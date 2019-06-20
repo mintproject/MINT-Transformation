@@ -9,7 +9,7 @@ from dtran.ifunc import IFunc
 
 
 class ReadFunc(IFunc):
-    id = "read"
+    id = "read_func"
     inputs = {"repr_file": ArgType.FilePath, "resources": ArgType.String}
     outputs = {"data": ArgType.Graph(None)}
 
