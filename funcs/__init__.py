@@ -2,4 +2,4 @@
 # -*- coding: utf-8 -*-
 
 from .read_func import ReadFunc
-from .write_func import WriteFunc
+from .write_func import WriteFuncGraph, WriteFuncNDimArray

@@ -1,16 +1,55 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import csv
+import numpy as np
 from typing import List
-
+import ujson as json
 from pydrepr.graph import Node, Graph
 
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc
+import netCDF4 as nc4
 
 
-class WriteFunc(IFunc):
-    id = "write_func"
+class WriteFuncNDimArray(IFunc):
+    id = "write_func_ndarray"
+    inputs = {"data": ArgType.NDimArray, "main_class": ArgType.String, "output_file": ArgType.FilePath}
+    outputs = {"data": ArgType.String}
+
+    def __init__(self, data: np.ndarray, main_class: str, output_file: str):
+        self.data = data
+        self.main_class = main_class
+        self.output_file = output_file
+
+    def exec(self) -> dict:
+        f = nc4.Dataset(self.output_file, "w", format="NETCDF4")
+        tempgrp = f.createGroup(self.main_class)
+        idx = 0
+        dims = []
+
+        tempgrp.createDimension("lon", self.data.shape[0] - 1)
+        tempgrp.createDimension("lat", self.data.shape[1] - 1)
+        tempgrp.createDimension("z", self.data.shape[2] - 1)
+        tempgrp.createDimension("time", None)
+
+        longitude = tempgrp.createVariable("Longitude", "f4", "lon")
+        latitude = tempgrp.createVariable("Latitude", "f4", "lat")
+        levels = tempgrp.createVariable("Levels", "i4", "z")
+        temp = tempgrp.createVariable("Value", "f4", ("time", "lon", "lat", "z"))
+
+        longitude[:] = self.data[0, :, :]
+        latitude[:] = self.data[:, 0, :]
+        levels[:] = self.data[:, :, 0]
+        temp[0, :, :, :] = self.data[1:, 1:, 1:]
+
+        f.close()
+
+    def validate(self) -> bool:
+        return True
+
+
+class WriteFuncGraph(IFunc):
+    id = "write_func_graph"
     inputs = {"graph": ArgType.Graph(None), "main_class": ArgType.String, "output_file": ArgType.FilePath}
     outputs = {"data": ArgType.String}
 
@@ -23,9 +62,9 @@ class WriteFunc(IFunc):
     def exec(self) -> dict:
         all_data_rows, attr_names = self.tabularize_data()
         if self.output_file.endswith("csv"):
-            WriteFunc._dump_to_csv(all_data_rows, attr_names, self.output_file)
+            WriteFuncGraph._dump_to_csv(all_data_rows, attr_names, self.output_file)
         elif self.output_file.endswith("json"):
-            WriteFunc._dump_to_json(all_data_rows, attr_names, self.output_file)
+            WriteFuncGraph._dump_to_json(all_data_rows, attr_names, self.output_file)
         else:
             all_data_rows = []
         return {"data": all_data_rows}
@@ -42,7 +81,8 @@ class WriteFunc(IFunc):
 
     @staticmethod
     def _dump_to_json(tabular_rows, attr_names, file_path):
-        pass
+        with open(file_path, "w", newline="") as f:
+            json.dump(tabular_rows, f)
 
     def tabularize_data(self) -> (list, set):
         main_class_nodes = []
