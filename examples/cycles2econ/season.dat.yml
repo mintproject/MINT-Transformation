@@ -1,0 +1,49 @@
+version: "1"
+resources: csv
+variables:
+  date: [2.., 0]
+  crop: [2.., 1]
+  total_biomass: [2.., 2]
+  root_biomass: [2.., 3]
+  grain_yield: [2.., 4]
+  forage_yield: [2.., 5]
+  ag_residue: [2.., 6]
+  harvest_index: [2.., 7]
+  potential_tr: [2.., 8]
+  actual_tr: [2.., 9]
+  soil_evap: [2.., 10]
+  total_n: [2.., 11]
+  root_n: [2.., 12]
+  grain_n: [2.., 13]
+  forage_n: [2.., 14]
+  cum_n_stress: [2.., 15]
+  n_in_harvest: [2.., 16]
+  n_in_residue: [2.., 17]
+  n_concn_forage: [2.., 18]
+
+
+
+
+
+
+
+
+alignments:
+  - type: dimension
+    value: unit:0 <-> indicator_name:0
+  - type: dimension
+    value: date:0 <-> indicator_name:0
+  - type: dimension
+    value: value:0 <-> indicator_name:0
+semantic_model:
+  data_nodes:
+    unit: qb:Observation:0--eg:unit
+    date: qb:Observation:0--eg:recorded_at^^xsd:dateTime
+    value: qb:Observation:0--rdf:value
+    indicator_name: qb:Observation:0--rdfs:label
+  prefixes:
+    qb: http://purl.org/linked-data/cube#
+    smdx-measure: http://purl.org/linked-data/sdmx/2009/measure#
+    eg: http://example.org/
+    rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+    rdfs: http://www.w3.org/2000/01/rdf-schema#
