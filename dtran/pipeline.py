@@ -13,12 +13,23 @@ class Pipeline(object):
         :param wired: input, output
         """
         self.func_classes = func_classes
+        # map from function id to a tuple (idx of function, order of function (start from 1)).
+        self.id2order = {}
+        # map from idx of function to its order
+        self.idx2order = {}
+
+        for i, func_cls in enumerate(func_classes):
+            if func_cls.id not in self.id2order:
+                self.id2order[func_cls.id] = []
+            self.id2order[func_cls.id].append((i, len(self.id2order[func_cls.id]) + 1))
+            self.idx2order[i] = len(self.id2order[func_cls.id])
+
         wired = wired or []
         for input, output in wired:
             if input[1] is None:
-                input[1] = self.get_func_idx(input[0])
+                input[1] = self.get_func_order(input[0])
             if output[1] is None:
-                output[1] = self.get_func_idx(output[0])
+                output[1] = self.get_func_order(output[0])
 
         self.wired = {
             WiredIOArg.get_arg_name(i[0], i[1], i[2]): WiredIOArg.get_arg_name(o[0], o[1], o[2])
@@ -30,7 +41,7 @@ class Pipeline(object):
         for arg in args:
             if isinstance(arg, WiredIOArg):
                 if arg.func_idx is None:
-                    func_idx = self.get_func_idx(arg.func_id)
+                    func_idx = self.get_func_order(arg.func_id)
                 else:
                     func_idx = arg.func_idx
                 inputs[WiredIOArg.get_arg_name(arg.func_id, func_idx, arg.name)] = inputs.pop(arg)
@@ -39,7 +50,7 @@ class Pipeline(object):
         for i, func_cls in enumerate(self.func_classes):
             func_args = {}
             for argname in func_cls.inputs.keys():
-                gname = WiredIOArg.get_arg_name(func_cls.id, i, argname)
+                gname = WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)
                 if gname in self.wired:
                     # wired has higher priority
                     func_args[argname] = output[self.wired[gname]]
@@ -49,7 +60,8 @@ class Pipeline(object):
             func = func_cls(**func_args)
             result = func.exec()
             for argname in func_cls.outputs.keys():
-                output[f"{func_cls.id}__{i}__{argname}"] = result[argname]
+                output[WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i],
+                                               argname)] = result[argname]
 
         return output
 
@@ -61,16 +73,13 @@ class Pipeline(object):
         """
         return True
 
-    def get_func_idx(self, func_id: str) -> int:
-        idx = []
-        for i, func_cls in enumerate(self.func_classes):
-            if func_cls.id == func_id:
-                idx.append(i)
-        if len(idx) == 0:
+    def get_func_order(self, func_id: str) -> int:
+        if len(self.id2order[func_id]) == 0:
             raise ValueError(f"Cannot wire argument to function {func_id} because it doesn't exist")
 
-        if len(idx) > 1:
+        if len(self.id2order[func_id]) > 1:
             raise ValueError(
-                f"Cannot wire argument to function {func_id} because it is ambiguous (more than one function with same id)")
+                f"Cannot wire argument to function {func_id} because it is ambiguous (more than one function with same id)"
+            )
 
-        return idx[0]
+        return self.id2order[func_id][0][-1]

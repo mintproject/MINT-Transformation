@@ -21,7 +21,6 @@ class PriceWriter(IFunc):
         return True
 
     def exec(self) -> dict:
-        print(self.graph.nodes)
         data = [["", "p"]]
         for node in self.graph.nodes:
             data.append([node.data['dcat-dimension:thing'], node.data['dcat:measure_1_value']])
@@ -36,29 +35,25 @@ if __name__ == "__main__":
     crop_names = {
         "Maize (white) - Retail": "maize",
         "Cassava - Retail": "cassava",
-        "Groundnuts (shelled) - Retail": "groundnuts", "Sesame - Retail": "sesame",
+        "Groundnuts (shelled) - Retail": "groundnuts",
+        "Sesame - Retail": "sesame",
         "Sorghum (white, imported) - Retail": "sorghum"
     }
 
-    pipeline = Pipeline([
-        ReadFunc,
-        FilterFunc,
-        GraphStr2StrFunc,
-        UnitTransFunc,
-        PriceWriter
-    ], wired=[
-        ReadFunc.O.data == FilterFunc.I.data,
-        FilterFunc.O.data == GraphStr2StrFunc.I.graph,
-        FilterFunc.O.data == UnitTransFunc.I.graph,
-        UnitTransFunc.O.graph == PriceWriter.I.graph
-    ])
+    pipeline = Pipeline([ReadFunc, FilterFunc, GraphStr2StrFunc, UnitTransFunc, PriceWriter],
+                        wired=[
+                            ReadFunc.O.data == FilterFunc.I.data,
+                            FilterFunc.O.data == GraphStr2StrFunc.I.graph,
+                            FilterFunc.O.data == UnitTransFunc.I.graph,
+                            UnitTransFunc.O.graph == PriceWriter.I.graph
+                        ])
 
     inputs = {
         ReadFunc.I.repr_file: wdir / "wfp_food_prices_south-sudan.model.yml",
         ReadFunc.I.resources: wdir / "wfp_food_prices_south-sudan.csv",
         FilterFunc.I.filter: "@type = 'qb:Observation' and "
-                             "sdmx-attribute:refArea.contains('Aweil (Town)') and "
-                             "sdmx-dimension:refPeriod = '2016-10-15' and "
+        "sdmx-attribute:refArea.contains('Aweil (Town)') and "
+        "sdmx-dimension:refPeriod = '2016-10-15' and "
         f"dcat-dimension:thing in {str(set(crop_names.keys()))}",
         GraphStr2StrFunc.I.semantic_type: "qb:Observation--dcat-dimension:thing",
         GraphStr2StrFunc.I.str2str: ujson.dumps(crop_names),
