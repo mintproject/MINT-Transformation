@@ -7,12 +7,13 @@ from dtran.wireio import WiredIOArg
 
 
 class Pipeline(object):
-    def __init__(self, func_cls: List[Type[IFunc]], wired: List[Tuple]):
+    def __init__(self, func_cls: List[Type[IFunc]], wired: List[Tuple]=None):
         """
         :param func_cls:
         :param wired: input, output
         """
         self.func_cls = func_cls
+        wired = wired or []
         for input, output in wired:
             if input[1] is None:
                 input[1] = self.get_func_idx(input[0])
