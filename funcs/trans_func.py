@@ -6,6 +6,7 @@ from dtran.argtype import ArgType
 from dtran.ifunc import IFunc
 from pydrepr import Graph
 
+
 class UnitTransFunc(IFunc):
     id = "unit_trans"
     inputs = {"graph": ArgType.Graph(None), "unit_value": ArgType.String, \

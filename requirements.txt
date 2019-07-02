@@ -1,5 +1,0 @@
-ujson
-git+https://github.com/binh-vu/temp.git@pyrepr#egg=pydrepr
-netCDF4
-arpeggio
-rdflib

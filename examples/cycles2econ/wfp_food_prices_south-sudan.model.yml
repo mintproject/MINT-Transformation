@@ -5,6 +5,10 @@ preprocessing:
     input: [2.., 9]
     code: |
       return f"{context.get_value([index[0], 6])} - {value}"
+  - type: pmap
+    input: [2.., 2]
+    code: |
+      return f"{context.get_value([index[0], 5])}/{value}"
 variables:
   date: [2.., 0]
   cmname: [2.., 1]

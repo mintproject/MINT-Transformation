@@ -1,8 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import csv
+from pathlib import Path
+
 import numpy as np
-from typing import List
+from typing import List, Union
 import ujson as json
 from pydrepr.graph import Node, Graph
 
@@ -53,11 +55,11 @@ class WriteFuncGraph(IFunc):
     inputs = {"graph": ArgType.Graph(None), "main_class": ArgType.String, "output_file": ArgType.FilePath}
     outputs = {"data": ArgType.String}
 
-    def __init__(self, graph: Graph, main_class: str, output_file: str):
+    def __init__(self, graph: Graph, main_class: str, output_file: Union[str, Path]):
         self.graph = graph
         self.main_class = main_class
 
-        self.output_file = output_file
+        self.output_file = str(output_file)
 
     def exec(self) -> dict:
         all_data_rows, attr_names = self.tabularize_data()

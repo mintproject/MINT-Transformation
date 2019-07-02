@@ -7,12 +7,12 @@ from dtran.wireio import WiredIOArg
 
 
 class Pipeline(object):
-    def __init__(self, func_cls: List[Type[IFunc]], wired: List[Tuple]=None):
+    def __init__(self, func_classes: List[Type[IFunc]], wired: List[any] = None):
         """
-        :param func_cls:
+        :param func_classes:
         :param wired: input, output
         """
-        self.func_cls = func_cls
+        self.func_classes = func_classes
         wired = wired or []
         for input, output in wired:
             if input[1] is None:
@@ -36,7 +36,7 @@ class Pipeline(object):
                 inputs[WiredIOArg.get_arg_name(arg.func_id, func_idx, arg.name)] = inputs.pop(arg)
 
         output = {}
-        for i, func_cls in enumerate(self.func_cls):
+        for i, func_cls in enumerate(self.func_classes):
             func_args = {}
             for argname in func_cls.inputs.keys():
                 gname = WiredIOArg.get_arg_name(func_cls.id, i, argname)
@@ -63,14 +63,14 @@ class Pipeline(object):
 
     def get_func_idx(self, func_id: str) -> int:
         idx = []
-        for i, func_cls in enumerate(self.func_cls):
+        for i, func_cls in enumerate(self.func_classes):
             if func_cls.id == func_id:
                 idx.append(i)
         if len(idx) == 0:
             raise ValueError(f"Cannot wire argument to function {func_id} because it doesn't exist")
 
         if len(idx) > 1:
-            raise ValueError(f"Cannot wire argument to function {func_id} because it is ambiguous (more than one function with same id)")
+            raise ValueError(
+                f"Cannot wire argument to function {func_id} because it is ambiguous (more than one function with same id)")
 
         return idx[0]
-
