@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+
+  <script src="{{url_for('static', filename='pipeline_form.js')}}"></script>
+  <div class="jumbotron vertical-center">
+    <p> <h2>Welcome to MINT-DT</br>
+    A framework to construct a transformation pipeline based on a given specification.</h2></p>
+
+    <div id="field">
+      <div id="field0" class="card border-primary border" style="width: 15rem;">
+        <!-- Text input-->
+        <div class="form-group">
+          <label class="control-label" for="action_id">Adapter Id</label>  
+          <!-- label class="col-md-4 control-label" for="action_id">Action Id</labe -->  
+          <div>
+          <!-- div class="col-md-5" -->
+            <input id="action_id" name="action_id" type="text" placeholder="" class="form-control input-md">
+          </div>
+        </div>
+        <!-- Text input-->
+        <div class="form-group">
+          <label class="control-label" for="action_name">Adapter Name</label>  
+          <!-- label class="col-md-4 control-label" for="action_name">Action Name</label --> 
+          <div>
+          <!-- div class="col-md-5" -->
+            <input id="action_name" name="action_name" type="text" placeholder="" class="form-control input-md">
+          </div>
+        </div>
+        <!-- File Button --> 
+        <div class="form-group">
+          <label class="control-label" for="action_json">JSON File</label>
+          <!-- label class="col-md-4 control-label" for="action_json">JSON File</label -->
+            <div>
+            <!-- div class="col-md-4" -->
+              <input type="file" id="action_json" name="action_json" class="input-file" accept=".txt,.json">
+              <div id="action_jsondisplay"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Button -->
+    <div class="form-group">
+      <div class="col-md-4">
+        <button id="add-more" name="add-more" class="btn btn-primary">Add More</button>
+      </div>
+    </div>
+
+    <div class="row container center" style="text-align: center;">
+      {% for adapter_inst in list_of_adapters %}
+      <div class="card border-primary border" style="width: 15rem;">
+        <h5 class="card-header">{{adapter_inst.name}}</h5>
+        <div class="card-body">
+        {{adapter_inst.module_type}}</br>
+          <b>{{adapter_inst.identifier}}</b></br>
+          <i>{{adapter_inst.description}}</i></br>
+          <h5 class="card-title" style="color:#9932CC">inputs</h5>
+          <p class="card-text" style="color:#999999">
+            {{adapter_inst.inputs}}
+          </p>
+          <h5 class="card-title" style="color:#9932CC">outputs</h5>
+          <p class="card-text" style="color:#999999">
+            {{adapter_inst.outputs}}
+          </p>
+          <!-- Button -->
+          <div class="form-group">
+            <button id="add-more" name="add-more" class="btn btn-primary">Add</button>
+          </div>
+        </div>
+      </div>&nbsp;
+      {% endfor %}
+    </div>
+
+  </div>
+
+{% endblock %}
