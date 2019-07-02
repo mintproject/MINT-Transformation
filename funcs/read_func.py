@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import ujson
+from typing import Union
+from pathlib import Path
 from pydrepr import Graph, Repr
 
 from dtran.argtype import ArgType
@@ -13,13 +15,15 @@ class ReadFunc(IFunc):
     inputs = {"repr_file": ArgType.FilePath, "resources": ArgType.String}
     outputs = {"data": ArgType.Graph(None)}
 
-    def __init__(self, repr_file: str, resources: str):
+    def __init__(self, repr_file: Union[str, Path], resources: Union[str, Path]):
+        resources = str(resources)
+
         if resources.startswith("{"):
             self.resources = ujson.loads(resources)
         else:
             self.resources = {"default": resources}
 
-        self.repr = Repr.from_file(repr_file)
+        self.repr = Repr.from_file(str(repr_file))
 
     def exec(self) -> dict:
         g = Graph.from_repr(self.repr, self.resources)
