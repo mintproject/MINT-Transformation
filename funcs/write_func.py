@@ -4,7 +4,7 @@ import csv
 from pathlib import Path
 
 import numpy as np
-from typing import List, Union
+from typing import List, Union, Dict
 import ujson as json
 from pydrepr.graph import Node, Graph
 
@@ -15,7 +15,11 @@ import netCDF4 as nc4
 
 class WriteFuncNDimArray(IFunc):
     id = "write_func_ndarray"
-    inputs = {"data": ArgType.NDimArray, "main_class": ArgType.String, "output_file": ArgType.FilePath}
+    inputs = {
+        "data": ArgType.NDimArray,
+        "main_class": ArgType.String,
+        "output_file": ArgType.FilePath
+    }
     outputs = {"data": ArgType.String}
 
     def __init__(self, data: np.ndarray, main_class: str, output_file: str):
@@ -52,12 +56,19 @@ class WriteFuncNDimArray(IFunc):
 
 class WriteFuncGraph(IFunc):
     id = "write_func_graph"
-    inputs = {"graph": ArgType.Graph(None), "main_class": ArgType.String, "output_file": ArgType.FilePath}
+    inputs = {
+        "graph": ArgType.Graph(None),
+        "main_class": ArgType.String,
+        "output_file": ArgType.FilePath,
+        "mapped_columns": ArgType.OrderedDict(None),
+    }
     outputs = {"data": ArgType.String}
 
-    def __init__(self, graph: Graph, main_class: str, output_file: Union[str, Path]):
+    def __init__(self, graph: Graph, main_class: str, output_file: Union[str, Path],
+                 mapped_columns: Dict[str, str]):
         self.graph = graph
         self.main_class = main_class
+        self.mapped_columns = mapped_columns
 
         self.output_file = str(output_file)
 
@@ -92,22 +103,36 @@ class WriteFuncGraph(IFunc):
             if node.data["@type"] == self.main_class:
                 main_class_nodes.append(node)
 
-        all_data_rows = []
-        all_attr_names = set()
-        for idx, node in enumerate(main_class_nodes):
-            dict_data_rows, attr_names = self._divide_search(node, [])
-            all_data_rows.extend(dict_data_rows)
+        # modified code to allow rename & select a subset of attributes
+        if len(self.mapped_columns) == 0:
+            all_data_rows = []
+            all_attr_names = set()
+            for idx, node in enumerate(main_class_nodes):
+                dict_data_rows, attr_names = self._divide_search(node, [])
+                all_data_rows.extend(dict_data_rows)
 
-            if idx == 0:
-                all_attr_names = attr_names
-            else:
-                all_attr_names = all_attr_names.union(attr_names)
+                if idx == 0:
+                    all_attr_names = attr_names
+                else:
+                    all_attr_names = all_attr_names.union(attr_names)
 
-        return all_data_rows, all_attr_names
+            return all_data_rows, all_attr_names
+        else:
+            all_data_rows = []
+            for node in main_class_nodes:
+                dict_data_rows, attr_names = self._divide_search(node, [])
+                for row in dict_data_rows:
+                    all_data_rows.append(
+                        {new_k: row[old_k]
+                         for old_k, new_k in self.mapped_columns.items()})
 
-    def _divide_search(
-        self, node: Node, visited: List[Node], with_ids: bool = False, excluding_attrs=None
-    ) -> (list, set):
+            return all_data_rows, list(self.mapped_columns.values())
+
+    def _divide_search(self,
+                       node: Node,
+                       visited: List[Node],
+                       with_ids: bool = False,
+                       excluding_attrs=None) -> (list, set):
         if excluding_attrs is None:
             excluding_attrs = ["@type"]
 
@@ -115,7 +140,9 @@ class WriteFuncGraph(IFunc):
         for attr, value in node.data.items():
             tuple_data_rows[0].append((attr, value, node.id))
 
-        for child_node in [self.graph.nodes[self.graph.edges[eid].target] for eid in node.edges_out]:
+        for child_node in [
+                self.graph.nodes[self.graph.edges[eid].target] for eid in node.edges_out
+        ]:
             if child_node not in visited:
                 child_data_rows = self._divide_search(node, visited + [child_node])
                 tuple_data_rows = tuple_data_rows * len(child_data_rows)

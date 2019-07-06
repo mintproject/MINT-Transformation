@@ -24,6 +24,7 @@ class ReadFunc(IFunc):
             self.resources = {"default": resources}
 
         self.repr = Repr.from_file(str(repr_file))
+        self.repr.validate()
 
     def exec(self) -> dict:
         g = Graph.from_repr(self.repr, self.resources)

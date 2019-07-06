@@ -7,29 +7,6 @@ import ujson
 from dtran import Pipeline, IFunc, ArgType
 from funcs import ReadFunc, FilterFunc, WriteFuncGraph, UnitTransFunc, GraphStr2StrFunc
 
-
-class PriceWriter(IFunc):
-    id = "econ_price_writer"
-    inputs = {"graph": ArgType.Graph(None), "output_file": ArgType.FilePath}
-    outputs = {}
-
-    def __init__(self, graph, output_file: Union[str, Path]):
-        self.graph = graph
-        self.output_file = str(output_file)
-
-    def validate(self) -> bool:
-        return True
-
-    def exec(self) -> dict:
-        data = [["", "p"]]
-        for node in self.graph.nodes:
-            data.append([node.data['dcat-dimension:thing'], node.data['dcat:measure_1_value']])
-
-        with open(self.output_file, "w") as f:
-            for r in data:
-                f.write(",".join(r) + "\n")
-
-
 if __name__ == "__main__":
     wdir = Path(os.path.abspath(__file__)).parent
     crop_names = {
@@ -40,12 +17,12 @@ if __name__ == "__main__":
         "Sorghum (white, imported) - Retail": "sorghum"
     }
 
-    pipeline = Pipeline([ReadFunc, FilterFunc, GraphStr2StrFunc, UnitTransFunc, PriceWriter],
+    pipeline = Pipeline([ReadFunc, FilterFunc, GraphStr2StrFunc, UnitTransFunc, WriteFuncGraph],
                         wired=[
                             ReadFunc.O.data == FilterFunc.I.data,
                             FilterFunc.O.data == GraphStr2StrFunc.I.graph,
                             FilterFunc.O.data == UnitTransFunc.I.graph,
-                            UnitTransFunc.O.graph == PriceWriter.I.graph
+                            UnitTransFunc.O.graph == WriteFuncGraph.I.graph
                         ])
 
     inputs = {
@@ -60,7 +37,12 @@ if __name__ == "__main__":
         UnitTransFunc.I.unit_value: "dcat:measure_1_value",
         UnitTransFunc.I.unit_label: "sdmx-attribute:unitMeasure",
         UnitTransFunc.I.unit_desired: "$/kg",
-        PriceWriter.I.output_file: wdir / "price.csv"
+        WriteFuncGraph.I.main_class: 'qb:Observation',
+        WriteFuncGraph.I.mapped_columns: {
+            "dcat-dimension:thing": "",
+            "dcat:measure_1_value": "p"
+        },
+        WriteFuncGraph.I.output_file: wdir / "price.csv"
     }
 
     outputs = pipeline.exec(inputs)
