@@ -1,53 +1,54 @@
 {% extends "base.html" %}
 {% block content %}
 
-  <script src="{{url_for('static', filename='pipeline_form.js')}}"></script>
-  <div class="jumbotron vertical-center">
-    <p> <h2>Welcome to MINT-DT</br>
-    A framework to construct a transformation pipeline based on a given specification.</h2></p>
+<div class="jumbotron vertical-center">
 
-    <div id="field">
-      <div id="field0" class="card border-primary border" style="width: 15rem;">
-        <!-- Text input-->
-        <div class="form-group">
-          <label class="control-label" for="action_id">Adapter Id</label>  
-          <!-- label class="col-md-4 control-label" for="action_id">Action Id</labe -->  
-          <div>
-          <!-- div class="col-md-5" -->
-            <input id="action_id" name="action_id" type="text" placeholder="" class="form-control input-md">
-          </div>
-        </div>
-        <!-- Text input-->
-        <div class="form-group">
-          <label class="control-label" for="action_name">Adapter Name</label>  
-          <!-- label class="col-md-4 control-label" for="action_name">Action Name</label --> 
-          <div>
-          <!-- div class="col-md-5" -->
-            <input id="action_name" name="action_name" type="text" placeholder="" class="form-control input-md">
-          </div>
-        </div>
-        <!-- File Button --> 
-        <div class="form-group">
-          <label class="control-label" for="action_json">JSON File</label>
-          <!-- label class="col-md-4 control-label" for="action_json">JSON File</label -->
-            <div>
-            <!-- div class="col-md-4" -->
-              <input type="file" id="action_json" name="action_json" class="input-file" accept=".txt,.json">
-              <div id="action_jsondisplay"></div>
-          </div>
-        </div>
+  <form name="top_res" action="/pipeline" method="GET">
+    <h2>Choose an adapter:</h2>
+    <select name="slct_adp" onchange="this.form.submit()">
+      {% for drop_itm in adp_dropdown_list %}
+          {% if adp_dropdown_selected_str == drop_itm %}
+      <option value="{{drop_itm}}" SELECTED>{{drop_itm}}</option>
+          {% else %}
+      <option value="{{drop_itm}}">{{drop_itm}}</option>
+          {% endif %}
+      {% endfor %}
+    </select>
+
+    </br></br>
+
+    <div class="card border-primary border center" style="width: 30rem;">
+      <h5 class="card-header">{{adp_dropdown_selected_inst.name}}</h5>
+      <div class="card-body">
+      {{adp_dropdown_selected_inst.module_type}}</br>
+        <b>{{adp_dropdown_selected_inst.identifier}}</b></br>
+        <i>{{adp_dropdown_selected_inst.description}}</i></br>
+        <h5 class="card-title" style="color:#9932CC">inputs</h5>
+        <p class="card-text" style="color:#999999">
+          {{adp_dropdown_selected_inst.inputs}}
+        </p>
+        <h5 class="card-title" style="color:#9932CC">outputs</h5>
+        <p class="card-text" style="color:#999999">
+          {{adp_dropdown_selected_inst.outputs}}
+        </p>
+        <!-- Button -->
+        <button id="add_adp" name="add_adp" class="btn btn-primary">Add</button>
       </div>
     </div>
 
-    <!-- Button -->
-    <div class="form-group">
-      <div class="col-md-4">
-        <button id="add-more" name="add-more" class="btn btn-primary">Add More</button>
-      </div>
-    </div>
+    </br>
+  
+  <hr style="border: 2px solid#5b9aa0;" />
 
-    <div class="row container center" style="text-align: center;">
-      {% for adapter_inst in list_of_adapters %}
+  <h2>Pipeline</h2></br>
+
+  <button id="save_pipe" name="save_pipe" class="btn btn-primary">Load Pipeline Configuration</button>
+  <button id="load_pipe" name="load_pipe" class="btn btn-primary">Save Pipeline Configuration</button>
+
+  </form>
+
+  <div class="row container center" style="text-align: center;">
+      {% for adapter_inst in pipeline_adapters %}
       <div class="card border-primary border" style="width: 15rem;">
         <h5 class="card-header">{{adapter_inst.name}}</h5>
         <div class="card-body">
@@ -62,15 +63,11 @@
           <p class="card-text" style="color:#999999">
             {{adapter_inst.outputs}}
           </p>
-          <!-- Button -->
-          <div class="form-group">
-            <button id="add-more" name="add-more" class="btn btn-primary">Add</button>
-          </div>
         </div>
       </div>&nbsp;
       {% endfor %}
-    </div>
-
   </div>
+
+</div>
 
 {% endblock %}

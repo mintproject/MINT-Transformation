@@ -36,15 +36,19 @@
           </ul>
         </div>
         <img height="50" src="{{url_for('static', filename='logo.png')}}">&nbsp;&nbsp;&nbsp;&nbsp;
-        <form class="form-inline" name="search" action="/search" method="GET" autocomplete="off">
+        <form class="form-inline" name="search" action="#" method="GET" autocomplete="off">
           <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" name="srch_str">
           <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
         </form>
       </nav>
     </header>
 
-    {% block content %}{% endblock %}
-
+    <div class="container center">
+      {% block content %}{% endblock %}
+      <footer class="footer">
+        <small>© 2019 Center on Knowledge Graphs, Information Sciences Institute</small>
+      </footer>
+    </div>
   </body>
 
 </html>
