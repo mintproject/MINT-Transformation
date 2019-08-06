@@ -4,27 +4,6 @@
     <div class="jumbotron vertical-center">
       <p> <h2>Welcome to MINT-DT</br>
       A framework to construct a transformation pipeline based on a given specification.</h2></p>
-      <div class="row container center" style="text-align: center;">
-        {% for adapter_inst in list_of_adapters %}
-        <div class="card border-primary border" style="width: 15rem;">
-          <h5 class="card-header">{{adapter_inst.name}}</h5>
-          <div class="card-body">
-          {{adapter_inst.module_type}}</br>
-            <b>{{adapter_inst.identifier}}</b></br>
-            <i>{{adapter_inst.description}}</i></br>
-            <h5 class="card-title" style="color:#9932CC">inputs</h5>
-            <p class="card-text" style="color:#999999">
-              {{adapter_inst.inputs}}
-            </p>
-            <h5 class="card-title" style="color:#9932CC">outputs</h5>
-            <p class="card-text" style="color:#999999">
-              {{adapter_inst.outputs}}
-            </p>
-            <a href="#" class="btn btn-primary">Select</a>
-          </div>
-        </div>&nbsp;
-        {% endfor %}
-      </div>
     </div>
 
 {% endblock %}
