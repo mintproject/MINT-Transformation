@@ -23,13 +23,19 @@
       {{adp_dropdown_selected_inst.module_type}}</br>
         <b>{{adp_dropdown_selected_inst.identifier}}</b></br>
         <i>{{adp_dropdown_selected_inst.description}}</i></br>
-        <h5 class="card-title" style="color:#9932CC">inputs</h5>
-        <p class="card-text" style="color:#999999">
-          {{adp_dropdown_selected_inst.inputs}}
+        <!-- Inputs -->
+        <h5 class="card-title" style="color:#9932CC"><u>inputs</u></h5>
+        <p class="card-text" style="color:#000000">
+          {% for selected_adp_input_name, selected_adp_input_attrs in adp_dropdown_selected_inst.inputs.items() %}
+            {{selected_adp_input_name}} [{{selected_adp_input_attrs[0]}}]{% if selected_adp_input_attrs[2] == False %}*{% endif %}</br>
+          {% endfor %}
         </p>
-        <h5 class="card-title" style="color:#9932CC">outputs</h5>
-        <p class="card-text" style="color:#999999">
-          {{adp_dropdown_selected_inst.outputs}}
+        <!-- Outputs -->
+        <h5 class="card-title" style="color:#9932CC"><u>outputs</u></h5>
+        <p class="card-text" style="color:#000000">
+          {% for selected_adp_output_name, selected_adp_output_attrs in adp_dropdown_selected_inst.outputs.items() %}
+            {{selected_adp_output_name}} [{{selected_adp_output_attrs[0]}}]{% if selected_adp_output_attrs[2] == False %}*{% endif %}</br>
+          {% endfor %}
         </p>
         <!-- Button -->
         <button id="add_adp" name="add_adp" class="btn btn-primary">Add</button>
@@ -55,14 +61,20 @@
         {{adapter_inst.module_type}}</br>
           <b>{{adapter_inst.identifier}}</b></br>
           <i>{{adapter_inst.description}}</i></br>
-          <h5 class="card-title" style="color:#9932CC">inputs</h5>
-          <p class="card-text" style="color:#999999">
-            {{adapter_inst.inputs}}
-          </p>
-          <h5 class="card-title" style="color:#9932CC">outputs</h5>
-          <p class="card-text" style="color:#999999">
-            {{adapter_inst.outputs}}
-          </p>
+          <!-- Inputs -->
+        <h5 class="card-title" style="color:#9932CC"><u>inputs</u></h5>
+        <p class="card-text" style="color:#000000">
+          {% for selected_adp_input_name, selected_adp_input_attrs in adp_dropdown_selected_inst.inputs.items() %}
+            {{selected_adp_input_name}} [{{selected_adp_input_attrs[0]}}]{% if selected_adp_input_attrs[2] == False %}*{% endif %}</br>
+          {% endfor %}
+        </p>
+        <!-- Outputs -->
+        <h5 class="card-title" style="color:#9932CC"><u>outputs</u></h5>
+        <p class="card-text" style="color:#000000">
+          {% for selected_adp_output_name, selected_adp_output_attrs in adp_dropdown_selected_inst.outputs.items() %}
+            {{selected_adp_output_name}} [{{selected_adp_output_attrs[0]}}]{% if selected_adp_output_attrs[2] == False %}*{% endif %}</br>
+          {% endfor %}
+        </p>
         </div>
       </div>&nbsp;
       {% endfor %}
