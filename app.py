@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request
 from copy import deepcopy
 import funcs
+from funcs import *
+from dtran import Pipeline
 
 app = Flask(__name__)
 
@@ -12,21 +14,27 @@ KEY_OUTPUTS = 'outputs'
 
 FORM_ADAPTER_SLCTD = 'slct_adp'
 FORM_ADAPTER_SUBMT = 'add_adp'
+FORM_ADAPTER_RMV   = 'remove_from_pipe'
 FORM_PIPELINE_UPDT = 'update_pipe'
+FORM_PIPELINE_EXE  = 'exe_pipe'
 
 class AdapterElement:
-    def __init__(self, name, module_type, identifier, description, inputs, outputs):
+    def __init__(self, name, module_type, identifier, description, inputs, outputs, adapter_object):
         self.name = name
         self.module_type = module_type
         self.identifier = identifier
         self.description = description
         self.inputs = inputs
         self.outputs = outputs
+        self.object = adapter_object
     
     def __repr__(self):
         return f'name={self.name}, module_type={self.module_type}, ' + \
             f'identifier={self.identifier}\ndescription={self.description}\n' + \
             f'inputs={self.inputs}\noutputs={self.outputs}\n\n'
+
+    def get_adapter_object(self):
+        return self.object
 
 class AdapterDB:
     def __init__(self):
@@ -51,7 +59,7 @@ class AdapterDB:
                 for arg_name, arg_attr in outputs_dict.items():
                     outputs[arg_name] = {'id': arg_attr.__dict__['id'], \
                         'val': arg_attr.__dict__['val'], 'optional': arg_attr.__dict__['optional']}
-                self.adapters.append(AdapterElement(a_name, module_type, identifier, description, inputs, outputs))
+                self.adapters.append(AdapterElement(a_name, module_type, identifier, description, inputs, outputs, a_cls))
 
     def get_list_of_adapters(self):
         return self.adapters
@@ -72,23 +80,31 @@ def get_next_index_in_g_pipeline():
     else:
         return g_pipeline[-1][0] + 1
 
-def update_g_pipeline_elements(adapter_index_in_pipe, input_n_output, adapter_attribute, value):
+def remove_adapter_from_pipeline(adapter_identifier_in_pipe):
+    global g_pipeline
+    for index_in_list, adapter_tuple in enumerate(g_pipeline):
+        if adapter_identifier_in_pipe == adapter_tuple[0]:
+            index_to_access = index_in_list
+            break
+    g_pipeline.pop(index_to_access)
+
+def update_g_pipeline_elements(adapter_identifier_in_pipe, input_n_output, adapter_attribute, value):
     global g_pipeline
 
     ''' g_pipeline is a list
-        ...[adapter_index_in_pipe] is an element in the pipe
+        ...[adapter_identifier_in_pipe] is an element in the pipe
         ...[0] holds the index, ...[1] hold the instance of the adapter '''
 
-    # inputs/outputs hold a dictionary of attributes, each one is a dictionary by itself '''
+    for index_in_list, adapter_tuple in enumerate(g_pipeline):
+        if adapter_identifier_in_pipe == adapter_tuple[0]:
+            index_to_access = index_in_list
+            break
 
-    # TODO: we must iterate over list and compare against index
-    #       instead of access g_pipeline[ adapter_index_in_pipe ]
-    #                  iterate over g_pipeline and match element at g_pipeline[*][0]
-
+    # inputs/outputs hold a dictionary of attributes, each one is a dictionary by itself
     if input_n_output:
-        g_pipeline[adapter_index_in_pipe][1].inputs[adapter_attribute]['val'] = value
+        g_pipeline[index_to_access][1].inputs[adapter_attribute]['val'] = value
     else:
-        g_pipeline[adapter_index_in_pipe][1].outputs[adapter_attribute]['val'] = value
+        g_pipeline[index_to_access][1].outputs[adapter_attribute]['val'] = value
 
 @app.route('/pipeline', methods=['GET', 'POST'])
 def pipeline():
@@ -121,9 +137,69 @@ def pipeline():
                 element_attr_in_pipeline = arg_name.split('.')[2]
                 update_g_pipeline_elements(element_id_in_pipeline, input_not_output, element_attr_in_pipeline, arg_val)
 
+    # iterate over args and check is something should be removed
+    for arg_name, arg_val in request.args.items():
+        if FORM_ADAPTER_RMV in arg_name:
+            element_id_in_pipeline = int(arg_name.split('.')[0])
+            remove_adapter_from_pipeline(element_id_in_pipeline)
+            break
+
+    # execute pipeline if user requested that
+    if FORM_PIPELINE_EXE in request.args:
+        execute_pipeline()
+
     return render_template('pipeline.html', adp_dropdown_list=list_of_adapter_names, \
         adp_dropdown_selected_str=adp_id_str_chosen, adp_dropdown_selected_inst=adp, \
         pipeline_adapters=g_pipeline)
+
+def execute_pipeline():
+
+    global g_pipeline
+
+    print(g_pipeline)
+    inputs = {} # TODO: fill
+    pipeline_classes = []
+    pipeline_wires = [] # TODO: fill
+
+    for _, adapter in g_pipeline:
+        adptr_obj = adapter.get_adapter_object()
+        pipeline_classes.append(adptr_obj)
+
+    '''
+    pipeline_wires_copy = [
+        ReadFunc.O.data == UnitTransFunc.I.graph,
+        UnitTransFunc.O.graph == WriteFuncGraph.I.graph
+    ]
+
+    inputs_copy = {
+        ReadFunc.I.repr_file: "examples/demo/s01_ethiopia_commodity_price.yml",
+        ReadFunc.I.resources: "examples/demo/s01_ethiopia_commodity_price.csv",
+        UnitTransFunc.I.unit_value: "rdf:value",
+        UnitTransFunc.I.unit_label: "eg:unit",
+        UnitTransFunc.I.unit_desired: "$/liter",
+        WriteFuncGraph.I.main_class: "qb:Observation",
+        WriteFuncGraph.I.output_file: "examples/demo/s01_ethiopia_commodity_price_write.csv"
+    }
+
+    print('*'*30)
+    print(pipeline_wires_copy)
+    print('*'*30)
+    print(pipeline_wires)
+    '''
+    
+    '''
+    pipeline = Pipeline([
+        ReadFunc,
+        UnitTransFunc,
+        WriteFuncGraph
+    ], wired=[
+        ReadFunc.O.data == UnitTransFunc.I.graph,
+        UnitTransFunc.O.graph == WriteFuncGraph.I.graph
+    ])
+    '''
+
+    # TODO: execute and print to screen and show errors/results
+    #outputs = pipeline.exec(inputs)
 
 # Set "homepage" to index.html
 @app.route('/')
