@@ -27,14 +27,14 @@
         <h5 class="card-title" style="color:#9932CC"><u>inputs</u></h5>
         <p class="card-text" style="color:#000000">
           {% for selected_adp_input_name, selected_adp_input_attrs in adp_dropdown_selected_inst.inputs.items() %}
-            {{selected_adp_input_name}} [{{selected_adp_input_attrs[0]}}]{% if selected_adp_input_attrs[2] == False %}*{% endif %}</br>
+            {{selected_adp_input_name}} [{{selected_adp_input_attrs['id']}}]{% if selected_adp_input_attrs['optional'] == False %}*{% endif %}</br>
           {% endfor %}
         </p>
         <!-- Outputs -->
         <h5 class="card-title" style="color:#9932CC"><u>outputs</u></h5>
         <p class="card-text" style="color:#000000">
           {% for selected_adp_output_name, selected_adp_output_attrs in adp_dropdown_selected_inst.outputs.items() %}
-            {{selected_adp_output_name}} [{{selected_adp_output_attrs[0]}}]{% if selected_adp_output_attrs[2] == False %}*{% endif %}</br>
+            {{selected_adp_output_name}} [{{selected_adp_output_attrs['id']}}]{% if selected_adp_output_attrs['optional'] == False %}*{% endif %}</br>
           {% endfor %}
         </p>
         <!-- Button -->
@@ -48,13 +48,15 @@
 
   <h2>Pipeline</h2></br>
 
-  <button id="save_pipe" name="save_pipe" class="btn btn-primary">Load Pipeline Configuration</button>
-  <button id="load_pipe" name="load_pipe" class="btn btn-primary">Save Pipeline Configuration</button>
+  <button name="save_pipe" class="btn btn-primary" disabled>Load Pipeline Configuration</button>
+  <button name="load_pipe" class="btn btn-primary" disabled>Save Pipeline Configuration</button>
 
-  </form>
+  </br></br>
+  <button name="update_pipe" class="btn btn-primary">Update</button>
+  </br>
 
   <div class="row container center" style="text-align: center;">
-      {% for adapter_inst in pipeline_adapters %}
+      {% for (adapter_idx, adapter_inst) in pipeline_adapters %}
       <div class="card border-primary border" style="width: 15rem;">
         <h5 class="card-header">{{adapter_inst.name}}</h5>
         <div class="card-body">
@@ -64,21 +66,35 @@
           <!-- Inputs -->
         <h5 class="card-title" style="color:#9932CC"><u>inputs</u></h5>
         <p class="card-text" style="color:#000000">
-          {% for selected_adp_input_name, selected_adp_input_attrs in adp_dropdown_selected_inst.inputs.items() %}
-            {{selected_adp_input_name}} [{{selected_adp_input_attrs[0]}}]{% if selected_adp_input_attrs[2] == False %}*{% endif %}</br>
+          {% for adp_name, adp_attrs in adapter_inst.inputs.items() %}
+            <b>{{adp_name}} [{{adp_attrs['id']}}]{% if adp_attrs['optional'] == False %}*{% endif %}</b></br>
+            {% if adp_attrs['val'] != None %}
+              <input type="text" name="{{adapter_idx}}.inputs.{{adp_name}}" value="{{adp_attrs['val']}}">
+            {% else %}
+              <input type="text" name="{{adapter_idx}}.inputs.{{adp_name}}">
+            {% endif %}</br>
           {% endfor %}
         </p>
         <!-- Outputs -->
         <h5 class="card-title" style="color:#9932CC"><u>outputs</u></h5>
         <p class="card-text" style="color:#000000">
-          {% for selected_adp_output_name, selected_adp_output_attrs in adp_dropdown_selected_inst.outputs.items() %}
-            {{selected_adp_output_name}} [{{selected_adp_output_attrs[0]}}]{% if selected_adp_output_attrs[2] == False %}*{% endif %}</br>
+          {% for adp_name, adp_attrs in adapter_inst.outputs.items() %}
+            <b>{{adp_name}} [{{adp_attrs['id']}}]{% if adp_attrs['optional'] == False %}*{% endif %}</b></br>
+            {% if adp_attrs['val'] != None %}
+              <input type="text" name="{{adapter_idx}}.outputs.{{adp_name}}" value="{{adp_attrs['val']}}">
+            {% else %}
+              <input type="text" name="{{adapter_idx}}.outputs.{{adp_name}}">
+            {% endif %}</br>
           {% endfor %}
         </p>
         </div>
       </div>&nbsp;
       {% endfor %}
   </div>
+
+  <button name="exe_pipe" class="btn btn-primary" disabled>Execute Pipeline</button>
+
+  </form>
 
 </div>
 
