@@ -89,15 +89,14 @@
             {% endif %}</br>
           {% endfor %}
         <!-- TODO: implement -->
-        </br><button name="remove_from_pipe" class="btn btn-primary" disabled>Remove</button>
+        </br><button name="{{adapter_idx}}.remove_from_pipe" class="btn btn-primary">Remove</button>
         </p>
         </div>
       </div>→
       {% endfor %}
   </div>
 
-  <!-- TODO: implement -->
-  <button name="exe_pipe" class="btn btn-primary" disabled>Execute Pipeline</button>
+  <button name="exe_pipe" class="btn btn-primary">Execute Pipeline</button>
 
   </form>
 
