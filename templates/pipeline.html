@@ -48,7 +48,9 @@
 
   <h2>Pipeline</h2></br>
 
+  <!-- TODO: implement -->
   <button name="save_pipe" class="btn btn-primary" disabled>Load Pipeline Configuration</button>
+  <!-- TODO: implement -->
   <button name="load_pipe" class="btn btn-primary" disabled>Save Pipeline Configuration</button>
 
   </br></br>
@@ -86,12 +88,15 @@
               <input type="text" name="{{adapter_idx}}.outputs.{{adp_name}}">
             {% endif %}</br>
           {% endfor %}
+        <!-- TODO: implement -->
+        </br><button name="remove_from_pipe" class="btn btn-primary" disabled>Remove</button>
         </p>
         </div>
-      </div>&nbsp;
+      </div>→
       {% endfor %}
   </div>
 
+  <!-- TODO: implement -->
   <button name="exe_pipe" class="btn btn-primary" disabled>Execute Pipeline</button>
 
   </form>

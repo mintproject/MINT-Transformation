@@ -80,6 +80,11 @@ def update_g_pipeline_elements(adapter_index_in_pipe, input_n_output, adapter_at
         ...[0] holds the index, ...[1] hold the instance of the adapter '''
 
     # inputs/outputs hold a dictionary of attributes, each one is a dictionary by itself '''
+
+    # TODO: we must iterate over list and compare against index
+    #       instead of access g_pipeline[ adapter_index_in_pipe ]
+    #                  iterate over g_pipeline and match element at g_pipeline[*][0]
+
     if input_n_output:
         g_pipeline[adapter_index_in_pipe][1].inputs[adapter_attribute]['val'] = value
     else:
