@@ -3,7 +3,7 @@ resources:
   default:
     type: csv
     delimiter: "\t"
-variables:
+attributes:
   date: [2.., 0]
   crop: [2.., 1]
   # unit: [1, 2..]
