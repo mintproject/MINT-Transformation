@@ -36,6 +36,9 @@ class AdapterElement:
     def get_adapter_object(self):
         return self.object
 
+    def get_adapter_identifier(self):
+        return self.identifier
+
 class AdapterDB:
     def __init__(self):
         self.adapters = list()
@@ -157,13 +160,17 @@ def execute_pipeline():
     global g_pipeline
 
     print(g_pipeline)
-    inputs = {} # TODO: fill
+    inputs = {}
     pipeline_classes = []
     pipeline_wires = [] # TODO: fill
 
     for _, adapter in g_pipeline:
         adptr_obj = adapter.get_adapter_object()
         pipeline_classes.append(adptr_obj)
+        for adp_input_key, adp_inp_dict in adapter.inputs.items():
+            print(f"adp_input_key={adp_input_key}, adp_inp_dict={adp_inp_dict}")
+            # TODO: solve issue with index (it's hard coded to 1 now!) in f"{id}__{idx}__{argname}"
+            inputs[f'{adapter.get_adapter_identifier()}__1__{adp_input_key}'] = adp_inp_dict['val']
 
     '''
     pipeline_wires_copy = [
@@ -171,15 +178,6 @@ def execute_pipeline():
         UnitTransFunc.O.graph == WriteFuncGraph.I.graph
     ]
 
-    inputs_copy = {
-        ReadFunc.I.repr_file: "examples/demo/s01_ethiopia_commodity_price.yml",
-        ReadFunc.I.resources: "examples/demo/s01_ethiopia_commodity_price.csv",
-        UnitTransFunc.I.unit_value: "rdf:value",
-        UnitTransFunc.I.unit_label: "eg:unit",
-        UnitTransFunc.I.unit_desired: "$/liter",
-        WriteFuncGraph.I.main_class: "qb:Observation",
-        WriteFuncGraph.I.output_file: "examples/demo/s01_ethiopia_commodity_price_write.csv"
-    }
 
     print('*'*30)
     print(pipeline_wires_copy)
