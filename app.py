@@ -18,6 +18,9 @@ FORM_ADAPTER_RMV   = 'remove_from_pipe'
 FORM_PIPELINE_UPDT = 'update_pipe'
 FORM_PIPELINE_EXE  = 'exe_pipe'
 
+GRAPH_INST_W_REPR  = 'GraphInstanceWire'
+# TODO: support NumPy
+
 class AdapterElement:
     def __init__(self, name, module_type, identifier, description, inputs, outputs, adapter_object):
         self.name = name
@@ -147,71 +150,81 @@ def pipeline():
             remove_adapter_from_pipeline(element_id_in_pipeline)
             break
 
+    pip_exe_msg = ""
     # execute pipeline if user requested that
     if FORM_PIPELINE_EXE in request.args:
-        execute_pipeline()
+        try:
+            execute_pipeline()
+        except ValueError:
+            pip_exe_msg = "Oops! Pipeline execution failed, see log..."
+        pip_exe_msg = "Pipeline execution succeeded!"
 
     return render_template('pipeline.html', adp_dropdown_list=list_of_adapter_names, \
         adp_dropdown_selected_str=adp_id_str_chosen, adp_dropdown_selected_inst=adp, \
-        pipeline_adapters=g_pipeline)
+        pipeline_adapters=g_pipeline, pipeline_exe_msg=pip_exe_msg)
 
 def execute_pipeline():
-
     global g_pipeline
 
-    print(g_pipeline)
     inputs = {}
     pipeline_classes = []
-    pipeline_wires = [] # TODO: fill
+    pipeline_wires = []
+
+    graph_instncs_dict = dict()
 
     for _, adapter in g_pipeline:
         adptr_obj = adapter.get_adapter_object()
+        adptr_id  = adapter.get_adapter_identifier()
         pipeline_classes.append(adptr_obj)
-        for adp_input_key, adp_inp_dict in adapter.inputs.items():
-            print(f"adp_input_key={adp_input_key}, adp_inp_dict={adp_inp_dict}")
-            # TODO: solve issue with index (it's hard coded to 1 now!) in f"{id}__{idx}__{argname}"
-            inputs[f'{adapter.get_adapter_identifier()}__1__{adp_input_key}'] = adp_inp_dict['val']
+        # parse inputs
+        for adp_inp_key, adp_inp_dict in adapter.inputs.items():
+            adp_inp_val = adp_inp_dict['val']
+            if adp_inp_val != '' and adp_inp_val != None:
+                # explicit input
+                if GRAPH_INST_W_REPR not in adp_inp_val:
+                    # TODO: this is a temporary workaround... fix and parse according to ArgType
+                    if adp_inp_val == '{}':
+                        adp_inp_val = {}
+                    # TODO: solve issue with index (it's hard coded to 1 now!) in f"{id}__{idx}__{argname}"
+                    inputs[f'{adptr_id}__1__{adp_inp_key}'] = adp_inp_val
+                else: # graph/numpy
+                    if adp_inp_val not in graph_instncs_dict:
+                        graph_instncs_dict[adp_inp_val] = dict()
+                    if 'i' not in graph_instncs_dict[adp_inp_val]:
+                        graph_instncs_dict[adp_inp_val]['i'] = list()
+                    graph_instncs_dict[adp_inp_val]['i'].append( [adptr_id, None, adp_inp_key] )
+        # parse outputs
+        for adp_out_key, adp_out_dict in adapter.outputs.items():
+            adp_out_val = adp_out_dict['val']
+            if adp_out_val != '' and adp_out_val != None and GRAPH_INST_W_REPR in adp_out_val:
+                if adp_out_val not in graph_instncs_dict:
+                    graph_instncs_dict[adp_out_val] = dict()
+                if 'o' not in graph_instncs_dict[adp_out_val]:
+                    graph_instncs_dict[adp_out_val]['o'] = list()
+                graph_instncs_dict[adp_out_val]['o'].append( [adptr_id, None, adp_out_key] )
 
     '''
-    pipeline_wires_copy = [
-        ReadFunc.O.data == UnitTransFunc.I.graph,
-        UnitTransFunc.O.graph == WriteFuncGraph.I.graph
-    ]
-
-
-    print('*'*30)
-    print(pipeline_wires_copy)
-    print('*'*30)
-    print(pipeline_wires)
+    'graph_instance_name' -->
+        'input'  --> list( (adp_identifier, None, adp_input_key ) )
+        'output' --> list( (adp_identifier, None, adp_output_key) )
     '''
-    
-    '''
-    pipeline = Pipeline([
-        ReadFunc,
-        UnitTransFunc,
-        WriteFuncGraph
-    ], wired=[
-        ReadFunc.O.data == UnitTransFunc.I.graph,
-        UnitTransFunc.O.graph == WriteFuncGraph.I.graph
-    ])
-    '''
+    for graph_inst_key, graph_inst_list in graph_instncs_dict.items():
+        # TODO: support more than 1 input and 1 output of specific instance
+        wire = ( graph_inst_list['i'][0], graph_inst_list['o'][0] )
+        pipeline_wires.append(wire)
 
-    # TODO: execute and print to screen and show errors/results
-    #outputs = pipeline.exec(inputs)
+    try:
+        # Pipeline Object
+        pipeline = Pipeline(pipeline_classes, wired=pipeline_wires)
+        # TODO: print to screen and show errors/results
+        pipeline.exec(inputs)
+    except:
+        raise ValueError("Pipeline cxecution failed...")
 
 # Set "homepage" to index.html
 @app.route('/')
 def index():
     return render_template('index.html')
-
-'''
-@app.route('/search')
-def search():
-    if FORM_SEARCH_FIELD in request.args:
-        srch_str = request.args.get(FORM_SEARCH_FIELD)
-    list_of_adapters = filter_by_keyword_substring(.. srch_str ..)
-    return render_template('index.html', list_of_adapters = list_of_adapters)
-'''
 
 if __name__ == '__main__':
     global g_pipeline, g_adapterdb
