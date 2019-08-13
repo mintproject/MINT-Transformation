@@ -214,6 +214,67 @@ def update_g_pipeline_elements(adapter_identifier_in_pipe, input_n_output, adapt
     else:
         g_pipeline[index_to_access][1].outputs[adapter_attribute]['val'] = value
 
+def execute_pipeline():
+    global g_pipeline, g_adapterdb
+
+    inputs = {}
+    pipeline_classes = []
+    pipeline_wires = []
+
+    graph_instncs_dict = dict()
+
+    for _, adapter in g_pipeline:
+        adptr_name  = adapter.get_adapter_name()
+        adptr_obj = g_adapterdb.get_adapter_object_from_name(adptr_name)
+        adptr_id  = adapter.get_adapter_identifier()
+        pipeline_classes.append(adptr_obj)
+        # parse inputs
+        for adp_inp_key, adp_inp_dict in adapter.inputs.items():
+            adp_inp_val = adp_inp_dict['val']
+            if adp_inp_val != '' and adp_inp_val != None:
+                # explicit input
+                if GRAPH_INST_W_REPR not in adp_inp_val:
+                    # TODO: this is a temporary workaround... fix and parse according to ArgType
+                    if adp_inp_val == '{}':
+                        adp_inp_val = {}
+                    # TODO: solve issue with index (it's hard coded to 1 now!) in f"{id}__{idx}__{argname}"
+                    inputs[f'{adptr_id}__1__{adp_inp_key}'] = adp_inp_val
+                else: # graph/numpy
+                    if adp_inp_val not in graph_instncs_dict:
+                        graph_instncs_dict[adp_inp_val] = dict()
+                    if 'i' not in graph_instncs_dict[adp_inp_val]:
+                        graph_instncs_dict[adp_inp_val]['i'] = list()
+                    graph_instncs_dict[adp_inp_val]['i'].append( [adptr_id, None, adp_inp_key] )
+        # parse outputs
+        for adp_out_key, adp_out_dict in adapter.outputs.items():
+            adp_out_val = adp_out_dict['val']
+            if adp_out_val != '' and adp_out_val != None and GRAPH_INST_W_REPR in adp_out_val:
+                if adp_out_val not in graph_instncs_dict:
+                    graph_instncs_dict[adp_out_val] = dict()
+                if 'o' not in graph_instncs_dict[adp_out_val]:
+                    graph_instncs_dict[adp_out_val]['o'] = list()
+                graph_instncs_dict[adp_out_val]['o'].append( [adptr_id, None, adp_out_key] )
+
+    '''
+    'graph_instance_name' -->
+        'input'  --> list( (adp_identifier, None, adp_input_key ) )
+        'output' --> list( (adp_identifier, None, adp_output_key) )
+    '''
+    for graph_inst_key, graph_inst_list in graph_instncs_dict.items():
+        # TODO: support more than 1 input and 1 output of specific instance
+        wire = ( graph_inst_list['i'][0], graph_inst_list['o'][0] )
+        pipeline_wires.append(wire)
+
+    try:
+        # Pipeline Object
+        pipeline = Pipeline(pipeline_classes, wired=pipeline_wires)
+        # TODO: print to screen and show errors/results
+        pipeline.exec(inputs)
+    except:
+        raise ValueError("Pipeline cxecution failed...")
+
+# --- entrypoints -------------------------------------------------------------
+
 @app.route('/pipeline', methods=['GET', 'POST'])
 def pipeline():
     global g_pipeline, g_adapterdb, g_graphs_dropdown_list
@@ -305,67 +366,6 @@ def pipeline():
     return render_template('pipeline.html', adp_dropdown_list=list_of_adapter_names, \
         adp_dropdown_selected_str=adp_id_str_chosen, adp_dropdown_selected_inst=adp, \
         pipeline_adapters=g_pipeline, pipeline_exe_msg=pip_exe_msg, graphs_dropdown_list=g_graphs_dropdown_list)
-
-def execute_pipeline():
-    global g_pipeline, g_adapterdb
-
-    inputs = {}
-    pipeline_classes = []
-    pipeline_wires = []
-
-    graph_instncs_dict = dict()
-
-    for _, adapter in g_pipeline:
-        adptr_name  = adapter.get_adapter_name()
-        adptr_obj = g_adapterdb.get_adapter_object_from_name(adptr_name)
-        adptr_id  = adapter.get_adapter_identifier()
-        pipeline_classes.append(adptr_obj)
-        # parse inputs
-        for adp_inp_key, adp_inp_dict in adapter.inputs.items():
-            adp_inp_val = adp_inp_dict['val']
-            if adp_inp_val != '' and adp_inp_val != None:
-                # explicit input
-                if GRAPH_INST_W_REPR not in adp_inp_val:
-                    # TODO: this is a temporary workaround... fix and parse according to ArgType
-                    if adp_inp_val == '{}':
-                        adp_inp_val = {}
-                    # TODO: solve issue with index (it's hard coded to 1 now!) in f"{id}__{idx}__{argname}"
-                    inputs[f'{adptr_id}__1__{adp_inp_key}'] = adp_inp_val
-                else: # graph/numpy
-                    if adp_inp_val not in graph_instncs_dict:
-                        graph_instncs_dict[adp_inp_val] = dict()
-                    if 'i' not in graph_instncs_dict[adp_inp_val]:
-                        graph_instncs_dict[adp_inp_val]['i'] = list()
-                    graph_instncs_dict[adp_inp_val]['i'].append( [adptr_id, None, adp_inp_key] )
-        # parse outputs
-        for adp_out_key, adp_out_dict in adapter.outputs.items():
-            adp_out_val = adp_out_dict['val']
-            if adp_out_val != '' and adp_out_val != None and GRAPH_INST_W_REPR in adp_out_val:
-                if adp_out_val not in graph_instncs_dict:
-                    graph_instncs_dict[adp_out_val] = dict()
-                if 'o' not in graph_instncs_dict[adp_out_val]:
-                    graph_instncs_dict[adp_out_val]['o'] = list()
-                graph_instncs_dict[adp_out_val]['o'].append( [adptr_id, None, adp_out_key] )
-
-    '''
-    'graph_instance_name' -->
-        'input'  --> list( (adp_identifier, None, adp_input_key ) )
-        'output' --> list( (adp_identifier, None, adp_output_key) )
-    '''
-    for graph_inst_key, graph_inst_list in graph_instncs_dict.items():
-        # TODO: support more than 1 input and 1 output of specific instance
-        wire = ( graph_inst_list['i'][0], graph_inst_list['o'][0] )
-        pipeline_wires.append(wire)
-
-    try:
-        # Pipeline Object
-        pipeline = Pipeline(pipeline_classes, wired=pipeline_wires)
-        # TODO: print to screen and show errors/results
-        pipeline.exec(inputs)
-    except:
-        raise ValueError("Pipeline cxecution failed...")
-
-# --- entrypoints -------------------------------------------------------------
 
 # Set "homepage" to index.html
 @app.route('/')
