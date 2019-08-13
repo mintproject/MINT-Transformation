@@ -3,6 +3,7 @@ from copy import deepcopy
 import funcs
 from funcs import *
 from dtran import Pipeline
+from json import dumps, JSONEncoder, JSONDecoder
 
 app = Flask(__name__)
 
@@ -12,40 +13,73 @@ KEY_IDENTIFIER = 'id'
 KEY_INPUTS = 'inputs'
 KEY_OUTPUTS = 'outputs'
 
-FORM_ADAPTER_SLCTD = 'slct_adp'
-FORM_ADAPTER_SUBMT = 'add_adp'
-FORM_ADAPTER_RMV   = 'remove_from_pipe'
-FORM_PIPELINE_UPDT = 'update_pipe'
-FORM_PIPELINE_EXE  = 'exe_pipe'
+FORM_ADPTR_SLCTD = 'slct_adp'
+FORM_ADPTR_SUBMT = 'add_adp'
+FORM_ADPTR_RMV   = 'remove_from_pipe'
+FORM_PIP_UPDT = 'update_pipe'
+FORM_PIP_CLR = 'clear_pipe'
+FORM_PIP_EXE  = 'exe_pipe'
+FORM_PIP_LOAD = 'load_pipe'
+FORM_PIP_SAVE = 'save_pipe'
+FORM_PIP_FILE_LOAD = 'pipe_config_load_file'
+FORM_PIP_FILE_SAVE = 'pipe_config_save_file'
 
 GRAPH_INST_W_REPR  = 'GraphInstanceWire'
 # TODO: support NumPy
 
+
+class CustomEncoder(JSONEncoder):
+    def default(self, o):
+        return {'__{}__'.format(o.__class__.__name__): o.__dict__}
+
+def AdapterElement_from_json(json_obj):
+    adp_el_str = '__AdapterElement__'
+    if adp_el_str in json_obj:
+        return AdapterElement.from_json(json_obj[adp_el_str])
+    else:
+        return json_obj
+
 class AdapterElement:
-    def __init__(self, name, module_type, identifier, description, inputs, outputs, adapter_object):
+    @classmethod
+    def from_json(cls, json_object):
+        name = json_object['name']
+        module_type = json_object['module_type']
+        identifier = json_object['identifier']
+        description = json_object['description']
+        inputs = json_object['inputs']
+        outputs = json_object['outputs']
+        ret_class = cls(name, module_type, identifier, description, inputs, outputs)
+        return ret_class
+
+    def __init__(self, name, module_type, identifier, description, inputs, outputs):
         self.name = name
         self.module_type = module_type
         self.identifier = identifier
         self.description = description
         self.inputs = inputs
         self.outputs = outputs
-        self.object = adapter_object
     
     def __repr__(self):
         return f'name={self.name}, module_type={self.module_type}, ' + \
             f'identifier={self.identifier}\ndescription={self.description}\n' + \
             f'inputs={self.inputs}\noutputs={self.outputs}\n\n'
 
-    def get_adapter_object(self):
-        return self.object
-
     def get_adapter_identifier(self):
         return self.identifier
+
+    def get_adapter_name(self):
+        return self.name
 
 class AdapterDB:
     def __init__(self):
         self.adapters = list()
+        self.name2object = dict()
         self.initialize_adapters()
+
+    def get_adapter_object_from_name(self, adp_name):
+        if adp_name in self.name2object:
+            return self.name2object[adp_name]
+        return None
 
     def initialize_adapters(self):
         for a_name, a_cls in funcs.__dict__.items():
@@ -65,7 +99,9 @@ class AdapterDB:
                 for arg_name, arg_attr in outputs_dict.items():
                     outputs[arg_name] = {'id': arg_attr.__dict__['id'], \
                         'val': arg_attr.__dict__['val'], 'optional': arg_attr.__dict__['optional']}
-                self.adapters.append(AdapterElement(a_name, module_type, identifier, description, inputs, outputs, a_cls))
+
+                self.adapters.append(AdapterElement(a_name, module_type, identifier, description, inputs, outputs))
+                self.name2object[a_name] = a_cls
 
     def get_list_of_adapters(self):
         return self.adapters
@@ -119,52 +155,82 @@ def pipeline():
     # get list of adapters and their names
     list_of_adapters = g_adapterdb.get_list_of_adapters()
     list_of_adapter_names = g_adapterdb.get_list_of_adapter_names_for_dropdown()
+    pip_exe_msg = ""
 
     # set default option
     adp_id_str_chosen = list_of_adapter_names[0]
     # show selected adapter
-    if FORM_ADAPTER_SLCTD in request.args:
-        adp_id_str_chosen = request.args.get(FORM_ADAPTER_SLCTD)
+    if FORM_ADPTR_SLCTD in request.args:
+        adp_id_str_chosen = request.args.get(FORM_ADPTR_SLCTD)
     adp = list_of_adapters[int(adp_id_str_chosen.split(' ')[0])]
 
-    # check if user submitted an adapter
-    if FORM_ADAPTER_SUBMT in request.args:
-        new_adapter = (get_next_index_in_g_pipeline(), deepcopy(adp))
-        g_pipeline.append(new_adapter)
+    # check if user loaded a pipeline config file
+    if FORM_PIP_LOAD in request.args and \
+        FORM_PIP_FILE_LOAD in request.args and \
+        request.args[FORM_PIP_FILE_LOAD] != '': 
 
-    # check if user updated any field in pipeline
-    if FORM_PIPELINE_UPDT in request.args:
+        g_pipeline.clear()
+        # load a pipeline configuration from file
+        input_config_file = request.args[FORM_PIP_FILE_LOAD]
+        with open(input_config_file, 'r') as read_file:
+            for line_i, line_d in enumerate(read_file):
+                adapter_el = JSONDecoder(object_hook = AdapterElement_from_json).decode(line_d)
+                load_adapter = (line_i, adapter_el)
+                g_pipeline.append(load_adapter)
+
+    elif FORM_PIP_SAVE in request.args and \
+        FORM_PIP_FILE_SAVE in request.args and \
+        request.args[FORM_PIP_FILE_SAVE] != '': # or save a pipeline config file
+
+        # save a pipeline configuration to file
+        output_config_file = request.args[FORM_PIP_FILE_SAVE]
+        with open(output_config_file, 'w') as write_file:
+            for pipidx, pipadp in g_pipeline:
+                write_file.write(dumps(pipadp, cls=CustomEncoder) + '\n')
+    else:
+
+        # check if user cleared the pipeline
+        if FORM_PIP_CLR in request.args:
+            g_pipeline.clear()
+
+        # check if user submitted an adapter
+        if FORM_ADPTR_SUBMT in request.args:
+            new_adapter = (get_next_index_in_g_pipeline(), deepcopy(adp))
+            g_pipeline.append(new_adapter)
+
+        # check if user updated any field in pipeline
+        if FORM_PIP_UPDT in request.args:
+            # iterate over adapter-cards
+            for arg_name, arg_val in request.args.items():
+                if ('inputs' in arg_name or 'outputs' in arg_name) and arg_val != '':
+                    input_not_output = True
+                    if 'outputs' in arg_name:
+                        input_not_output = False
+                    element_id_in_pipeline = int(arg_name.split('.')[0])
+                    element_attr_in_pipeline = arg_name.split('.')[2]
+                    update_g_pipeline_elements(element_id_in_pipeline, input_not_output, element_attr_in_pipeline, arg_val)
+
+        # iterate over args and check is something should be removed
         for arg_name, arg_val in request.args.items():
-            if ('inputs' in arg_name or 'outputs' in arg_name) and arg_val != '':
-                input_not_output = True
-                if 'outputs' in arg_name:
-                    input_not_output = False
+            if FORM_ADPTR_RMV in arg_name:
                 element_id_in_pipeline = int(arg_name.split('.')[0])
-                element_attr_in_pipeline = arg_name.split('.')[2]
-                update_g_pipeline_elements(element_id_in_pipeline, input_not_output, element_attr_in_pipeline, arg_val)
+                remove_adapter_from_pipeline(element_id_in_pipeline)
+                break
 
-    # iterate over args and check is something should be removed
-    for arg_name, arg_val in request.args.items():
-        if FORM_ADAPTER_RMV in arg_name:
-            element_id_in_pipeline = int(arg_name.split('.')[0])
-            remove_adapter_from_pipeline(element_id_in_pipeline)
-            break
-
-    pip_exe_msg = ""
-    # execute pipeline if user requested that
-    if FORM_PIPELINE_EXE in request.args:
-        try:
-            execute_pipeline()
-        except ValueError:
-            pip_exe_msg = "Oops! Pipeline execution failed, see log..."
-        pip_exe_msg = "Pipeline execution succeeded!"
+        # execute pipeline if user requested that
+        if FORM_PIP_EXE in request.args:
+            try:
+                execute_pipeline()
+            except ValueError:
+                pip_exe_msg = "Oops! Pipeline execution failed, see log..."
+            pip_exe_msg = "Pipeline execution succeeded!"
 
     return render_template('pipeline.html', adp_dropdown_list=list_of_adapter_names, \
         adp_dropdown_selected_str=adp_id_str_chosen, adp_dropdown_selected_inst=adp, \
         pipeline_adapters=g_pipeline, pipeline_exe_msg=pip_exe_msg)
 
 def execute_pipeline():
-    global g_pipeline
+    global g_pipeline, g_adapterdb
 
     inputs = {}
     pipeline_classes = []
@@ -173,7 +239,8 @@ def execute_pipeline():
     graph_instncs_dict = dict()
 
     for _, adapter in g_pipeline:
-        adptr_obj = adapter.get_adapter_object()
+        adptr_name  = adapter.get_adapter_name()
+        adptr_obj = g_adapterdb.get_adapter_object_from_name(adptr_name)
         adptr_id  = adapter.get_adapter_identifier()
         pipeline_classes.append(adptr_obj)
         # parse inputs
