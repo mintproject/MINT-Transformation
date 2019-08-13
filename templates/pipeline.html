@@ -72,9 +72,34 @@
           {% for adp_name, adp_attrs in adapter_inst.inputs.items() %}
             <b>{{adp_name}} [{{adp_attrs['id']}}]{% if adp_attrs['optional'] == False %}*{% endif %}</b></br>
             {% if adp_attrs['val'] != None %}
-              <input type="text" name="{{adapter_idx}}.inputs.{{adp_name}}" value="{{adp_attrs['val']}}">
+
+              {% if adp_attrs['id'] == 'graph' %}
+                <select name="{{adapter_idx}}.inputs__select.{{adp_name}}" onchange="this.form.submit()">
+                {% for drop_itm in graphs_dropdown_list %}
+
+                  {% if adp_attrs['val'] == drop_itm %}
+                    <option value="{{drop_itm}}" SELECTED>{{drop_itm}}</option>
+                  {% else %}
+                    <option value="{{drop_itm}}">{{drop_itm}}</option>
+                  {% endif %}
+                {% endfor %}
+                </select>
+              {% else %}
+                <input type="text" name="{{adapter_idx}}.inputs.{{adp_name}}" value="{{adp_attrs['val']}}">
+              {% endif %}
+
             {% else %}
-              <input type="text" name="{{adapter_idx}}.inputs.{{adp_name}}">
+
+              {% if adp_attrs['id'] == 'graph' %}
+                <select name="{{adapter_idx}}.inputs__select.{{adp_name}}" onchange="this.form.submit()">
+                {% for drop_itm in graphs_dropdown_list %}
+                  <option value="{{drop_itm}}">{{drop_itm}}</option>
+                {% endfor %}
+                </select>
+              {% else %}
+                <input type="text" name="{{adapter_idx}}.inputs.{{adp_name}}">
+              {% endif %}
+
             {% endif %}</br>
           {% endfor %}
         </p>
@@ -84,9 +109,37 @@
           {% for adp_name, adp_attrs in adapter_inst.outputs.items() %}
             <b>{{adp_name}} [{{adp_attrs['id']}}]{% if adp_attrs['optional'] == False %}*{% endif %}</b></br>
             {% if adp_attrs['val'] != None %}
-              <input type="text" name="{{adapter_idx}}.outputs.{{adp_name}}" value="{{adp_attrs['val']}}">
+
+              {% if adp_attrs['id'] == 'graph' %}
+                <select name="{{adapter_idx}}.outputs__select.{{adp_name}}" onchange="this.form.submit()">
+                {% for drop_itm in graphs_dropdown_list %}
+
+                  {% if adp_attrs['val'] == drop_itm %}
+                    <option value="{{drop_itm}}" SELECTED>{{drop_itm}}</option>
+                  {% else %}
+                    <option value="{{drop_itm}}">{{drop_itm}}</option>
+                  {% endif %}
+
+                {% endfor %}
+                </select>
+              {% else %}
+
+                <input type="text" name="{{adapter_idx}}.outputs.{{adp_name}}" value="{{adp_attrs['val']}}">
+              {% endif %} 
+
             {% else %}
-              <input type="text" name="{{adapter_idx}}.outputs.{{adp_name}}">
+
+              {% if adp_attrs['id'] == 'graph' %}
+                <select name="{{adapter_idx}}.outputs__select.{{adp_name}}" onchange="this.form.submit()">
+                {% for drop_itm in graphs_dropdown_list %}
+                  <option value="{{drop_itm}}">{{drop_itm}}</option>
+                {% endfor %}
+                </select>
+              {% else %}
+
+                <input type="text" name="{{adapter_idx}}.outputs.{{adp_name}}">
+              {% endif %}
+
             {% endif %}</br>
           {% endfor %}
         <!-- Remove-from-pipeline button -->
