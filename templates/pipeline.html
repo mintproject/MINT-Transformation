@@ -48,14 +48,15 @@
 
   <h2>Pipeline</h2></br>
 
-  <!-- TODO: implement -->
-  <button name="save_pipe" class="btn btn-primary" disabled>Load Pipeline Configuration</button>
-  <!-- TODO: implement -->
-  <button name="load_pipe" class="btn btn-primary" disabled>Save Pipeline Configuration</button>
+  <button name="clear_pipe" class="btn btn-primary">Clear Pipeline</button>
+  </br></br>
+  <input name="pipe_config_load_file" type="text">
+  <button name="load_pipe" class="btn btn-primary">Load Pipeline Configuration</button>
+  </br></br>
+  <input name="pipe_config_save_file" type="text">
+  <button name="save_pipe" class="btn btn-primary">Save Pipeline Configuration</button>
 
   </br></br>
-  <button name="update_pipe" class="btn btn-primary">Update</button>
-  </br>
 
   <div class="row container center" style="text-align: center;">
       {% for (adapter_idx, adapter_inst) in pipeline_adapters %}
@@ -96,6 +97,8 @@
       {% endfor %}
   </div>
 
+  <button name="update_pipe" class="btn btn-primary">Update</button>
+  </br></br>
   <button name="exe_pipe" class="btn btn-primary">Execute Pipeline</button>
   {% if pipeline_exe_msg != "" %}
     </br><h2>{{pipeline_exe_msg}}</h2>
