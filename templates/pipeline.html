@@ -1,3 +1,4 @@
+{% from "macros.html" import adapter_card_w_add_button %}
 {% extends "base.html" %}
 {% block content %}
 
@@ -120,7 +121,6 @@
   
     <hr style="border: 2px solid#5b9aa0;" />
 
-
     <h2>Choose an adapter:</h2>
     <select name="slct_adp" onchange="this.form.submit()">
       {% for drop_itm in adp_dropdown_list %}
@@ -134,30 +134,7 @@
 
     </br></br>
 
-    <div class="card border-primary border center" style="width: 30rem;">
-      <h5 class="card-header">{{adp_dropdown_selected_inst.name}}</h5>
-      <div class="card-body">
-      {{adp_dropdown_selected_inst.module_type}}</br>
-        <b>{{adp_dropdown_selected_inst.identifier}}</b></br>
-        <i>{{adp_dropdown_selected_inst.description}}</i></br>
-        <!-- Inputs -->
-        <h5 class="card-title" style="color:#9932CC"><u>inputs</u></h5>
-        <p class="card-text" style="color:#000000">
-          {% for selected_adp_input_name, selected_adp_input_attrs in adp_dropdown_selected_inst.inputs.items() %}
-            {{selected_adp_input_name}} [{{selected_adp_input_attrs['id']}}]{% if selected_adp_input_attrs['optional'] == False %}*{% endif %}</br>
-          {% endfor %}
-        </p>
-        <!-- Outputs -->
-        <h5 class="card-title" style="color:#9932CC"><u>outputs</u></h5>
-        <p class="card-text" style="color:#000000">
-          {% for selected_adp_output_name, selected_adp_output_attrs in adp_dropdown_selected_inst.outputs.items() %}
-            {{selected_adp_output_name}} [{{selected_adp_output_attrs['id']}}]{% if selected_adp_output_attrs['optional'] == False %}*{% endif %}</br>
-          {% endfor %}
-        </p>
-        <!-- Button -->
-        <button id="add_adp" name="add_adp" class="btn btn-primary">Add</button>
-      </div>
-    </div>
+    {{ adapter_card_w_add_button(adp_dropdown_selected_inst) }}
 
   </form>
 
