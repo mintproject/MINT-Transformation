@@ -27,15 +27,15 @@
             <li class="nav-item active">
               <a class="nav-link" href="/">Home</a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link disabled" href="#">Browse</a>
+            <li class="nav-item active">
+              <a class="nav-link" href="/browse">Browse</a>
             </li>
             <li class="nav-item active">
               <a class="nav-link" href="/pipeline">Pipeline</a>
             </li>
           </ul>
         </div>
-        <img height="50" src="{{url_for('static', filename='logo.png')}}">&nbsp;&nbsp;&nbsp;&nbsp;
+        <a target="_blank" href="http://www.mint-project.info"><img height="50" src="{{url_for('static', filename='logo.png')}}"></a>&nbsp;&nbsp;&nbsp;&nbsp;
         <form class="form-inline" name="search" action="#" method="GET" autocomplete="off">
           <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" name="srch_str">
           <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>

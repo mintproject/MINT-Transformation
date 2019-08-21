@@ -367,6 +367,12 @@ def pipeline():
         adp_dropdown_selected_str=adp_id_str_chosen, adp_dropdown_selected_inst=adp, \
         pipeline_adapters=g_pipeline, pipeline_exe_msg=pip_exe_msg, graphs_dropdown_list=g_graphs_dropdown_list)
 
+@app.route('/browse')
+def browse():
+    global g_adapterdb
+    aptrs_cat = g_adapterdb.get_list_of_adapters()
+    return render_template('browse.html', adapters_catalog=aptrs_cat)
+
 # Set "homepage" to index.html
 @app.route('/')
 def index():
