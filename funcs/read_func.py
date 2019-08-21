@@ -12,6 +12,10 @@ from dtran.ifunc import IFunc
 
 class ReadFunc(IFunc):
     id = "read_func"
+    description = ''' An entry point in the pipeline.
+    Reads an input file and a yml file describing the D-REPR layout of this file.
+    The data are representated in a Graph object.
+    '''
     inputs = {"repr_file": ArgType.FilePath, "resources": ArgType.String}
     outputs = {"data": ArgType.Graph(None)}
 
