@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from pydrepr import Graph
+from drepr import Graph
 
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc

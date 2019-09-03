@@ -1,0 +1,21 @@
+version: '1'
+resources:
+  default:
+    type: csv
+    delimiter: "\t"
+preprocessing: []
+attributes:
+  time: [0.., 0]
+  groundwater: [0.., 1..]
+alignments:
+  - type: dimension
+    value: groundwater:0 <-> time:0
+semantic_model:
+  data_nodes:
+    groundwater: pihm:Point:1--mint:groundWater^^xsd:decimal
+    time: pihm:Point:1--schema:recordedAt^^xsd:decimal
+  relations: []
+  prefixes:
+    mint: https://mint.isi.edu/
+    schema: https://schema.org/
+    pihm: https://pihm.psu.edu/

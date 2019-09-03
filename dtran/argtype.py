@@ -12,7 +12,6 @@ class ArgType(object):
     Number: 'ArgType' = None
     Boolean: 'ArgType' = None
     DateTime: 'ArgType' = None
-    Function: 'ArgType' = None
 
     def __init__(self, id: str, optional: bool = False, val: Any = None):
         self.id = id
@@ -32,4 +31,3 @@ ArgType.String = ArgType("string")
 ArgType.Number = ArgType("number")
 ArgType.Boolean = ArgType("boolean")
 ArgType.DateTime = ArgType("datetime")
-ArgType.Function = ArgType("function")

@@ -1,0 +1,21 @@
+version: '1'
+resources:
+  default:
+    type: csv
+    delimiter: "\t"
+preprocessing: []
+attributes:
+  time: [0.., 0]
+  infil: [0.., 1..]
+alignments:
+  - type: dimension
+    value: infil:0 <-> time:0
+semantic_model:
+  data_nodes:
+    infil: pihm:Point:1--mint:infiltration^^xsd:decimal
+    time: pihm:Point:1--schema:recordedAt^^xsd:decimal
+  relations: []
+  prefixes:
+    mint: https://mint.isi.edu/
+    schema: https://schema.org/
+    pihm: https://pihm.psu.edu/

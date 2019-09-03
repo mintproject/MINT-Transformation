@@ -1,0 +1,33 @@
+version: '1'
+resources:
+  default:
+    type: csv
+    delimiter: "\t"
+preprocessing: []
+attributes:
+  mu_key: [1.., 0]
+  slt: [1.., 1]
+  clay: [1.., 2]
+  om: [1.., 3]
+  bld: [1.., 4]
+alignments:
+  - type: dimension
+    value: mu_key:0 <-> slt:0
+  - type: dimension
+    value: mu_key:0 <-> clay:0
+  - type: dimension
+    value: mu_key:0 <-> om:0
+  - type: dimension
+    value: mu_key:0 <-> bld:0
+semantic_model:
+  data_nodes:
+    mu_key: pihm:Point:1--pihm:mu_key^^xsd:decimal
+    slt: pihm:Point:1--pihm:slt^^xsd:decimal
+    clay: pihm:Point:1--pihm:clay^^xsd:decimal
+    om: pihm:Point:1--pihm:om^^xsd:decimal
+    bld: pihm:Point:1--pihm:bld^^xsd:decimal
+  relations: []
+  prefixes:
+    mint: https://mint.isi.edu/
+    schema: https://schema.org/
+    pihm: https://pihm.psu.edu/

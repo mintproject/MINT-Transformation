@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 from typing import List, Union, Dict
 import ujson as json
-from pydrepr.graph import Node, Graph
+from drepr.graph import Node, Graph
 
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc

@@ -4,7 +4,7 @@
 from ccut.app.ccut_lib import CCUT, RET_VAL_OK, RET_STR_MAP
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc
-from pydrepr import Graph
+from drepr import Graph
 
 
 class UnitTransFunc(IFunc):

@@ -4,7 +4,7 @@
 import ujson
 from typing import Union
 from pathlib import Path
-from pydrepr import Graph, Repr
+from drepr import Graph, DRepr
 
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc
@@ -23,11 +23,10 @@ class ReadFunc(IFunc):
         else:
             self.resources = {"default": resources}
 
-        self.repr = Repr.from_file(str(repr_file))
-        self.repr.validate()
+        self.repr = DRepr.parse_from_file(str(repr_file))
 
     def exec(self) -> dict:
-        g = Graph.from_repr(self.repr, self.resources)
+        g = Graph.from_drepr(self.repr, self.resources)
         return {"data": g}
 
     def validate(self) -> bool:
