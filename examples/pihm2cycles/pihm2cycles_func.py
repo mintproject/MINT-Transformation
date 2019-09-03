@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import uuid4
 
 from drepr import Graph
@@ -17,19 +17,17 @@ class Pihm2CyclesFunc(IFunc):
         "cycles_layers": ArgType.String,
         "patch_id": ArgType.Number,
         "gw_depth": ArgType.Number,
-        "starting_time": ArgType.DateTime,
     }
     outputs = {"reinit_graph": ArgType.Graph(None), "cycle_soil_graph": ArgType.Graph(None)}
 
     def __init__(
-        self,
-        pihm_data_graph: Graph,
-        pihm_soil_graph: Graph,
-        pid_graph: Graph,
-        cycles_layers: str,
-        patch_id: int,
-        gw_depth: float,
-        starting_time: datetime,
+            self,
+            pihm_data_graph: Graph,
+            pihm_soil_graph: Graph,
+            pid_graph: Graph,
+            cycles_layers: str,
+            patch_id: int,
+            gw_depth: float,
     ):
         self.pihm_data_graph = pihm_data_graph
         self.pihm_soil_graph = pihm_soil_graph
@@ -39,7 +37,6 @@ class Pihm2CyclesFunc(IFunc):
 
         self.patch_id = patch_id
         self.gw_depth = gw_depth
-        self.starting_time = starting_time
 
     def exec(self) -> dict:
         cycles_layers_graph = self._soil_transform()
@@ -51,20 +48,19 @@ class Pihm2CyclesFunc(IFunc):
         for pihm_node in self.pihm_data_graph.nodes:
             for cycle_node in cycles_layers_graph.nodes:
                 var_uri = uuid4()
-                reinit_node = Node(var_uri)
+                reinit_node = Node(int(var_uri), {}, [], [])
                 reinit_node.data["cycle:var_name"] = "SATURATION_L%s" % cycle_node.data["cycle:layer_id"]
-                reinit_node.data["cycle:value"] = self._calculate_saturation_fraction(
-                    cycle_node.data["cycle:top"],
-                    cycle_node.data["cycle:bottom"],
-                    self.gw_depth - pihm_node.data["schema:depth"],
-                )
-                reinit_node.data["cycle:rot_year"] = (
-                    pihm_node.data["schema:recordedAt"] - self.starting_time
-                ).days // 365
 
-                reinit_node.data["cycle:doy"] = (
-                    pihm_node.data["schema:recordedAt"] - self.starting_time
-                ).days % 365
+                reinit_node.data["cycle:value"] = self._calculate_saturation_fraction(
+                    float(cycle_node.data["cycle:top"]),
+                    float(cycle_node.data["cycle:bottom"]),
+                    self.gw_depth - float(pihm_node.data["mint:groundWater"]),
+                )
+                reinit_node.data["cycle:rot_year"] = timedelta(
+                    minutes=float(pihm_node.data["schema:recordedAt"])).days // 365
+                reinit_node.data["cycle:doy"] = timedelta(
+                    minutes=float(pihm_node.data["schema:recordedAt"])).days % 365
+
                 reinit_nodes.append(reinit_node)
         prefixes = {"cycle": "https://cycles.psu.edu/", "schema": "https://schema.org/"}
         return Graph(prefixes, reinit_nodes, [])
@@ -101,6 +97,7 @@ class Pihm2CyclesFunc(IFunc):
             node.data["cycle:no3"] = -1
             node.data["cycle:nh4"] = 0.2
 
+            nodes.append(node)
             previous_offset = previous_offset + float(layer_thickness)
         prefixes = {"cycle": "https://cycles.psu.edu/"}
         return Graph(prefixes, nodes, [])

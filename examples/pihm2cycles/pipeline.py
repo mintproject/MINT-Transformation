@@ -37,7 +37,6 @@ if __name__ == "__main__":
         Pihm2CyclesFunc.I.cycles_layers: "[0.05, 0.05, 0.10, 0.2, 0.4, 0.4, 0.4, 0.4]",
         Pihm2CyclesFunc.I.patch_id: "1",
         Pihm2CyclesFunc.I.gw_depth: 30,
-        Pihm2CyclesFunc.I.starting_time: datetime.now(),
         CyclesWriteFunc.I.reinit_file: wdir / "cycles.REINIT",
         CyclesWriteFunc.I.soil_file:  wdir / "cycles.soil",
     }

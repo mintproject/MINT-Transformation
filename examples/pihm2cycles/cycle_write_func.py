@@ -15,7 +15,7 @@ class CyclesWriteFunc(IFunc):
         "reinit_file": ArgType.FilePath,
         "soil_file": ArgType.FilePath,
     }
-    outputs = {"data": ArgType.String}
+    outputs = {"result": ArgType.Boolean}
 
     def __init__(
         self,
@@ -36,6 +36,7 @@ class CyclesWriteFunc(IFunc):
 
             writer.writerow(["ROT_YEAR", "DOY", "VARIABLE", "VALUE"])
             for node in self.reinit_graph.nodes:
+                print(node)
                 doy = node.data["cycle:doy"]
                 rot_year = node.data["cycle:rot_year"]
                 var_name = node.data["cycle:var_name"]
@@ -52,6 +53,7 @@ class CyclesWriteFunc(IFunc):
             layers = []
 
             for node in self.soil_graph.nodes:
+                print(node)
                 layer_id = node.data["cycle:layerId"]
                 thickness = node.data["cycle:thickness"]
                 clay = node.data["cycle:clay"]
@@ -71,6 +73,7 @@ class CyclesWriteFunc(IFunc):
     def exec(self):
         self._write_init_file()
         self._write_soil_file()
+        return {"result": True}
 
     def validate(self) -> bool:
         return True
