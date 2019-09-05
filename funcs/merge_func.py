@@ -13,8 +13,7 @@ class MergeFunc(IFunc):
         self.graph2 = graph2
 
     def exec(self) -> dict:
-        prefixes = self.graph1.prefixes.update(self.graph2.prefixes)
-        return {"data": Graph(prefixes, self.graph1.nodes + self.graph2.nodes, self.graph1.edges + self.graph2.edges)}
+        return {"data": Graph(self.graph1.nodes + self.graph2.nodes, self.graph1.edges + self.graph2.edges)}
 
     def validate(self) -> bool:
         return True

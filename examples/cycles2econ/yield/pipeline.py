@@ -4,10 +4,10 @@ import uuid
 from pathlib import Path
 from typing import Union
 
-from pydrepr import Graph
+from drepr import Graph
 
 from dtran import Pipeline, IFunc, ArgType
-from funcs import ReadFunc, FilterFunc, GraphWriteFunc, UnitTransFunc
+from funcs import ReadFunc, GraphWriteFunc
 
 
 class TransWrapperFunc(IFunc):
@@ -16,7 +16,8 @@ class TransWrapperFunc(IFunc):
     inputs = {
         "graph1": ArgType.Graph(None),
         "graph2": ArgType.Graph(None),
-        "code": ArgType.FilePath
+        "code": ArgType.FilePath,
+        "filter": ArgType.String(optional=True),
     }
     outputs = {}
 
@@ -37,54 +38,49 @@ class TransWrapperFunc(IFunc):
             "Cassava - Retail": "cassava",
             "Groundnuts (shelled) - Retail": "groundnuts",
             "Sesame - Retail": "sesame",
-            "Sorghum (white, imported) - Retail": "sorghum"
+            "Sorghum (white, imported) - Retail": "sorghum",
         }
 
         for crop_name, crop_new_name in crop_names.items():
             config = configparser.ConfigParser()
-            config['DEFAULT'] = {
-                "crop_name": crop_name,
-                "percent-increase-fertilizer": 10
-            }
+            config["DEFAULT"] = {"crop_name": crop_name, "percent-increase-fertilizer": 10}
 
             with open(exc_dir / f"config.{crop_new_name}.ini", "w") as f:
                 config.write(f)
 
         return {}
-        # WriteFuncGraph(self.graph1, "qb:Observation", f"/tmp/{self.id}.graph.csv", {
-        #     ""
-        # })
 
 
 if __name__ == "__main__":
     wdir = Path(os.path.abspath(__file__)).parent
     crop_names = {
-        "Maize (white) - Retail", "Cassava - Retail", "Groundnuts (shelled) - Retail",
-        "Sesame - Retail", "Sorghum (white, imported) - Retail"
+        "Maize (white) - Retail",
+        "Cassava - Retail",
+        "Groundnuts (shelled) - Retail",
+        "Sesame - Retail",
+        "Sorghum (white, imported) - Retail",
     }
 
     pipeline = Pipeline(
-        [ReadFunc, FilterFunc, ReadFunc, FilterFunc, TransWrapperFunc, GraphWriteFunc],
+        [ReadFunc, ReadFunc, TransWrapperFunc, GraphWriteFunc],
         wired=[
-            ReadFunc.O._1.data == FilterFunc.I._1.data, ReadFunc.O._2.data == FilterFunc.I._2.data,
-            FilterFunc.O._1.data == TransWrapperFunc.I.graph1,
-            FilterFunc.O._2.data == TransWrapperFunc.I.graph2,
-            FilterFunc.O._1.data == GraphWriteFunc.I.graph
-        ])
+            ReadFunc.O._1.data == TransWrapperFunc.I.graph1,
+            ReadFunc.O._2.data == TransWrapperFunc.I.graph2,
+            TransWrapperFunc.O.data == GraphWriteFunc.I.graph,
+        ],
+    )
 
     inputs = {
         ReadFunc.I._1.repr_file: wdir / "season.model.yml",
         ReadFunc.I._1.resources: wdir / "season.dat",
         ReadFunc.I._2.repr_file: wdir / "season.model.yml",
         ReadFunc.I._2.resources: wdir / "season1.dat",
-
-        FilterFunc.I._1.filter: "@type = 'qb:Observation' and sdmx-dimension:refPeriod = '2016-10-12'",
-        FilterFunc.I._2.filter: "@type = 'qb:Observation' and sdmx-dimension:refPeriod = '2016-10-12'",
-
+        TransWrapperFunc.I._1.filter: "@type = 'qb:Observation' and sdmx-dimension:refPeriod = '2016-10-12'",
+        TransWrapperFunc.I._2.filter: "@type = 'qb:Observation' and sdmx-dimension:refPeriod = '2016-10-12'",
         TransWrapperFunc.I.code: wdir / "cycles-to-crop.py",
         GraphWriteFunc.I.main_class: "qb:Observation",
         GraphWriteFunc.I.output_file: wdir / "output.csv",
-        GraphWriteFunc.I.mapped_columns: {}
+        GraphWriteFunc.I.mapped_columns: {},
     }
 
     outputs = pipeline.exec(inputs)

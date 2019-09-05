@@ -2,14 +2,14 @@ version: "1"
 resources: csv
 preprocessing:
   - type: pmap
-    input: [2.., 9]
+    path: [2.., 9]
     code: |
       return f"{context.get_value([index[0], 6])} - {value}"
   - type: pmap
-    input: [2.., 2]
+    path: [2.., 2]
     code: |
       return f"{context.get_value([index[0], 5])}/{value}"
-variables:
+attributes:
   date: [2.., 0]
   cmname: [2.., 1]
   unit: [2.., 2]

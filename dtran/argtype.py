@@ -24,6 +24,11 @@ class ArgType(object):
 
         return self.id == other.id and self.val == other.val
 
+    def __call__(self, optional: bool = False, val: Any = None):
+        if optional == self.optional and val == self.val:
+            return self
+        return ArgType(self.id, optional, val)
+
 
 ArgType.FilePath = ArgType("file_path")
 ArgType.NDimArray = ArgType("ndim_array")

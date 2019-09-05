@@ -15,11 +15,7 @@ import netCDF4 as nc4
 
 class NetCDFWriteFunc(IFunc):
     id = "netcdf_write_func"
-    inputs = {
-        "data": ArgType.NDimArray,
-        "main_class": ArgType.String,
-        "output_file": ArgType.FilePath
-    }
+    inputs = {"data": ArgType.NDimArray, "main_class": ArgType.String, "output_file": ArgType.FilePath}
     outputs = {"data": ArgType.String}
 
     def __init__(self, data: np.ndarray, main_class: str, output_file: str):
@@ -64,8 +60,9 @@ class GraphWriteFunc(IFunc):
     }
     outputs = {"data": ArgType.String}
 
-    def __init__(self, graph: Graph, main_class: str, output_file: Union[str, Path],
-                 mapped_columns: Dict[str, str]):
+    def __init__(
+        self, graph: Graph, main_class: str, output_file: Union[str, Path], mapped_columns: Dict[str, str]
+    ):
         self.graph = graph
         self.main_class = main_class
         self.mapped_columns = mapped_columns
@@ -93,7 +90,7 @@ class GraphWriteFunc(IFunc):
             writer.writerows(tabular_rows)
 
     @staticmethod
-    def _dump_to_json(tabular_rows, file_path):
+    def _dump_to_json(tabular_rows, attr_names, file_path):
         with open(file_path, "w", newline="") as f:
             json.dump(tabular_rows, f)
 
@@ -122,17 +119,13 @@ class GraphWriteFunc(IFunc):
             for node in main_class_nodes:
                 dict_data_rows, attr_names = self._divide_search(node, [])
                 for row in dict_data_rows:
-                    all_data_rows.append(
-                        {new_k: row[old_k]
-                         for old_k, new_k in self.mapped_columns.items()})
+                    all_data_rows.append({new_k: row[old_k] for old_k, new_k in self.mapped_columns.items()})
 
             return all_data_rows, list(self.mapped_columns.values())
 
-    def _divide_search(self,
-                       node: Node,
-                       visited: List[Node],
-                       with_ids: bool = False,
-                       excluding_attrs=None) -> (list, set):
+    def _divide_search(
+        self, node: Node, visited: List[Node], with_ids: bool = False, excluding_attrs=None
+    ) -> (list, set):
         if excluding_attrs is None:
             excluding_attrs = ["@type"]
 
@@ -140,9 +133,7 @@ class GraphWriteFunc(IFunc):
         for attr, value in node.data.items():
             tuple_data_rows[0].append((attr, value, node.id))
 
-        for child_node in [
-                self.graph.nodes[self.graph.edges[eid].target] for eid in node.edges_out
-        ]:
+        for child_node in [self.graph.nodes[self.graph.edges[eid].target] for eid in node.edges_out]:
             if child_node not in visited:
                 child_data_rows = self._divide_search(node, visited + [child_node])
                 tuple_data_rows = tuple_data_rows * len(child_data_rows)
@@ -164,26 +155,28 @@ class GraphWriteFunc(IFunc):
             dict_data_rows.append(attr_to_value_id)
         return dict_data_rows, attr_list
 
+
 class VisJsonWriteFunc(GraphWriteFunc):
     id = "vis_json_write_func"
     inputs = {
         "graph": ArgType.Graph(None),
         "main_class": ArgType.String,
         "output_file": ArgType.FilePath,
-        "name": ArgType.String,
         "mapped_columns": ArgType.OrderedDict(None),
     }
     outputs = {"data": ArgType.String}
 
-    def __init__(self, graph: Graph, main_class: str, output_file: Union[str, Path], name: str,
-                 mapped_columns: Dict[str, str]):
-        super().__init__(graph, main_class, output_file, mapped_columns)
-        self.name = name
+    @staticmethod
+    def _dump_to_json(tabular_rows, attr_names, file_path):
+        json_obj = {"name": Path(file_path).stem, "data": []}
 
-    def _dump_to_json(tabular_rows, file_path):
-        json_objs = []
+        for row in tabular_rows:
+            json_obj["data"].append(row)
 
-        for
+        with open(file_path, "w") as f:
+            json.dump([json_obj], f)
 
-
-
+    def exec(self) -> dict:
+        all_data_rows, attr_names = self.tabularize_data()
+        VisJsonWriteFunc._dump_to_json(all_data_rows, attr_names, self.output_file)
+        return {"data": all_data_rows}

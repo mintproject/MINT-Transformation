@@ -46,15 +46,30 @@ class Pihm2CyclesFunc(IFunc):
     def _reinit_transform(self, cycles_layers_graph):
         reinit_nodes = []
         for pihm_node in self.pihm_data_graph.nodes:
-            for cycle_node in cycles_layers_graph.nodes:
-                var_uri = uuid4()
-                reinit_node = Node(int(var_uri), {}, [], [])
-                reinit_node.data["cycle:var_name"] = "SATURATION_L%s" % cycle_node.data["cycle:layer_id"]
+            if "mint:groundWater" in pihm_node.data:
+                for cycle_node in cycles_layers_graph.nodes:
+                    reinit_node = Node(len(reinit_nodes), {}, [], [])
+                    reinit_node.data["@type"] = "cycle:Variable"
 
-                reinit_node.data["cycle:value"] = self._calculate_saturation_fraction(
-                    float(cycle_node.data["cycle:top"]),
-                    float(cycle_node.data["cycle:bottom"]),
-                    self.gw_depth - float(pihm_node.data["mint:groundWater"]),
+                    reinit_node.data["cycle:var_name"] = "SATURATION_L%s" % cycle_node.data["cycle:layer_id"]
+                    reinit_node.data["cycle:value"] = self._calculate_saturation(
+                        float(cycle_node.data["cycle:top"]),
+                        float(cycle_node.data["cycle:bottom"]),
+                        self.gw_depth - float(pihm_node.data["mint:groundWater"]),
+                    )
+                    reinit_node.data["cycle:rot_year"] = timedelta(
+                        minutes=float(pihm_node.data["schema:recordedAt"])).days // 365
+                    reinit_node.data["cycle:doy"] = timedelta(
+                        minutes=float(pihm_node.data["schema:recordedAt"])).days % 365
+
+                    reinit_nodes.append(reinit_node)
+
+            else:
+                reinit_node = Node(len(reinit_nodes), {}, [], [])
+                reinit_node.data["@type"] = "cycle:Variable"
+                reinit_node.data["cycle:var_name"] = "INFILTRATION%s" % cycle_node.data["cycle:layer_id"]
+                reinit_node.data["cycle:value"] = self._calculate_infiltration(
+                    float(pihm_node.data["mint:infiltration"])
                 )
                 reinit_node.data["cycle:rot_year"] = timedelta(
                     minutes=float(pihm_node.data["schema:recordedAt"])).days // 365
@@ -62,8 +77,7 @@ class Pihm2CyclesFunc(IFunc):
                     minutes=float(pihm_node.data["schema:recordedAt"])).days % 365
 
                 reinit_nodes.append(reinit_node)
-        prefixes = {"cycle": "https://cycles.psu.edu/", "schema": "https://schema.org/"}
-        return Graph(prefixes, reinit_nodes, [])
+        return Graph(reinit_nodes, [])
 
     def validate(self) -> bool:
         return True
@@ -82,6 +96,8 @@ class Pihm2CyclesFunc(IFunc):
         nodes = []
 
         for i, layer_thickness in enumerate(self.cycles_layers):
+            node = Node(i, {}, [], [])
+            node.data["@type"] = "cycle:Layer"
             node.data["cycle:layer_id"] = i
             node.data["cycle:thickness"] = layer_thickness
             node.data["cycle:top"] = previous_offset
@@ -99,8 +115,7 @@ class Pihm2CyclesFunc(IFunc):
 
             nodes.append(node)
             previous_offset = previous_offset + float(layer_thickness)
-        prefixes = {"cycle": "https://cycles.psu.edu/"}
-        return Graph(prefixes, nodes, [])
+        return Graph(nodes, [])
 
     def _patch_id2key(self, patch_id: int) -> int:
         for node in self.pid_graph.nodes:
@@ -108,7 +123,11 @@ class Pihm2CyclesFunc(IFunc):
                 return node.data["cycle:ele_id"]
 
     @staticmethod
-    def _calculate_saturation_fraction(water_level: float, top: float, bottom: float):
+    def _calculate_infiltration(infiltration: float):
+        return infiltration * 1000
+
+    @staticmethod
+    def _calculate_saturation(water_level: float, top: float, bottom: float):
         if water_level > bottom:
             return 0.0
         if water_level < top:

@@ -35,13 +35,13 @@ class CyclesWriteFunc(IFunc):
             writer = csv.writer(f, delimiter="\t")
 
             writer.writerow(["ROT_YEAR", "DOY", "VARIABLE", "VALUE"])
-            for node in self.reinit_graph.nodes:
-                print(node)
+            for node in sorted(
+                self.reinit_graph.nodes, key=lambda n: (n.data["cycle:rot_year"], n.data["cycle:doy"])
+            ):
                 doy = node.data["cycle:doy"]
                 rot_year = node.data["cycle:rot_year"]
                 var_name = node.data["cycle:var_name"]
                 value = node.data["cycle:value"]
-
                 writer.writerow([rot_year, doy, var_name, value])
 
     def _write_soil_file(self):
@@ -53,13 +53,12 @@ class CyclesWriteFunc(IFunc):
             layers = []
 
             for node in self.soil_graph.nodes:
-                print(node)
-                layer_id = node.data["cycle:layerId"]
+                layer_id = node.data["cycle:layer_id"]
                 thickness = node.data["cycle:thickness"]
                 clay = node.data["cycle:clay"]
                 sand = node.data["cycle:sand"]
                 om = node.data["cycle:om"]
-                bd = node.data["cycle:bd"]
+                bd = node.data["cycle:bld"]
                 fc = node.data["cycle:fc"]
                 pwp = node.data["cycle:pwp"]
                 no3 = node.data["cycle:no3"]

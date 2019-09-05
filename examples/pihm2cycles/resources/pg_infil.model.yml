@@ -3,7 +3,11 @@ resources:
   default:
     type: csv
     delimiter: "\t"
-preprocessing: []
+preprocessing:
+  - type: pmap
+    path: [0.., 1..]
+    code: |
+      return 0 if not value else value
 attributes:
   time: [0.., 0]
   infil: [0.., 1..]
