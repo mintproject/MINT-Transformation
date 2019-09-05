@@ -13,8 +13,8 @@ from dtran.ifunc import IFunc
 import netCDF4 as nc4
 
 
-class WriteFuncNDimArray(IFunc):
-    id = "write_func_ndarray"
+class NetCDFWriteFunc(IFunc):
+    id = "netcdf_write_func"
     inputs = {
         "data": ArgType.NDimArray,
         "main_class": ArgType.String,
@@ -54,8 +54,8 @@ class WriteFuncNDimArray(IFunc):
         return True
 
 
-class WriteFuncGraph(IFunc):
-    id = "write_func_graph"
+class GraphWriteFunc(IFunc):
+    id = "graph_write_func"
     inputs = {
         "graph": ArgType.Graph(None),
         "main_class": ArgType.String,
@@ -75,9 +75,9 @@ class WriteFuncGraph(IFunc):
     def exec(self) -> dict:
         all_data_rows, attr_names = self.tabularize_data()
         if self.output_file.endswith("csv"):
-            WriteFuncGraph._dump_to_csv(all_data_rows, attr_names, self.output_file)
+            GraphWriteFunc._dump_to_csv(all_data_rows, attr_names, self.output_file)
         elif self.output_file.endswith("json"):
-            WriteFuncGraph._dump_to_json(all_data_rows, attr_names, self.output_file)
+            GraphWriteFunc._dump_to_json(all_data_rows, attr_names, self.output_file)
         else:
             all_data_rows = []
         return {"data": all_data_rows}
@@ -93,7 +93,7 @@ class WriteFuncGraph(IFunc):
             writer.writerows(tabular_rows)
 
     @staticmethod
-    def _dump_to_json(tabular_rows, attr_names, file_path):
+    def _dump_to_json(tabular_rows, file_path):
         with open(file_path, "w", newline="") as f:
             json.dump(tabular_rows, f)
 
@@ -163,3 +163,27 @@ class WriteFuncGraph(IFunc):
                     attr_to_value_id[attr] = value
             dict_data_rows.append(attr_to_value_id)
         return dict_data_rows, attr_list
+
+class VisJsonWriteFunc(GraphWriteFunc):
+    id = "vis_json_write_func"
+    inputs = {
+        "graph": ArgType.Graph(None),
+        "main_class": ArgType.String,
+        "output_file": ArgType.FilePath,
+        "name": ArgType.String,
+        "mapped_columns": ArgType.OrderedDict(None),
+    }
+    outputs = {"data": ArgType.String}
+
+    def __init__(self, graph: Graph, main_class: str, output_file: Union[str, Path], name: str,
+                 mapped_columns: Dict[str, str]):
+        super().__init__(graph, main_class, output_file, mapped_columns)
+        self.name = name
+
+    def _dump_to_json(tabular_rows, file_path):
+        json_objs = []
+
+        for
+
+
+

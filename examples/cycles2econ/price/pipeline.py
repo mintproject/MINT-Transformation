@@ -5,7 +5,7 @@ from typing import Union
 import ujson
 
 from dtran import Pipeline, IFunc, ArgType
-from funcs import ReadFunc, FilterFunc, WriteFuncGraph, UnitTransFunc, GraphStr2StrFunc
+from funcs import ReadFunc, FilterFunc, GraphWriteFunc, UnitTransFunc, GraphStr2StrFunc
 
 if __name__ == "__main__":
     wdir = Path(os.path.abspath(__file__)).parent
@@ -17,12 +17,12 @@ if __name__ == "__main__":
         "Sorghum (white, imported) - Retail": "sorghum"
     }
 
-    pipeline = Pipeline([ReadFunc, FilterFunc, GraphStr2StrFunc, UnitTransFunc, WriteFuncGraph],
+    pipeline = Pipeline([ReadFunc, FilterFunc, GraphStr2StrFunc, UnitTransFunc, GraphWriteFunc],
                         wired=[
                             ReadFunc.O.data == FilterFunc.I.data,
                             FilterFunc.O.data == GraphStr2StrFunc.I.graph,
                             FilterFunc.O.data == UnitTransFunc.I.graph,
-                            UnitTransFunc.O.graph == WriteFuncGraph.I.graph
+                            UnitTransFunc.O.graph == GraphWriteFunc.I.graph
                         ])
 
     inputs = {
@@ -37,12 +37,12 @@ if __name__ == "__main__":
         UnitTransFunc.I.unit_value: "dcat:measure_1_value",
         UnitTransFunc.I.unit_label: "sdmx-attribute:unitMeasure",
         UnitTransFunc.I.unit_desired: "$/kg",
-        WriteFuncGraph.I.main_class: 'qb:Observation',
-        WriteFuncGraph.I.mapped_columns: {
+        GraphWriteFunc.I.main_class: 'qb:Observation',
+        GraphWriteFunc.I.mapped_columns: {
             "dcat-dimension:thing": "",
             "dcat:measure_1_value": "p"
         },
-        WriteFuncGraph.I.output_file: wdir / "price.csv"
+        GraphWriteFunc.I.output_file: wdir / "price.csv"
     }
 
     outputs = pipeline.exec(inputs)
