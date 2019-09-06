@@ -4,7 +4,7 @@ import csv
 from pathlib import Path
 
 import numpy as np
-from typing import List, Union, Dict
+from typing import List, Union, Dict, Optional
 import ujson as json
 from drepr.graph import Node, Graph
 
@@ -57,17 +57,20 @@ class GraphWriteFunc(IFunc):
         "main_class": ArgType.String,
         "output_file": ArgType.FilePath,
         "mapped_columns": ArgType.OrderedDict(None),
+        "filter": ArgType.String(optional=True)
     }
     outputs = {"data": ArgType.String}
 
     def __init__(
-        self, graph: Graph, main_class: str, output_file: Union[str, Path], mapped_columns: Dict[str, str]
+            self, graph: Graph, main_class: str, output_file: Union[str, Path], mapped_columns: Dict[str, str],
+            filter: Optional[str] = None
     ):
         self.graph = graph
         self.main_class = main_class
         self.mapped_columns = mapped_columns
 
         self.output_file = str(output_file)
+        self.filter_func = IFunc.filter_func(filter)
 
     def exec(self) -> dict:
         all_data_rows, attr_names = self.tabularize_data()
@@ -98,7 +101,8 @@ class GraphWriteFunc(IFunc):
         main_class_nodes = []
         for node in self.graph.nodes:
             if node.data["@type"] == self.main_class:
-                main_class_nodes.append(node)
+                if self.filter_func(node):
+                    main_class_nodes.append(node)
 
         # modified code to allow rename & select a subset of attributes
         if len(self.mapped_columns) == 0:
@@ -124,7 +128,7 @@ class GraphWriteFunc(IFunc):
             return all_data_rows, list(self.mapped_columns.values())
 
     def _divide_search(
-        self, node: Node, visited: List[Node], with_ids: bool = False, excluding_attrs=None
+            self, node: Node, visited: List[Node], with_ids: bool = False, excluding_attrs=None
     ) -> (list, set):
         if excluding_attrs is None:
             excluding_attrs = ["@type"]
@@ -163,6 +167,7 @@ class VisJsonWriteFunc(GraphWriteFunc):
         "main_class": ArgType.String,
         "output_file": ArgType.FilePath,
         "mapped_columns": ArgType.OrderedDict(None),
+        "filter": ArgType.String(optional=True)
     }
     outputs = {"data": ArgType.String}
 

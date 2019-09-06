@@ -71,7 +71,7 @@ class Pihm2CyclesFunc(IFunc):
             else:
                 reinit_node = Node(len(reinit_nodes), {}, [], [])
                 reinit_node.data["@type"] = "cycle:Variable"
-                reinit_node.data["cycle:var_name"] = "INFILTRATION%s" % cycle_node.data["cycle:layer_id"]
+                reinit_node.data["cycle:var_name"] = "INFILTRATION"
                 reinit_node.data["cycle:value"] = self._calculate_infiltration(
                     float(pihm_node.data["mint:infiltration"])
                 )

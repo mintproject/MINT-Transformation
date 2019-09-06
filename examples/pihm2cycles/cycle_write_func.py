@@ -18,11 +18,11 @@ class CyclesWriteFunc(IFunc):
     outputs = {"result": ArgType.Boolean}
 
     def __init__(
-        self,
-        reinit_graph: Graph,
-        soil_graph: Graph,
-        reinit_file: Union[str, Path],
-        soil_file: Union[str, Path],
+            self,
+            reinit_graph: Graph,
+            soil_graph: Graph,
+            reinit_file: Union[str, Path],
+            soil_file: Union[str, Path],
     ):
         self.reinit_graph = reinit_graph
         self.soil_graph = soil_graph
@@ -36,7 +36,7 @@ class CyclesWriteFunc(IFunc):
 
             writer.writerow(["ROT_YEAR", "DOY", "VARIABLE", "VALUE"])
             for node in sorted(
-                self.reinit_graph.nodes, key=lambda n: (n.data["cycle:rot_year"], n.data["cycle:doy"])
+                    self.reinit_graph.nodes, key=lambda n: (n.data["cycle:rot_year"], n.data["cycle:doy"])
             ):
                 doy = node.data["cycle:doy"]
                 rot_year = node.data["cycle:rot_year"]
