@@ -31,16 +31,11 @@ class UnitTransFunc(IFunc):
     def exec(self):
         for node in self.graph.nodes:
             if self.filter_func(node):
-                print(node)
                 src_unit = node.data[self.unit_label]
                 conversion_value, err_code = self.ccut.canonical_transform(src_unit, self.unit_desired, 1)
                 if RET_VAL_OK != err_code:
-                    raise ValueError(
-                        f"Error in the unit conversion process['{src_unit}' --> '{self.unit_desired}']: [{err_code}] "
-                        f"{RET_STR_MAP[err_code]}"
-                    )
+                    continue
                 new_obs_value = float(node.data[self.unit_value]) * conversion_value
                 node.data[self.unit_value] = str(new_obs_value)
                 node.data[self.unit_label] = self.unit_desired
-                print(node)
         return {"graph": self.graph}
