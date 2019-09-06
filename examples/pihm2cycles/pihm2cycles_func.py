@@ -46,6 +46,7 @@ class Pihm2CyclesFunc(IFunc):
     def _reinit_transform(self, cycles_layers_graph):
         reinit_nodes = []
         for pihm_node in self.pihm_data_graph.nodes:
+            print(pihm_node.data["mint:index"], self.patch_id)
             if int(pihm_node.data["mint:index"]) != self.patch_id:
                 continue
             if "mint:groundWater" in pihm_node.data:
@@ -125,7 +126,7 @@ class Pihm2CyclesFunc(IFunc):
 
     def _patch_id2key(self, patch_id: int) -> int:
         for node in self.pid_graph.nodes:
-            if node.data["cycle:index"] == patch_id:
+            if int(node.data["cycle:index"]) == patch_id:
                 return node.data["cycle:ele_id"]
 
     @staticmethod

@@ -31,9 +31,8 @@ class CyclesWriteFunc(IFunc):
         self.soil_file = Path(soil_file)
 
     def _write_init_file(self):
-        with self.reinit_file.open("w") as f:
+        with self.reinit_file.open("w", newline="") as f:
             writer = csv.writer(f, delimiter="\t")
-
             writer.writerow(["ROT_YEAR", "DOY", "VARIABLE", "VALUE"])
             for node in sorted(
                     self.reinit_graph.nodes, key=lambda n: (n.data["cycle:rot_year"], n.data["cycle:doy"])
