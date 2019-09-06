@@ -65,7 +65,7 @@ class CyclesWriteFunc(IFunc):
                 nh4 = node.data["cycle:nh4"]
 
                 layer = [layer_id, thickness, clay, sand, om, bd, fc, pwp, no3, nh4]
-                writer.write("\t".join(layer) + "\n")
+                writer.write("\t".join([str(x) for x in layer]) + "\n")
                 layers.append(layer)
             return layers
 

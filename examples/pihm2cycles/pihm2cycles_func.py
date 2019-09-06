@@ -21,13 +21,13 @@ class Pihm2CyclesFunc(IFunc):
     outputs = {"reinit_graph": ArgType.Graph(None), "cycle_soil_graph": ArgType.Graph(None)}
 
     def __init__(
-            self,
-            pihm_data_graph: Graph,
-            pihm_soil_graph: Graph,
-            pid_graph: Graph,
-            cycles_layers: str,
-            patch_id: int,
-            gw_depth: float,
+        self,
+        pihm_data_graph: Graph,
+        pihm_soil_graph: Graph,
+        pid_graph: Graph,
+        cycles_layers: str,
+        patch_id: int,
+        gw_depth: float,
     ):
         self.pihm_data_graph = pihm_data_graph
         self.pihm_soil_graph = pihm_soil_graph
@@ -46,6 +46,8 @@ class Pihm2CyclesFunc(IFunc):
     def _reinit_transform(self, cycles_layers_graph):
         reinit_nodes = []
         for pihm_node in self.pihm_data_graph.nodes:
+            if int(pihm_node.data["mint:index"]) != self.patch_id:
+                continue
             if "mint:groundWater" in pihm_node.data:
                 for cycle_node in cycles_layers_graph.nodes:
                     reinit_node = Node(len(reinit_nodes), {}, [], [])
@@ -57,10 +59,12 @@ class Pihm2CyclesFunc(IFunc):
                         float(cycle_node.data["cycle:bottom"]),
                         self.gw_depth - float(pihm_node.data["mint:groundWater"]),
                     )
-                    reinit_node.data["cycle:rot_year"] = timedelta(
-                        minutes=float(pihm_node.data["schema:recordedAt"])).days // 365
-                    reinit_node.data["cycle:doy"] = timedelta(
-                        minutes=float(pihm_node.data["schema:recordedAt"])).days % 365
+                    reinit_node.data["cycle:rot_year"] = (
+                        timedelta(minutes=float(pihm_node.data["schema:recordedAt"])).days // 365
+                    )
+                    reinit_node.data["cycle:doy"] = (
+                        timedelta(minutes=float(pihm_node.data["schema:recordedAt"])).days % 365
+                    )
 
                     reinit_nodes.append(reinit_node)
 
@@ -71,10 +75,12 @@ class Pihm2CyclesFunc(IFunc):
                 reinit_node.data["cycle:value"] = self._calculate_infiltration(
                     float(pihm_node.data["mint:infiltration"])
                 )
-                reinit_node.data["cycle:rot_year"] = timedelta(
-                    minutes=float(pihm_node.data["schema:recordedAt"])).days // 365
-                reinit_node.data["cycle:doy"] = timedelta(
-                    minutes=float(pihm_node.data["schema:recordedAt"])).days % 365
+                reinit_node.data["cycle:rot_year"] = (
+                    timedelta(minutes=float(pihm_node.data["schema:recordedAt"])).days // 365
+                )
+                reinit_node.data["cycle:doy"] = (
+                    timedelta(minutes=float(pihm_node.data["schema:recordedAt"])).days % 365
+                )
 
                 reinit_nodes.append(reinit_node)
         return Graph(reinit_nodes, [])

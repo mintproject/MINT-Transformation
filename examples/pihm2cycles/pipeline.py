@@ -7,6 +7,7 @@ from examples.pihm2cycles.cycle_write_func import CyclesWriteFunc
 from examples.pihm2cycles.pihm2cycles_func import Pihm2CyclesFunc
 from funcs import ReadFunc
 from funcs.merge_func import MergeFunc
+import ujson as json
 
 if __name__ == "__main__":
 
@@ -27,9 +28,13 @@ if __name__ == "__main__":
 
     inputs = {
         ReadFunc.I._1.repr_file: wdir / "pg_gw.model.yml",
-        ReadFunc.I._1.resources: wdir / "pg.GW.csv",
+        ReadFunc.I._1.resources: json.dumps(
+            {"default": str(wdir / "pg.GW.csv"), "cycle_mapping": str(wdir / "cycles_soil.csv")}
+        ),
         ReadFunc.I._2.repr_file: wdir / "pg_infil.model.yml",
-        ReadFunc.I._2.resources: wdir / "pg.infil.csv",
+        ReadFunc.I._2.resources: json.dumps(
+            {"default": str(wdir / "pg.infil.csv"), "cycle_mapping": str(wdir / "cycles_soil.csv")}
+        ),
         ReadFunc.I._3.repr_file: wdir / "pihm_soil.model.yml",
         ReadFunc.I._3.resources: wdir / "pihm_soil.csv",
         ReadFunc.I._4.repr_file: wdir / "cycles_soil.model.yml",
@@ -38,7 +43,7 @@ if __name__ == "__main__":
         Pihm2CyclesFunc.I.patch_id: "1",
         Pihm2CyclesFunc.I.gw_depth: 30,
         CyclesWriteFunc.I.reinit_file: wdir / "cycles.REINIT",
-        CyclesWriteFunc.I.soil_file:  wdir / "cycles.soil",
+        CyclesWriteFunc.I.soil_file: wdir / "cycles.soil",
     }
 
     outputs = pipeline.exec(inputs)

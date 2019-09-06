@@ -3,21 +3,31 @@ resources:
   default:
     type: csv
     delimiter: "\t"
+  cycle_mapping:
+    type: csv
+    delimiter: ","
 preprocessing:
   - type: pmap
+    resource_id: default
     path: [0.., 1..]
     code: |
       return 0 if not value else value
 attributes:
   time: [0.., 0]
   groundwater: [0.., 1..]
+  index:
+    resource_id: cycle_mapping
+    path: [1.., 0]
 alignments:
   - type: dimension
     value: groundwater:0 <-> time:0
+  - type: dimension
+    value: groundwater:1 <-> index:0
 semantic_model:
   data_nodes:
     groundwater: pihm:Point:1--mint:groundWater^^xsd:decimal
     time: pihm:Point:1--schema:recordedAt^^xsd:decimal
+    index: pihm:Point:1--mint:index^^xsd:decimal
   relations: []
   prefixes:
     mint: https://mint.isi.edu/
