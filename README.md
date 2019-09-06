@@ -1,4 +1,4 @@
-### MINT Data Transformations
+# MINT Data Transformations
 
 A framework to construct a transformation pipeline based on some specification from users.
 
@@ -16,10 +16,10 @@ git submodule update  # fetches all the data
 
 ## Usage
 
-# Developers:
+### Developers:
 See the first revision of a demo notebook in file `demo.ipynb`.
 
-# General Users:
+### General Users:
 Run the following command from the root folder:
 ```
 python ui/app.py
