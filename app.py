@@ -264,14 +264,11 @@ def execute_pipeline():
         # TODO: support more than 1 input and 1 output of specific instance
         wire = ( graph_inst_list['i'][0], graph_inst_list['o'][0] )
         pipeline_wires.append(wire)
-
-    try:
-        # Pipeline Object
-        pipeline = Pipeline(pipeline_classes, wired=pipeline_wires)
-        # TODO: print to screen and show errors/results
-        pipeline.exec(inputs)
-    except:
-        raise ValueError("Pipeline cxecution failed...")
+    
+    # Pipeline Object
+    pipeline = Pipeline(pipeline_classes, wired=pipeline_wires)
+    # TODO: print to screen and show errors/results
+    pipeline.exec(inputs)
 
 # --- entrypoints -------------------------------------------------------------
 
@@ -357,11 +354,7 @@ def pipeline():
 
         # execute pipeline if user requested that
         if FORM_PIP_EXE in request.args:
-            try:
-                execute_pipeline()
-            except ValueError:
-                pip_exe_msg = "Oops! Pipeline execution failed, see log..."
-            pip_exe_msg = "Pipeline execution succeeded!"
+            execute_pipeline()
 
     return render_template('pipeline.html', adp_dropdown_list=list_of_adapter_names, \
         adp_dropdown_selected_str=adp_id_str_chosen, adp_dropdown_selected_inst=adp, \
