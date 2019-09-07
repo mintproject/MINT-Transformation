@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session
 from copy import deepcopy
 import funcs
 from funcs import *
@@ -6,6 +6,8 @@ from dtran import Pipeline
 from json import dumps, JSONEncoder, JSONDecoder
 
 app = Flask(__name__)
+app.secret_key = 'MFwwDQYJKoZIhvcNAQEBBQAD'
+app.config['SESSION_TYPE'] = 'filesystem'
 
 KEY_DESC = 'description'
 KEY_MODL = '__module__'
@@ -50,18 +52,16 @@ def update_list_of_global_graphs_from_args_dict(args_dict):
     ''' Update the list of g_graphs_dropdown_list based on a given arguments dictionary.
     This method is called when loading a pipeline file externally. '''
 
-    global g_graphs_dropdown_list
+    sesh_g_instancs = session.get('sesh_g_instancs', None)
+    if not sesh_g_instancs:
+        sesh_g_instancs = ['', GRAPH_INST_ADD]
+    else:
+        sesh_g_instancs = JSONDecoder().decode(session['sesh_g_instancs'])
 
     for _, item in args_dict.items():
-        if item['id'] == 'graph' and item['val'] not in g_graphs_dropdown_list:
-            g_graphs_dropdown_list.append(item['val'])
-
-def init_list_of_global_graphs():
-    ''' Initialize the list of g_graphs_dropdown_list. '''
-
-    global g_graphs_dropdown_list
-
-    g_graphs_dropdown_list = ['', GRAPH_INST_ADD]
+        if item['id'] == 'graph' and item['val'] not in sesh_g_instancs:
+            sesh_g_instancs.append(item['val'])
+    session['sesh_g_instancs'] = dumps(sesh_g_instancs)
 
 def was_graph_instance_added(req_args_list):
     ''' Check whether one of the element in a given list includes GRAPH_INST_CHANGE in name. '''
@@ -180,42 +180,36 @@ class AdapterDB:
 
 # --- pipeline methods --------------------------------------------------------
 
-def get_next_index_in_g_pipeline():
-    global g_pipeline
-
-    if len(g_pipeline) == 0:
+def get_next_index_in_g_pipeline(session_pipeline):
+    if len(session_pipeline) == 0:
         return 0
     else:
-        return g_pipeline[-1][0] + 1
+        return session_pipeline[-1][0] + 1
 
-def remove_adapter_from_pipeline(adapter_identifier_in_pipe):
-    global g_pipeline
-    for index_in_list, adapter_tuple in enumerate(g_pipeline):
+def remove_adapter_from_pipeline(session_pipeline, adapter_identifier_in_pipe):
+    for index_in_list, adapter_tuple in enumerate(session_pipeline):
         if adapter_identifier_in_pipe == adapter_tuple[0]:
             index_to_access = index_in_list
             break
-    g_pipeline.pop(index_to_access)
+    session_pipeline.pop(index_to_access)
 
-def update_g_pipeline_elements(adapter_identifier_in_pipe, input_n_output, adapter_attribute, value):
-    global g_pipeline
-
+def update_g_pipeline_elements(session_pipeline, adapter_identifier_in_pipe, input_n_output, adapter_attribute, value):
     ''' g_pipeline is a list
         ...[adapter_identifier_in_pipe] is an element in the pipe
         ...[0] holds the index, ...[1] hold the instance of the adapter '''
-
-    for index_in_list, adapter_tuple in enumerate(g_pipeline):
+    for index_in_list, adapter_tuple in enumerate(session_pipeline):
         if adapter_identifier_in_pipe == adapter_tuple[0]:
             index_to_access = index_in_list
             break
 
     # inputs/outputs hold a dictionary of attributes, each one is a dictionary by itself
     if input_n_output:
-        g_pipeline[index_to_access][1].inputs[adapter_attribute]['val'] = value
+        session_pipeline[index_to_access][1].inputs[adapter_attribute]['val'] = value
     else:
-        g_pipeline[index_to_access][1].outputs[adapter_attribute]['val'] = value
+        session_pipeline[index_to_access][1].outputs[adapter_attribute]['val'] = value
 
-def execute_pipeline():
-    global g_pipeline, g_adapterdb
+def execute_pipeline(session_pipeline):
+    global g_adapterdb
 
     inputs = {}
     pipeline_classes = []
@@ -223,7 +217,7 @@ def execute_pipeline():
 
     graph_instncs_dict = dict()
 
-    for _, adapter in g_pipeline:
+    for _, adapter in session_pipeline:
         adptr_name  = adapter.get_adapter_name()
         adptr_obj = g_adapterdb.get_adapter_object_from_name(adptr_name)
         adptr_id  = adapter.get_adapter_identifier()
@@ -274,7 +268,23 @@ def execute_pipeline():
 
 @app.route('/pipeline', methods=['GET', 'POST'])
 def pipeline():
-    global g_pipeline, g_adapterdb, g_graphs_dropdown_list
+    global g_adapterdb
+
+    # init wire 'instances' of graphs
+    sesh_g_instancs = session.get('sesh_g_instancs', None)
+    if not sesh_g_instancs:
+        sesh_g_instancs = ['', GRAPH_INST_ADD]
+    else:
+        sesh_g_instancs = JSONDecoder().decode(session['sesh_g_instancs'])
+
+    # init session pipeline
+    sesh_pip = session.get('sesh_pip', None)
+    if not sesh_pip:
+        sesh_pip = list()
+    else:
+        sesh_pip = JSONDecoder(object_hook = AdapterElement_from_json).decode(session['sesh_pip'])
+
+    print(f'\n\nsesh_g_instancs=\n{sesh_g_instancs}\n\nsesh_pip=\n{sesh_pip}\n\n')
 
     # get list of adapters and their names
     list_of_adapters = g_adapterdb.get_list_of_adapters()
@@ -293,8 +303,8 @@ def pipeline():
         FORM_PIP_FILE_LOAD in request.args and \
         request.args[FORM_PIP_FILE_LOAD] != '': 
 
-        g_pipeline.clear()
-        init_list_of_global_graphs()
+        sesh_pip.clear()
+        session['sesh_g_instancs'] = dumps(['', GRAPH_INST_ADD])
 
         # load a pipeline configuration from file
         input_config_file = request.args[FORM_PIP_FILE_LOAD]
@@ -302,7 +312,8 @@ def pipeline():
             for line_i, line_d in enumerate(read_file):
                 adapter_el = JSONDecoder(object_hook = AdapterElement_from_json).decode(line_d)
                 load_adapter = (line_i, adapter_el)
-                g_pipeline.append(load_adapter)
+                sesh_pip.append(load_adapter)
+        sesh_g_instancs = JSONDecoder().decode(session['sesh_g_instancs'])
 
     elif FORM_PIP_SAVE in request.args and \
         FORM_PIP_FILE_SAVE in request.args and \
@@ -311,19 +322,19 @@ def pipeline():
         # save a pipeline configuration to file
         output_config_file = request.args[FORM_PIP_FILE_SAVE]
         with open(output_config_file, 'w') as write_file:
-            for pipidx, pipadp in g_pipeline:
+            for _, pipadp in sesh_pip:
                 write_file.write(dumps(pipadp, cls=CustomEncoder) + '\n')
     else:
 
         # check if user cleared the pipeline
         if FORM_PIP_CLR in request.args:
-            g_pipeline.clear()
-            init_list_of_global_graphs()
+            sesh_pip.clear()
+            sesh_g_instancs = ['', GRAPH_INST_ADD]
 
         # check if user submitted an adapter
         elif FORM_ADPTR_SUBMT in request.args:
-            new_adapter = (get_next_index_in_g_pipeline(), deepcopy(adp))
-            g_pipeline.append(new_adapter)
+            new_adapter = (get_next_index_in_g_pipeline(sesh_pip), deepcopy(adp))
+            sesh_pip.append(new_adapter)
 
         # check if user updated any field in pipeline (or graph instance added)
         elif FORM_PIP_UPDT in request.args or \
@@ -338,27 +349,29 @@ def pipeline():
                         input_not_output = False
 
                     if GRAPH_INST_ADD == arg_val:
-                        g_graphs_dropdown_list.append(GRAPH_INST_W_REPR + str(len(g_graphs_dropdown_list) - 1))
-                        arg_val = g_graphs_dropdown_list[-1]
+                        sesh_g_instancs.append(GRAPH_INST_W_REPR + str(len(sesh_g_instancs) - 1))
+                        arg_val = sesh_g_instancs[-1]
 
                     element_id_in_pipeline = int(arg_name.split('.')[0])
                     element_attr_in_pipeline = arg_name.split('.')[2]
-                    update_g_pipeline_elements(element_id_in_pipeline, input_not_output, element_attr_in_pipeline, arg_val)
+                    update_g_pipeline_elements(sesh_pip, element_id_in_pipeline, input_not_output, element_attr_in_pipeline, arg_val)
 
         # iterate over args and check is something should be removed
         for arg_name, arg_val in request.args.items():
             if FORM_ADPTR_RMV in arg_name:
                 element_id_in_pipeline = int(arg_name.split('.')[0])
-                remove_adapter_from_pipeline(element_id_in_pipeline)
+                remove_adapter_from_pipeline(sesh_pip, element_id_in_pipeline)
                 break
 
         # execute pipeline if user requested that
         if FORM_PIP_EXE in request.args:
-            execute_pipeline()
+            execute_pipeline(sesh_pip)
 
+    session['sesh_pip'] = dumps(sesh_pip, cls=CustomEncoder)
+    session['sesh_g_instancs'] = dumps(sesh_g_instancs)
     return render_template('pipeline.html', adp_dropdown_list=list_of_adapter_names, \
         adp_dropdown_selected_str=adp_id_str_chosen, adp_dropdown_selected_inst=adp, \
-        pipeline_adapters=g_pipeline, pipeline_exe_msg=pip_exe_msg, graphs_dropdown_list=g_graphs_dropdown_list)
+        pipeline_adapters=sesh_pip, pipeline_exe_msg=pip_exe_msg, graphs_dropdown_list=sesh_g_instancs)
 
 @app.route('/browse')
 def browse():
@@ -374,10 +387,8 @@ def index():
 # --- main --------------------------------------------------------------------
 
 if __name__ == '__main__':
-    global g_pipeline, g_adapterdb
-    g_pipeline = list()
-    g_adapterdb = AdapterDB()
-    init_list_of_global_graphs()
+    global g_adapterdb
 
+    g_adapterdb = AdapterDB()
     app.debug = True
     app.run(host='0.0.0.0', port=5000, debug=True)
