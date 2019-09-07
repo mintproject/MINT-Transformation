@@ -24,15 +24,15 @@ class Pihm2NetCDFFunc(IFunc):
         "start_time": ArgType.DateTime,
         "threshold": ArgType.Number,
     }
-    outputs = {"flooding_array": ArgType.NDimArray}
+    outputs = {"graph": ArgType.Graph(None)}
 
     def __init__(
-        self,
-        point_graph: Graph,
-        surf_graph: Graph,
-        mean_space: str,
-        start_time: datetime.datetime,
-        threshold: float,
+            self,
+            point_graph: Graph,
+            surf_graph: Graph,
+            mean_space: str,
+            start_time: datetime.datetime,
+            threshold: float,
     ):
         self.point_graph = point_graph
         self.surf_graph = surf_graph
@@ -47,10 +47,10 @@ class Pihm2NetCDFFunc(IFunc):
         matrix, point2idx, xlong, ylat = self._points2matrix(self.mean_space)
         max_flooding = 0
 
-        time_to_node = defaultdict(lambda: Node(len(time_to_node), {}, [], []))
+        time_coord_to_node = defaultdict(lambda: Node(len(time_coord_to_node), {}, [], []))
 
         for node in self.surf_graph.iter_nodes():
-
+            xi, yi = point2idx[node.data["mint:index"]]
             recorded_at = self.start_time + datetime.timedelta(minutes=node.data["schema:recordedAt"] - 1440)
 
             flooding_value = 1.0 if node["mint:flooding"] >= self.threshold else 0.0
@@ -58,24 +58,23 @@ class Pihm2NetCDFFunc(IFunc):
             max_flooding = max(max_flooding, flooding_value)
 
             if "mint:grid_flooding" not in node.data:
-                time_to_node[recorded_at].data["mint:grid_flooding"] = [flooding_value]
+                time_coord_to_node[(recorded_at, xi, yi)].data["mint:grid_flooding"] = [flooding_value]
             else:
-                time_to_node[recorded_at].data["mint:grid_flooding"].append(flooding_value)
+                time_coord_to_node[(recorded_at, xi, yi)].data["mint:grid_flooding"].append(flooding_value)
 
+        for (recorded_at, xi, yi), node in time_coord_to_node.items():
+            if max_flooding == 0:
+                node.data["mint:grid_flooding"] = 0
+            node.data["schema:recordedAt"] = recorded_at
+            node.data["mint:xi"] = xi
+            node.data["mint:yi"] = yi
 
-        for node in time_to_node.values():
-                xi, yi = point2idx[node.data["mint:index"]]
-                node.data["mint:grid_flooding"] = stats.mode(node.data["mint:grid_flooding"]).mode[0]
-
-            flood_matrix = flood_matrix.transpose()
-
-            if np.max(flood_matrix) == 0.0:
-                flood_matrix.fill(0.0)
+        nodes = list(time_coord_to_node.values())
+        return {"data": Graph(nodes, [])}
 
     def _points2matrix(
-        self, mean_space: Union[str, float] = "auto"
+            self, mean_space: Union[str, float] = "auto"
     ) -> Tuple[np.ndarray, Dict[int, Tuple[int, int]], List[float], List[float]]:
-
         ylat = sorted({float(n.data["schema:latitude"]) for n in self.point_graph.iter_nodes()})
         xlong = sorted({float(n.data["schema:latitude"]) for n in self.point_graph.iter_nodes()})
 
@@ -100,7 +99,7 @@ class Pihm2NetCDFFunc(IFunc):
 
     @staticmethod
     def _get_evenly_spacing_axis(
-        vmin: float, vmax: float, spacing: float, is_rounding_point: bool
+            vmin: float, vmax: float, spacing: float, is_rounding_point: bool
     ) -> List[float]:
         if is_rounding_point:
             vmin = vmin - vmin % spacing
