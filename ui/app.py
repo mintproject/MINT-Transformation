@@ -284,8 +284,6 @@ def pipeline():
     else:
         sesh_pip = JSONDecoder(object_hook = AdapterElement_from_json).decode(session['sesh_pip'])
 
-    print(f'\n\nsesh_g_instancs=\n{sesh_g_instancs}\n\nsesh_pip=\n{sesh_pip}\n\n')
-
     # get list of adapters and their names
     list_of_adapters = g_adapterdb.get_list_of_adapters()
     list_of_adapter_names = g_adapterdb.get_list_of_adapter_names_for_dropdown()
