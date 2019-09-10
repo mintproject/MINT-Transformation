@@ -31,6 +31,7 @@ class ArgType(object):
 
 
 ArgType.FilePath = ArgType("file_path")
+ArgType.OrderedDict = ArgType("ordered_dict")
 ArgType.NDimArray = ArgType("ndim_array")
 ArgType.String = ArgType("string")
 ArgType.Number = ArgType("number")

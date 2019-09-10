@@ -12,6 +12,7 @@ netcdf4 = "*"
 pydrepr = {git = "https://github.com/binh-vu/temp.git",ref = "pyrepr"}
 arpeggio = "*"
 rdflib = "*"
+xarray = "*"
 
 [requires]
 python_version = "3.7"

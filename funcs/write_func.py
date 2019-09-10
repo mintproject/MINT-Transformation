@@ -19,7 +19,7 @@ class GraphWriteFunc(IFunc):
         "graph": ArgType.Graph(None),
         "main_class": ArgType.String,
         "output_file": ArgType.FilePath,
-        "mapped_columns": ArgType.OrderedDict(None),
+        "mapped_columns": ArgType.OrderedDict,
         "filter": ArgType.String(optional=True)
     }
     outputs = {"data": ArgType.String}

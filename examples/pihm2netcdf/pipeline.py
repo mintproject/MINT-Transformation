@@ -29,12 +29,8 @@ if __name__ == "__main__":
         ReadFunc.I._1.repr_file: wdir / "pihm_surf.model.yml",
         ReadFunc.I._1.resources: wdir / "surf.csv",
         Cell2PointFunc.I.cell_file: wdir / "pg.infil.csv",
-        Cell2PointFunc.I.point_file: wdir / "surf_points.csv"
-        ReadFunc.I._2.repr_file: wdir / "points.model.yml"
-        Pihm2CyclesFunc.I.patch_id: "1",
-        Pihm2CyclesFunc.I.gw_depth: 30,
-        CyclesWriteFunc.I.reinit_file: wdir / "cycles.REINIT",
-        CyclesWriteFunc.I.soil_file:  wdir / "cycles.soil",
+        Cell2PointFunc.I.point_file: wdir / "surf_points.csv",
+        ReadFunc.I._2.repr_file: wdir / "points.model.yml",
     }
 
     outputs = pipeline.exec(inputs)
