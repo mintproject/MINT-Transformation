@@ -6,7 +6,7 @@ from typing import *
 class ArgType(object):
     FilePath: 'ArgType' = None
     Graph: Callable[[Any], 'ArgType'] = lambda val: ArgType("graph", val=val)
-    OrderedDict: Callable[[Any], 'ArgType'] = lambda val: ArgType("ordered_dict", val=val)
+    OrderedDict: 'ArgType' = None
     NDimArray: 'ArgType' = None
     String: 'ArgType' = None
     Number: 'ArgType' = None

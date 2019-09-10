@@ -1,0 +1,25 @@
+version: '1'
+resources: tsv
+transformation: []
+layout:
+  time:
+    location: 0:..:0
+  flooding:
+    location: 0:0..:1..
+  node_index:
+    location: 1:0:..
+mappings:
+  - type: dimension_mapping
+    value: flooding:1 <-> time:1
+  - type: dimension_mapping
+    value: flooding:2 <-> node_index:2
+semantic_model:
+  semantic_types:
+    node_index: pihm:Point1--mint:index^^xsd:int
+    flooding: pihm:Point1--mint:flooding^^xsd:decimal
+    time: pihm:Point1--schema:recordedAt^^xsd:decimal
+  semantic_relations: []
+  ontology_prefixes:
+    mint: https://mint.isi.edu/
+    schema: https://schema.org/
+    pihm: https://pihm.psu.edu/
