@@ -22,7 +22,7 @@ attributes:
     path: [0.., 0]
   flooding:
     resource_id: surf
-    path: [0.., 1..]
+    path: [0.., 1..-1]
 alignments:
   - type: dimension
     value: element_index:0 <-> longitude:0

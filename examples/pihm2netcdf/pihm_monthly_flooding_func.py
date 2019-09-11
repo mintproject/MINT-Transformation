@@ -26,6 +26,7 @@ class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
             graph: Graph,
             mean_space: str,
             start_time: datetime.datetime,
+            end_time: datetime.datetime,
             threshold: float,
     ):
         super().__init__(graph, mean_space, start_time, threshold)
@@ -35,6 +36,7 @@ class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
             mean_space = float(mean_space)
         self.mean_space = mean_space
         self.start_time = start_time
+        self.end_time = end_time
         self.threshold = threshold
 
     def exec(self) -> dict:
@@ -65,20 +67,34 @@ class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
             flood_ndarray,
             coords=[("time", [i for i in range(0, 13)]), ("Y", ylat), ("X", xlong)],
             attrs={
+                "title": "Surface Inundation",
                 "standard_name": "land_water_surface__height_flood_index",
-                "long_name": "Flooding Index",
+                "long_name": "Surface Inundation",
                 "units": "m",
-                "vmin": 0.0,
-                "vmax": 1.0,
+                "valid_min": 0.0,
+                "valid_max": 1.0,
+                "missing_value": -999.0,
+                "fill_value": -999.0,
+
             },
         )
+
+        time_resolution = "P1M"
 
         flood_ndarray = xr.Dataset(
             data_vars={"flood": flood_ndarray},
             attrs={
-                "missing_values": -999.0,
-                "title": "Flooding-Index",
+                "title": "Monthly gridded surface inundation for Pongo River in 2017",
                 "comment": "Outputs generated from the workflow",
+                "naming_authority": "edu.isi.workflow",
+                "id": "/MINT/NETCDF/MONTHLY_GRIDDED_SURFACE_INUNDATION_2017",
+                "date_created": str(datetime.datetime.now()),
+                "date_modified": str(datetime.datetime.now()),
+                "creator_name": "Minh Pham",
+                "creator_email": "minhpham@usc.edu",
+                "time_coverage_start": self.start_time,
+                "time_coverage_end": self.end_time,
+                "time_coverage_resolution": time_resolution,
             },
         )
 
