@@ -1,0 +1,101 @@
+version: '1'
+resources:
+  default:
+    type: csv
+    delimiter: ','
+preprocessing: []
+attributes:
+  attribute_block0:
+    resource_id: default
+    path:
+    - 0..2:1
+    - 0..9:1
+    unique: false
+    sorted: none
+    value_type: unspecified
+    missing_values: []
+  date:
+    resource_id: default
+    path:
+    - 2..:1
+    - 0
+    unique: false
+    sorted: none
+    value_type: unspecified
+    missing_values: []
+  price:
+    resource_id: default
+    path:
+    - 2..:1
+    - 8
+    unique: false
+    sorted: none
+    value_type: unspecified
+    missing_values: []
+  item:
+    resource_id: default
+    path:
+    - 2..:1
+    - 1
+    unique: false
+    sorted: none
+    value_type: unspecified
+    missing_values: []
+  unit:
+    resource_id: default
+    path:
+    - 2..:1
+    - 2
+    unique: false
+    sorted: none
+    value_type: unspecified
+    missing_values: []
+  market:
+    resource_id: default
+    path:
+    - 2..:1
+    - 7
+    unique: false
+    sorted: none
+    value_type: unspecified
+    missing_values: []
+alignments:
+- type: range
+  source: date
+  target: price
+  aligned_dims:
+  - source: 0
+    target: 0
+- type: range
+  source: unit
+  target: price
+  aligned_dims:
+  - source: 0
+    target: 0
+- type: range
+  source: price
+  target: item
+  aligned_dims:
+  - source: 0
+    target: 0
+- type: range
+  source: price
+  target: market
+  aligned_dims:
+  - source: 0
+    target: 0
+semantic_model:
+  data_nodes:
+    price: qb:Observation:1--dcat-cube:measure_1_value^^xsd:decimal
+    date: qb:Observation:1--sdmx-dimension:refPeriod^^xsd:dateTime
+    item: qb:Observation:1--dcat-cube:dimension_thing^^xsd:string
+    unit: qb:Observation:1--sdmx-attribute:unitMeasure^^xsd:string
+    market: qb:Observation:1--sdmx-dimension:refArea^^xsd:string
+  relations: []
+  literal_nodes: []
+  subjects: {}
+  prefixes:
+    qb: http://purl.org/linked-data/cube#
+    dcat-cube: http://isi.edu/ontologies/dcat-cube#
+    sdmx-dimension: http://purl.org/linked-data/sdmx/2009/dimension#
+    sdmx-attribute: http://purl.org/linked-data/sdmx/2009/attribute#
