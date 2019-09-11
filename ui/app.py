@@ -264,6 +264,9 @@ def execute_pipeline(session_pipeline):
     # TODO: print to screen and show errors/results
     pipeline.exec(inputs)
 
+    # TODO: create 'enums' for pipeline execution status
+    return True
+
 # --- entrypoints -------------------------------------------------------------
 
 @app.route('/pipeline', methods=['GET', 'POST'])
@@ -363,7 +366,12 @@ def pipeline():
 
         # execute pipeline if user requested that
         if FORM_PIP_EXE in request.args:
-            execute_pipeline(sesh_pip)
+            exec_sts = execute_pipeline(sesh_pip)
+            if exec_sts:
+                pip_exe_msg = "Pipeline execution succeeded!"
+            else:
+                pip_exe_msg = "Oops! Pipeline execution failed, see log..."
+            
 
     session['sesh_pip'] = dumps(sesh_pip, cls=CustomEncoder)
     session['sesh_g_instancs'] = dumps(sesh_g_instancs)

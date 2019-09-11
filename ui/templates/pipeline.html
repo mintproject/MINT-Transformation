@@ -4,6 +4,12 @@
 
 <div class="jumbotron vertical-center">
 
+  {% if pipeline_exe_msg != "" %}
+    <div class="alert alert-success" role="alert">
+    {{pipeline_exe_msg}}
+    </div>
+  {% endif %}
+
   <form name="top_res" action="/pipeline" method="GET">
 
   <h2>Pipeline</h2></br>
@@ -112,9 +118,6 @@
   <button name="update_pipe" class="btn btn-primary">Update</button>
   </br></br>
   <button name="exe_pipe" class="btn btn-primary">Execute Pipeline</button>
-  {% if pipeline_exe_msg != "" %}
-    </br><h2>{{pipeline_exe_msg}}</h2>
-  {% endif %}
 
     </br>
   
