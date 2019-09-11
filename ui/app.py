@@ -322,6 +322,7 @@ def pipeline():
 
         # save a pipeline configuration to file
         output_config_file = request.args[FORM_PIP_FILE_SAVE]
+        # TODO: create path if it doesn't exist
         with open(output_config_file, 'w') as write_file:
             for _, pipadp in sesh_pip:
                 write_file.write(dumps(pipadp, cls=CustomEncoder) + '\n')

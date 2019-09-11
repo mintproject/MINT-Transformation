@@ -4,3 +4,4 @@ netCDF4
 arpeggio
 rdflib
 flask
+requests
