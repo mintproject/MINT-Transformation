@@ -16,8 +16,7 @@ from dtran import IFunc, ArgType
 class PihmFloodingIndexFunc(IFunc):
     id = "pihm_flooding_index_func"
     inputs = {
-        "point_graph": ArgType.Graph(None),
-        "surf_graph": ArgType.Graph(None),
+        "graph": ArgType.Graph(None),
         "mean_space": ArgType.String,
         "start_time": ArgType.DateTime,
         "threshold": ArgType.Number,
@@ -26,14 +25,12 @@ class PihmFloodingIndexFunc(IFunc):
 
     def __init__(
         self,
-        point_graph: Graph,
-        surf_graph: Graph,
+        graph: Graph,
         mean_space: str,
         start_time: datetime.datetime,
         threshold: float,
     ):
-        self.point_graph = point_graph
-        self.surf_graph = surf_graph
+        self.graph = graph
 
         if mean_space != "auto":
             mean_space = float(mean_space)
@@ -91,8 +88,9 @@ class PihmFloodingIndexFunc(IFunc):
     def _points2matrix(
         self, mean_space: Union[str, float] = "auto"
     ) -> Tuple[np.ndarray, Dict[int, Tuple[int, int]], List[float], List[float]]:
-        ylat = sorted({float(n.data["schema:latitude"]) for n in self.point_graph.iter_nodes()})
-        xlong = sorted({float(n.data["schema:latitude"]) for n in self.point_graph.iter_nodes()})
+        print(self.graph.nodes)
+        ylat = sorted({float(n.data["schema:latitude"]) for n in self.graph.iter_nodes()})
+        xlong = sorted({float(n.data["schema:latitude"]) for n in self.graph.iter_nodes()})
 
         if mean_space == "auto":
             mean_space_long = np.mean([i - j for i, j in zip(xlong[1:], xlong[:-1])])
@@ -106,7 +104,7 @@ class PihmFloodingIndexFunc(IFunc):
         point2idx = {}
         matrix = np.ones((len(ylat), len(xlong))) * -999.0
 
-        for node in self.point_graph.iter_nodes():
+        for node in self.graph.iter_nodes():
             xi = bisect.bisect(xlong, float(node.data["schema:latitude"])) - 1
             yi = bisect.bisect(ylat, float(node.data["schema:latitude"])) - 1
             point2idx[int(node.data["mint:index"])] = (xi, yi)

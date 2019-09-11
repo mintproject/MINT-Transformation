@@ -14,8 +14,7 @@ from examples.pihm2netcdf.pihm_flooding_index_func import PihmFloodingIndexFunc
 class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
     id = "pihm_monthly_flooding_func"
     inputs = {
-        "point_graph": ArgType.Graph(None),
-        "surf_graph": ArgType.Graph(None),
+        "graph": ArgType.Graph(None),
         "mean_space": ArgType.String,
         "start_time": ArgType.DateTime,
         "threshold": ArgType.Number,
@@ -23,16 +22,14 @@ class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
     outputs = {"data": ArgType.NDimArray}
 
     def __init__(
-        self,
-        point_graph: Graph,
-        surf_graph: Graph,
-        mean_space: str,
-        start_time: datetime.datetime,
-        threshold: float,
+            self,
+            graph: Graph,
+            mean_space: str,
+            start_time: datetime.datetime,
+            threshold: float,
     ):
-        super().__init__(point_graph, surf_graph, mean_space, start_time, threshold)
-        self.point_graph = point_graph
-        self.surf_graph = surf_graph
+        super().__init__(graph, mean_space, start_time, threshold)
+        self.graph = graph
 
         if mean_space != "auto":
             mean_space = float(mean_space)
@@ -49,7 +46,7 @@ class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
         for node in self.surf_graph.iter_nodes():
             xi, yi = point2idx[node.data["mint:index"]]
             recorded_at = (
-                self.start_time + datetime.timedelta(minutes=node.data["schema:recordedAt"] - 1440)
+                    self.start_time + datetime.timedelta(minutes=node.data["schema:recordedAt"] - 1440)
             ).month
 
             flooding_value = 1.0 if node["mint:flooding"] >= self.threshold else 0.0
