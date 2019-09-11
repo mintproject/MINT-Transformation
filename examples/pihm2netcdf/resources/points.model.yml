@@ -1,0 +1,46 @@
+version: '1'
+resources:
+  points:
+    type: csv
+    delimiter: ","
+  surf:
+    type: csv
+    delimiter: "\t"
+preprocessing: []
+attributes:
+  element_index:
+    resource_id: points
+    path: [1.., 0]
+  longitude:
+    resource_id: points
+    path: [1.., 1]
+  latitude:
+    resource_id: points
+    path: [1.., 2]
+  time:
+    resource_id: surf
+    path: [0.., 0]
+  flooding:
+    resource_id: surf
+    path: [0.., 1..-1]
+alignments:
+  - type: dimension
+    value: element_index:0 <-> longitude:0
+  - type: dimension
+    value: element_index:0 <-> latitude:0
+  - type: dimension
+    value: flooding:0 <-> time:0
+  - type: dimension
+    value: flooding:1 <-> element_index:0
+semantic_model:
+  data_nodes:
+    element_index: pihm:Point:1--mint:index^^xsd:int
+    longitude: pihm:Point:1--schema:longitude^^xsd:decimal
+    latitude: pihm:Point:1--schema:latitude^^xsd:decimal
+    flooding: pihm:Point:1--mint:flooding^^xsd:decimal
+    time: pihm:Point:1--schema:recordedAt^^xsd:decimal
+  relations: []
+  prefixes:
+    mint: https://mint.isi.edu/
+    schema: https://schema.org/
+    pihm: https://pihm.psu.edu/

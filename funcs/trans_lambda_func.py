@@ -1,15 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from ccut.app.ccut_lib import CCUT, RET_VAL_OK, RET_STR_MAP
+from drepr import Graph
+
 from dtran.argtype import ArgType, Callable, Dict, Any
 from dtran.ifunc import IFunc
-from pydrepr import Graph
 
 
 class LambdaTransFunc(IFunc):
     id = "lambda_trans"
-    inputs = {"graph": ArgType.Graph(None), "transform_func": ArgType.Function, "input_label": ArgType.String,
+    inputs = {"graph": ArgType.Graph(None), "transform_func": ArgType.Function,
               "output_label": ArgType.String}
     outputs = {"graph": ArgType.Graph(None)}
 

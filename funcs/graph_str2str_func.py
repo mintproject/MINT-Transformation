@@ -1,10 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from typing import Dict
+
 import ujson
-from typing import Union, Dict
-from pathlib import Path
-from pydrepr import Graph, Repr
+from drepr import Graph
 
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc
@@ -23,7 +23,7 @@ class GraphStr2StrFunc(IFunc):
 
     def exec(self) -> dict:
         for node in self.graph.nodes:
-            if node.data['@type'] == self.class_name and self.predicate in node.data:
+            if node.data["@type"] == self.class_name and self.predicate in node.data:
                 node.data[self.predicate] = self.str2str[node.data[self.predicate]]
 
         return {}

@@ -6,13 +6,12 @@ from typing import *
 class ArgType(object):
     FilePath: 'ArgType' = None
     Graph: Callable[[Any], 'ArgType'] = lambda val: ArgType("graph", val=val)
-    OrderedDict: Callable[[Any], 'ArgType'] = lambda val: ArgType("ordered_dict", val=val)
+    OrderedDict: 'ArgType' = None
     NDimArray: 'ArgType' = None
     String: 'ArgType' = None
     Number: 'ArgType' = None
     Boolean: 'ArgType' = None
     DateTime: 'ArgType' = None
-    Function: 'ArgType' = None
 
     def __init__(self, id: str, optional: bool = False, val: Any = None):
         self.id = id
@@ -25,11 +24,16 @@ class ArgType(object):
 
         return self.id == other.id and self.val == other.val
 
+    def __call__(self, optional: bool = False, val: Any = None):
+        if optional == self.optional and val == self.val:
+            return self
+        return ArgType(self.id, optional, val)
+
 
 ArgType.FilePath = ArgType("file_path")
+ArgType.OrderedDict = ArgType("ordered_dict")
 ArgType.NDimArray = ArgType("ndim_array")
 ArgType.String = ArgType("string")
 ArgType.Number = ArgType("number")
 ArgType.Boolean = ArgType("boolean")
 ArgType.DateTime = ArgType("datetime")
-ArgType.Function = ArgType("function")

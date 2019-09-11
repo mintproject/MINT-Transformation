@@ -40,3 +40,25 @@ class IFunc(metaclass=IFuncIO):
         :return:
         """
         raise NotImplementedError()
+
+    @staticmethod
+    def filter_func(filter):
+        if filter is None:
+            return lambda n: True
+        # rewrite the query
+        conditions = []
+        for and_expr in filter.split(" and "):
+            and_expr = and_expr.strip()
+            if " = " in and_expr:
+                field, value = and_expr.split(" = ")
+                conditions.append(f'(n.data["{field}"] == {value})')
+            elif ".contains(" in and_expr:
+                field, value = and_expr.split(".contains(")
+                conditions.append(f'(n.data["{field}"].find({value[:-1]}) != -1)')
+            elif " in " in and_expr:
+                field, value = and_expr.split(" in ")
+                conditions.append(f'(n.data["{field}"] in {value})')
+            else:
+                raise NotImplementedError(f"Doesn't handle {and_expr} yet")
+
+        return eval(f"lambda n: " + " and ".join(conditions))

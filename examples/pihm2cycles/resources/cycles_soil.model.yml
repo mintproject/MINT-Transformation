@@ -1,0 +1,19 @@
+version: '1'
+resources:
+  default:
+    type: csv
+    delimiter: ","
+preprocessing: []
+attributes:
+  ele_id: [1.., 0]
+  index: [1.., 1]
+alignments:
+  - type: dimension
+    value: ele_id:0 <-> index:0
+semantic_model:
+  data_nodes:
+    ele_id: cycle:Point:1--cycle:ele_id^^xsd:decimal
+    index: cycle:Point:1--cycle:index^^xsd:decimal
+  relations: []
+  prefixes:
+    cycle: https://cycles.psu.edu/

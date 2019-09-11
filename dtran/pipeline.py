@@ -55,13 +55,17 @@ class Pipeline(object):
                     # wired has higher priority
                     func_args[argname] = output[self.wired[gname]]
                 else:
-                    func_args[argname] = inputs[gname]
+                    try:
+                        func_args[argname] = inputs[gname]
+                    except KeyError as e:
+                        if func_cls.inputs[argname].optional:
+                            continue
+                        raise e
 
             func = func_cls(**func_args)
             result = func.exec()
             for argname in func_cls.outputs.keys():
-                output[WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i],
-                                               argname)] = result[argname]
+                output[WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)] = result[argname]
 
         return output
 
