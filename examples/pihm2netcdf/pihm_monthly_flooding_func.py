@@ -20,7 +20,7 @@ class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
         "start_time": ArgType.DateTime,
         "threshold": ArgType.Number,
     }
-    outputs = {"graph": ArgType.Graph(None)}
+    outputs = {"data": ArgType.NDimArray}
 
     def __init__(
         self,

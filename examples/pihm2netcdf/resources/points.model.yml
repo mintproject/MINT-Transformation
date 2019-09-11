@@ -1,25 +1,25 @@
 version: '1'
-resources: tsv
-transformation: []
-layout:
-  element_index:
-    location: 1..:0
-  longitude:
-    location: 1..:1
-  latitude:
-    location: 1..:2
-mappings:
-  - type: dimension_mapping
+resources:
+  default:
+    type: csv
+    delimiter: ","
+preprocessing: []
+attributes:
+  element_index: [1.., 0]
+  longitude: [1.., 1]
+  latitude: [1.., 2]
+alignments:
+  - type: dimension
     value: element_index:0 <-> longitude:0
-  - type: dimension_mapping
+  - type: dimension
     value: element_index:0 <-> latitude:0
 semantic_model:
-  semantic_types:
+  data_nodes:
     element_index: pihm:Point1--mint:index^^xsd:int
     longitude: pihm:Point1--schema:longitude^^xsd:decimal
     latitude: pihm:Point1--schema:latitude^^xsd:decimal
-  semantic_relations: []
-  ontology_prefixes:
+  relations: []
+  prefixes:
     mint: https://mint.isi.edu/
     schema: https://schema.org/
     pihm: https://pihm.psu.edu/

@@ -12,7 +12,7 @@ from dtran.ifunc import IFunc
 
 class ReadFunc(IFunc):
     id = "read_func"
-    inputs = {"repr_file": ArgType.FilePath, "resources": ArgType.String}
+    inputs = {"repr_file": ArgType.FilePath, "resources": ArgType.FilePath}
     outputs = {"data": ArgType.Graph(None)}
 
     def __init__(self, repr_file: Union[str, Path], resources: Union[str, Path]):

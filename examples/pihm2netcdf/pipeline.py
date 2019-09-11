@@ -28,6 +28,7 @@ if __name__ == "__main__":
     inputs = {
         ReadFunc.I._1.repr_file: wdir / "pihm_surf.model.yml",
         ReadFunc.I._1.resources: wdir / "surf.csv",
+        Cell2PointFunc.I.cell2point_file: wdir / "cell2points.R",
         Cell2PointFunc.I.cell_file: wdir / "pg.infil.csv",
         Cell2PointFunc.I.point_file: wdir / "surf_points.csv",
         ReadFunc.I._2.repr_file: wdir / "points.model.yml",

@@ -17,6 +17,6 @@ class Cell2PointFunc(IFunc):
 
     def exec(self) -> dict:
         subprocess.check_output(
-            f"Rscript ${self.cell2point_file} ${self.cell_file} ${self.point_file}", shell=True
+            f"Rscript {self.cell2point_file} {self.cell_file} {self.point_file}", shell=True
         )
         return {"point_file": self.point_file}

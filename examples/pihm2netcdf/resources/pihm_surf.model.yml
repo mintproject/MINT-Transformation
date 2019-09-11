@@ -1,25 +1,21 @@
 version: '1'
-resources: tsv
-transformation: []
-layout:
-  time:
-    location: 0:..:0
-  flooding:
-    location: 0:0..:1..
-  node_index:
-    location: 1:0:..
-mappings:
-  - type: dimension_mapping
-    value: flooding:1 <-> time:1
-  - type: dimension_mapping
-    value: flooding:2 <-> node_index:2
+resources:
+  default:
+    type: csv
+    delimiter: "\t"
+preprocessing: []
+attributes:
+  time: [0.., 0]
+  flooding: [0.., 1]
+alignments:
+  - type: dimension
+    value: flooding:0 <-> time:0
 semantic_model:
-  semantic_types:
-    node_index: pihm:Point1--mint:index^^xsd:int
-    flooding: pihm:Point1--mint:flooding^^xsd:decimal
-    time: pihm:Point1--schema:recordedAt^^xsd:decimal
-  semantic_relations: []
-  ontology_prefixes:
+  data_nodes:
+    flooding: pihm:Point:1--mint:flooding^^xsd:decimal
+    time: pihm:Point:1--schema:recordedAt^^xsd:decimal
+  relations: []
+  prefixes:
     mint: https://mint.isi.edu/
     schema: https://schema.org/
     pihm: https://pihm.psu.edu/
