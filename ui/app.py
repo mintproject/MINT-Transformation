@@ -9,27 +9,27 @@ app = Flask(__name__)
 app.secret_key = 'MFwwDQYJKoZIhvcNAQEBBQAD'
 app.config['SESSION_TYPE'] = 'filesystem'
 
-KEY_DESC = 'description'
-KEY_MODL = '__module__'
-KEY_IDENTIFIER = 'id'
-KEY_INPUTS = 'inputs'
-KEY_OUTPUTS = 'outputs'
+KEY_DESC           = 'description'
+KEY_MODL           = '__module__'
+KEY_IDENTIFIER     = 'id'
+KEY_INPUTS         = 'inputs'
+KEY_OUTPUTS        = 'outputs'
 
-FORM_ADPTR_SLCTD = 'slct_adp'
-FORM_ADPTR_SUBMT = 'add_adp'
-FORM_ADPTR_RMV   = 'remove_from_pipe'
-FORM_PIP_UPDT = 'update_pipe'
-FORM_PIP_CLR = 'clear_pipe'
-FORM_PIP_EXE  = 'exe_pipe'
-FORM_PIP_LOAD = 'load_pipe'
-FORM_PIP_SAVE = 'save_pipe'
+FORM_ADPTR_SLCTD   = 'slct_adp'
+FORM_ADPTR_SUBMT   = 'add_adp'
+FORM_ADPTR_RMV     = 'remove_from_pipe'
+FORM_PIP_UPDT      = 'update_pipe'
+FORM_PIP_CLR       = 'clear_pipe'
+FORM_PIP_EXE       = 'exe_pipe'
+FORM_PIP_LOAD      = 'load_pipe'
+FORM_PIP_SAVE      = 'save_pipe'
 FORM_PIP_FILE_LOAD = 'pipe_config_load_file'
 FORM_PIP_FILE_SAVE = 'pipe_config_save_file'
 
 GRAPH_INST_W_REPR  = 'GraphInstanceWire'
 GRAPH_INST_ADD     = 'Create graph instance'
 GRAPH_INST_CHANGE  = '__select'
-# TODO: support NumPy
+# TODO: support NumPy instances
 
 # --- helpers -----------------------------------------------------------------
 
@@ -48,8 +48,9 @@ def AdapterElement_from_json(json_obj):
     else:
         return json_obj
 
-def update_list_of_global_graphs_from_args_dict(args_dict):
-    ''' Update the list of g_graphs_dropdown_list based on a given arguments dictionary.
+def update_list_of_session_graphs_from_args_dict(args_dict):
+    ''' Update the list of (local) session graph instancs
+    based on a given arguments dictionary.
     This method is called when loading a pipeline file externally. '''
 
     sesh_g_instancs = session.get('sesh_g_instancs', None)
@@ -82,29 +83,28 @@ class AdapterElement:
     def from_json(cls, json_object):
         ''' Create an AdapterElement class from a json_object. '''
 
-        name = json_object['name']
+        name        = json_object['name']
         module_type = json_object['module_type']
-        identifier = json_object['identifier']
+        identifier  = json_object['identifier']
         description = json_object['description']
-        inputs = json_object['inputs']
-        outputs = json_object['outputs']
+        inputs      = json_object['inputs']
+        outputs     = json_object['outputs']
 
-        # update global list of graph instances when loading from JSON file
-        update_list_of_global_graphs_from_args_dict(inputs)
-        update_list_of_global_graphs_from_args_dict(outputs)
+        # update local list of graph instances when loading from JSON file
+        update_list_of_session_graphs_from_args_dict(inputs)
+        update_list_of_session_graphs_from_args_dict(outputs)
 
-        ret_class = cls(name, module_type, identifier, description, inputs, outputs)
-        return ret_class
+        return cls(name, module_type, identifier, description, inputs, outputs)
 
     def __init__(self, name, module_type, identifier, description, inputs, outputs):
         ''' Initialize AdapterElement. '''
 
-        self.name = name
+        self.name        = name
         self.module_type = module_type
-        self.identifier = identifier
+        self.identifier  = identifier
         self.description = description
-        self.inputs = inputs
-        self.outputs = outputs
+        self.inputs      = inputs
+        self.outputs     = outputs
     
     def __repr__(self):
         ''' Print AdapterElement. '''
@@ -146,13 +146,13 @@ class AdapterDB:
 
         for a_name, a_cls in funcs.__dict__.items():
             if isinstance(a_cls, type):
-                cls_dict = a_cls.__dict__
+                cls_dict    = a_cls.__dict__
                 module_type = cls_dict[KEY_MODL].split('.')[-1]
-                identifier = cls_dict[KEY_IDENTIFIER]
+                identifier  = cls_dict[KEY_IDENTIFIER]
                 description = None
                 if KEY_DESC in cls_dict:
                     description = cls_dict[KEY_DESC]
-                inputs_dict = cls_dict[KEY_INPUTS]
+                inputs_dict  = cls_dict[KEY_INPUTS]
                 outputs_dict = cls_dict[KEY_OUTPUTS]
                 inputs, outputs = dict(), dict()
                 for arg_name, arg_attr in inputs_dict.items():
@@ -180,35 +180,44 @@ class AdapterDB:
 
 # --- pipeline methods --------------------------------------------------------
 
-def get_next_index_in_g_pipeline(session_pipeline):
+def get_next_index_in_session_pipeline(session_pipeline):
+    ''' Get the next available index in the (local) session pipeline. '''
+
     if len(session_pipeline) == 0:
         return 0
     else:
         return session_pipeline[-1][0] + 1
 
-def remove_adapter_from_pipeline(session_pipeline, adapter_identifier_in_pipe):
+def remove_adapter_from_session_pipeline(session_pipeline, adapter_identifier_in_pipe):
+    ''' Remove an adapter from the (local) session pipeline by index. '''
+
     for index_in_list, adapter_tuple in enumerate(session_pipeline):
         if adapter_identifier_in_pipe == adapter_tuple[0]:
             index_to_access = index_in_list
             break
     session_pipeline.pop(index_to_access)
 
-def update_g_pipeline_elements(session_pipeline, adapter_identifier_in_pipe, input_n_output, adapter_attribute, value):
-    ''' g_pipeline is a list
+def update_session_pipeline_fields(session_pipeline, adapter_identifier_in_pipe, input_n_output, adapter_attribute, value):
+    ''' Update the (local) session pipeline adapter fields (content). '''
+
+    ''' session_pipeline is a list
         ...[adapter_identifier_in_pipe] is an element in the pipe
-        ...[0] holds the index, ...[1] hold the instance of the adapter '''
+        ...[0] holds the index, ...[1] holds the instance of the adapter (AdapterElement) '''
+
+    # find the access index to the pipeline
     for index_in_list, adapter_tuple in enumerate(session_pipeline):
         if adapter_identifier_in_pipe == adapter_tuple[0]:
             index_to_access = index_in_list
             break
-
-    # inputs/outputs hold a dictionary of attributes, each one is a dictionary by itself
+    # inputs/outputs hold a dictionary of attributes, each is a dictionary by itself
     if input_n_output:
         session_pipeline[index_to_access][1].inputs[adapter_attribute]['val'] = value
     else:
         session_pipeline[index_to_access][1].outputs[adapter_attribute]['val'] = value
 
 def execute_pipeline(session_pipeline):
+    ''' Execute the (local) session pipeline. '''
+
     global g_adapterdb
 
     inputs = {}
@@ -261,7 +270,7 @@ def execute_pipeline(session_pipeline):
     
     # Pipeline Object
     pipeline = Pipeline(pipeline_classes, wired=pipeline_wires)
-    # TODO: print to screen and show errors/results
+    # TODO: wrap with 'try' and print errors/results (return False)
     pipeline.exec(inputs)
 
     # TODO: create 'enums' for pipeline execution status
@@ -271,6 +280,9 @@ def execute_pipeline(session_pipeline):
 
 @app.route('/pipeline', methods=['GET', 'POST'])
 def pipeline():
+    ''' Generates an interactive view of the pipeline elements (adapters)
+    during its construction and execution.  '''
+
     global g_adapterdb
 
     # init wire 'instances' of graphs
@@ -335,7 +347,7 @@ def pipeline():
 
         # check if user submitted an adapter
         elif FORM_ADPTR_SUBMT in request.args:
-            new_adapter = (get_next_index_in_g_pipeline(sesh_pip), deepcopy(adp))
+            new_adapter = (get_next_index_in_session_pipeline(sesh_pip), deepcopy(adp))
             sesh_pip.append(new_adapter)
 
         # check if user updated any field in pipeline (or graph instance added)
@@ -356,13 +368,13 @@ def pipeline():
 
                     element_id_in_pipeline = int(arg_name.split('.')[0])
                     element_attr_in_pipeline = arg_name.split('.')[2]
-                    update_g_pipeline_elements(sesh_pip, element_id_in_pipeline, input_not_output, element_attr_in_pipeline, arg_val)
+                    update_session_pipeline_fields(sesh_pip, element_id_in_pipeline, input_not_output, element_attr_in_pipeline, arg_val)
 
         # iterate over args and check is something should be removed
         for arg_name, arg_val in request.args.items():
             if FORM_ADPTR_RMV in arg_name:
                 element_id_in_pipeline = int(arg_name.split('.')[0])
-                remove_adapter_from_pipeline(sesh_pip, element_id_in_pipeline)
+                remove_adapter_from_session_pipeline(sesh_pip, element_id_in_pipeline)
                 break
 
         # execute pipeline if user requested that
@@ -376,12 +388,15 @@ def pipeline():
 
     session['sesh_pip'] = dumps(sesh_pip, cls=CustomEncoder)
     session['sesh_g_instancs'] = dumps(sesh_g_instancs)
+
     return render_template('pipeline.html', adp_dropdown_list=list_of_adapter_names, \
         adp_dropdown_selected_str=adp_id_str_chosen, adp_dropdown_selected_inst=adp, \
         pipeline_adapters=sesh_pip, pipeline_exe_msg=pip_exe_msg, graphs_dropdown_list=sesh_g_instancs)
 
 @app.route('/browse')
 def browse():
+    ''' Generates an view of all available pipeline elements (adapters). '''
+
     global g_adapterdb
     aptrs_cat = g_adapterdb.get_list_of_adapters()
     return render_template('browse.html', adapters_catalog=aptrs_cat)
@@ -389,6 +404,8 @@ def browse():
 # Set "homepage" to index.html
 @app.route('/')
 def index():
+    ''' Generates the homepage. '''
+
     return render_template('index.html')
 
 # --- main --------------------------------------------------------------------
