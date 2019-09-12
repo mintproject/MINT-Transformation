@@ -73,9 +73,9 @@ class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
         flood_ndarray = xr.DataArray(
             flood_ndarray,
             coords=[("time",
-                     [datetime.date(self.start_time.year, month, self.start_time.day).strftime('%Y-%m-%dT%H:%M:%SZ') for
-                      month in range(1, 13)]),
-                    ("X", xlong), ("Y", ylat)],
+                     np.array([datetime.date(self.start_time.year, month, self.start_time.day).strftime('%Y-%m-%dT%H:%M:%SZ') for
+                      month in range(1, 13)])),
+                    ("X", np.array(xlong)), ("Y", np.array(ylat))],
             attrs={
                 "title": "Surface Inundation",
                 "standard_name": "land_water_surface__height_flood_index",
@@ -91,7 +91,7 @@ class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
         time_resolution = "P1M"
 
         flood_ndarray = xr.Dataset(
-            data_vars={"flood": flood_ndarray},
+            data_vars={"flood": flood_ndarray.load()},
             attrs={
                 "title": "Monthly gridded surface inundation for Pongo River in 2017",
                 "comment": "Outputs generated from the workflow",
