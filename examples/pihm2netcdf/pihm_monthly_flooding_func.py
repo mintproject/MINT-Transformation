@@ -49,8 +49,8 @@ class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
         for node in self.graph.iter_nodes():
             xi, yi = point2idx[node.data["mint:index"]]
             recorded_at = (
-                    self.start_time + datetime.timedelta(minutes=node.data["schema:recordedAt"] - 1440)
-            ).month - 1
+                                  self.start_time + datetime.timedelta(minutes=node.data["schema:recordedAt"] - 1440)
+                          ).month - 1
 
             flooding_value = 1.0 if node.data["mint:flooding"] >= self.threshold else 0.0
 
@@ -74,7 +74,10 @@ class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
 
         flood_ndarray = xr.DataArray(
             flood_ndarray,
-            coords=[("month", [i for i in range(1, 13)]), ("X", xlong), ("Y", ylat)],
+            coords=[("time",
+                     [datetime.date(self.start_time.year, month, self.start_time.day).strftime('%Y-%m-%dT%H:%M:%SZ') for
+                      month in range(1, 13)]),
+                    ("X", xlong), ("Y", ylat)],
             attrs={
                 "title": "Surface Inundation",
                 "standard_name": "land_water_surface__height_flood_index",
@@ -97,12 +100,12 @@ class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
                 "comment": "Outputs generated from the workflow",
                 "naming_authority": "edu.isi.workflow",
                 "id": "/MINT/NETCDF/MONTHLY_GRIDDED_SURFACE_INUNDATION_2017",
-                "date_created": str(datetime.datetime.now()),
-                "date_modified": str(datetime.datetime.now()),
+                "date_created": datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+                "date_modified": datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
                 "creator_name": "Minh Pham",
                 "creator_email": "minhpham@usc.edu",
-                "time_coverage_start": str(self.start_time),
-                "time_coverage_end": str(self.end_time),
+                "time_coverage_start": self.start_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                "time_coverage_end": self.end_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
                 "time_coverage_resolution": time_resolution,
             },
         )
