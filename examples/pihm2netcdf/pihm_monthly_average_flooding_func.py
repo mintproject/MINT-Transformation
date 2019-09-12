@@ -61,10 +61,8 @@ class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
         for (i, j, k), val in indices.items():
             flood_ndarray[i][j][k] = np.mean(val)
 
-        xlong = np.asarray(xlong, dtype=np.float32)
-        ylat = np.asarray(ylat, dtype=np.float32)
-        time = np.asarray([datetime.date(self.start_time.year, month, self.start_time.day).strftime('%Y-%m-%dT%H:%M:%SZ') for
-                      month in range(1, 13)])
+        time = [datetime.date(self.start_time.year, month, self.start_time.day).strftime('%Y-%m-%dT%H:%M:%SZ') for
+                      month in range(1, 13)]
 
         flood_var = xr.DataArray(
             flood_ndarray,
@@ -80,24 +78,24 @@ class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
                 "fill_value": -999.0,
             },
         )
-        time_var = xr.DataArray(time, coords=[("time", time)])
-        xlong_var = xr.DataArray(xlong, coords=[("X", xlong)], attrs={
-            "standard_name": "longitude",
-            "long_name": "longitude",
-            "axis": "X",
-            "units": "degrees_east",
-        })
-        ylat_var = xr.DataArray(ylat, coords=[("Y", ylat)], attrs={
-            "standard_name": "latitude",
-            "long_name": "latitude",
-            "axis": "Y",
-            "units": "degrees_north",
-        })
+        # time_var = xr.DataArray(time, coords=[("time", time)])
+        # xlong_var = xr.DataArray(xlong, coords=[("X", xlong)], attrs={
+        #     "standard_name": "longitude",
+        #     "long_name": "longitude",
+        #     "axis": "X",
+        #     "units": "degrees_east",
+        # })
+        # ylat_var = xr.DataArray(ylat, coords=[("Y", ylat)], attrs={
+        #     "standard_name": "latitude",
+        #     "long_name": "latitude",
+        #     "axis": "Y",
+        #     "units": "degrees_north",
+        # })
 
         time_resolution = "P1M"
 
         flood_dataset = xr.Dataset(
-            data_vars={"flood": flood_var, "time": time_var, "X": xlong_var, "Y": ylat_var},
+            data_vars={"flood": flood_var},
             attrs={
                 "title": "Monthly gridded surface inundation for Pongo River in 2017",
                 "comment": "Outputs generated from the workflow",
@@ -112,6 +110,22 @@ class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
                 "time_coverage_resolution": time_resolution,
             },
         )
+
+        x_attrs = {
+            "standard_name": "longitude",
+            "long_name": "longitude",
+            "axis": "X",
+            "units": "degrees_east",
+        }
+        y_attrs = {
+            "standard_name": "latitude",
+            "long_name": "latitude",
+            "axis": "Y",
+            "units": "degrees_north",
+        }
+
+        flood_dataset.X.attrs.update(x_attrs)
+        flood_dataset.Y.attrs.update(y_attrs)
 
         return {"data": flood_dataset}
 

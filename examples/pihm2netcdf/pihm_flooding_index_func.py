@@ -104,7 +104,7 @@ class PihmFloodingIndexFunc(IFunc):
         matrix = np.ones((len(ylat), len(xlong))) * -999.0
 
         for node in self.graph.iter_nodes():
-            xi = bisect.bisect(xlong, float(node.data["schema:latitude"])) - 1
+            xi = bisect.bisect(xlong, float(node.data["schema:longitude"])) - 1
             yi = bisect.bisect(ylat, float(node.data["schema:latitude"])) - 1
             point2idx[int(node.data["mint:index"])] = (xi, yi)
 
