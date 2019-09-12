@@ -44,5 +44,7 @@ class MintNetCDFWriteFunc(IFunc):
         self.ndarray.Y.attrs.update(y_attrs)
         self.ndarray.to_netcdf(self.output_file)
 
+        return {"result": True}
+
     def validate(self) -> bool:
         return True

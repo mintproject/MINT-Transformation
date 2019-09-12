@@ -64,7 +64,7 @@ class PihmFloodingIndexFunc(IFunc):
 
         flood_ndarray = xr.DataArray(
             flood_ndarray,
-            coords=[("time", [i for i in range(0, 366)]), ("Y", ylat), ("X", xlong)],
+            coords=[("time", [i for i in range(0, 366)]), ("X", xlong), ("Y", ylat)],
             attrs={
                 "standard_name": "land_water_surface__height_flood_index",
                 "long_name": "Flooding Index",
@@ -88,9 +88,8 @@ class PihmFloodingIndexFunc(IFunc):
     def _points2matrix(
         self, mean_space: Union[str, float] = "auto"
     ) -> Tuple[np.ndarray, Dict[int, Tuple[int, int]], List[float], List[float]]:
-        print(self.graph.nodes)
         ylat = sorted({float(n.data["schema:latitude"]) for n in self.graph.iter_nodes()})
-        xlong = sorted({float(n.data["schema:latitude"]) for n in self.graph.iter_nodes()})
+        xlong = sorted({float(n.data["schema:longitude"]) for n in self.graph.iter_nodes()})
 
         if mean_space == "auto":
             mean_space_long = np.mean([i - j for i, j in zip(xlong[1:], xlong[:-1])])

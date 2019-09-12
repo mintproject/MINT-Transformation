@@ -62,10 +62,19 @@ class Pipeline(object):
                             continue
                         raise e
 
-            func = func_cls(**func_args)
+            try:
+                func = func_cls(**func_args)
+            except TypeError:
+                print(f"Cannot initialize cls: {func_cls}")
+                raise
+
             result = func.exec()
             for argname in func_cls.outputs.keys():
-                output[WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)] = result[argname]
+                try:
+                    output[WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)] = result[argname]
+                except TypeError:
+                    print(f"Error while wiring output of {func_cls} from {argname} to {WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)}")
+                    raise
 
         return output
 
