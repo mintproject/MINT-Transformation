@@ -1,9 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import datetime
+from collections import defaultdict
 
 import numpy as np
 import xarray as xr
+from netCDF4 import Dataset
 from drepr import Graph
 from scipy import stats
 
@@ -11,8 +13,8 @@ from dtran import ArgType
 from examples.pihm2netcdf.pihm_flooding_index_func import PihmFloodingIndexFunc
 
 
-class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
-    id = "pihm_monthly_flooding_func"
+class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
+    id = "pihm_monthly_average_flooding_func"
     inputs = {
         "graph": ArgType.Graph(None),
         "mean_space": ArgType.String,
@@ -44,54 +46,58 @@ class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
         matrix, point2idx, xlong, ylat = self._points2matrix(self.mean_space)
         max_flooding = 0
 
-        flood_ndarray = np.ones((12, len(xlong), len(ylat)), dtype=object) * -999.0
+        indices = defaultdict(lambda: [])
+        flood_ndarray = np.ones((12, len(xlong), len(ylat)), dtype=np.float32) * -999.0
 
         for node in self.graph.iter_nodes():
             xi, yi = point2idx[node.data["mint:index"]]
             recorded_at = (self.start_time + datetime.timedelta(minutes=node.data["schema:recordedAt"] - 1440)).month - 1
 
-            flooding_value = 1.0 if node.data["mint:flooding"] >= self.threshold else 0.0
-
+            flooding_value = node.data["mint:flooding"]
             max_flooding = max(max_flooding, flooding_value)
 
-            if flood_ndarray[recorded_at][xi][yi] == -999.0:
-                flood_ndarray[recorded_at][xi][yi] = [flooding_value]
-            else:
-                flood_ndarray[recorded_at][xi][yi].append(flooding_value)
+            indices[(recorded_at, xi, yi)].append(flooding_value)
 
-        for i in range(12):
-            for j in range(len(xlong)):
-                for k in range(len(ylat)):
-                    flood_ndarray[i][j][k] = np.mean(flood_ndarray[i][j][k])
+        for (i, j, k), val in indices.items():
+            flood_ndarray[i][j][k] = np.mean(val)
 
-        if max_flooding == 0:
-            for i in range(12):
-                for j in range(len(xlong)):
-                    for k in range(len(ylat)):
-                        flood_ndarray[i][j][k] = 0
+        xlong = np.asarray(xlong, dtype=np.float32)
+        ylat = np.asarray(ylat, dtype=np.float32)
+        time = np.asarray([datetime.date(self.start_time.year, month, self.start_time.day).strftime('%Y-%m-%dT%H:%M:%SZ') for
+                      month in range(1, 13)])
 
-        flood_ndarray = xr.DataArray(
+        flood_var = xr.DataArray(
             flood_ndarray,
-            coords=[("time",
-                     [datetime.date(self.start_time.year, month, self.start_time.day).strftime('%Y-%m-%dT%H:%M:%SZ') for
-                      month in range(1, 13)]),
-                    ("X", xlong), ("Y", ylat)],
+            coords=[("time", time), ("X", xlong), ("Y", ylat)],
             attrs={
                 "title": "Surface Inundation",
                 "standard_name": "land_water_surface__height_flood_index",
                 "long_name": "Surface Inundation",
                 "units": "m",
                 "valid_min": 0.0,
-                "valid_max": 1.0,
+                "valid_max": np.max(flood_ndarray),
                 "missing_value": -999.0,
                 "fill_value": -999.0,
             },
         )
+        time_var = xr.DataArray(time, coords=[("time", time)])
+        xlong_var = xr.DataArray(xlong, coords=[("X", xlong)], attrs={
+            "standard_name": "longitude",
+            "long_name": "longitude",
+            "axis": "X",
+            "units": "degrees_east",
+        })
+        ylat_var = xr.DataArray(ylat, coords=[("Y", ylat)], attrs={
+            "standard_name": "latitude",
+            "long_name": "latitude",
+            "axis": "Y",
+            "units": "degrees_north",
+        })
 
         time_resolution = "P1M"
 
-        flood_ndarray = xr.Dataset(
-            data_vars={"flood": flood_ndarray},
+        flood_dataset = xr.Dataset(
+            data_vars={"flood": flood_var, "time": time_var, "X": xlong_var, "Y": ylat_var},
             attrs={
                 "title": "Monthly gridded surface inundation for Pongo River in 2017",
                 "comment": "Outputs generated from the workflow",
@@ -107,23 +113,7 @@ class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
             },
         )
 
-        x_attrs = {
-            "standard_name": "longitude",
-            "long_name": "longitude",
-            "axis": "X",
-            "units": "degrees_east",
-        }
-        y_attrs = {
-            "standard_name": "latitude",
-            "long_name": "latitude",
-            "axis": "Y",
-            "units": "degrees_north",
-        }
-
-        flood_ndarray.X.attrs.update(x_attrs)
-        flood_ndarray.Y.attrs.update(y_attrs)
-
-        return {"data": flood_ndarray}
+        return {"data": flood_dataset}
 
     def validate(self) -> bool:
         return True

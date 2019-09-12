@@ -23,11 +23,10 @@ class MintNetCDFWriteFunc(IFunc):
         output_file: Union[str, Path],
     ):
         self.ndarray = data
-
         self.output_file = Path(output_file)
 
     def exec(self) -> dict:
-        self.ndarray.to_netcdf(self.output_file)
+        self.ndarray.to_netcdf(self.output_file, format="NETCDF4", encoding={"flood": {"_FillValue": -999.0}})
 
         return {"result": True}
 
