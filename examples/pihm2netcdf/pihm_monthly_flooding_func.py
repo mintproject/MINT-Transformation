@@ -17,6 +17,7 @@ class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
         "graph": ArgType.Graph(None),
         "mean_space": ArgType.String,
         "start_time": ArgType.DateTime,
+        "end_time": ArgType.DateTime,
         "threshold": ArgType.Number,
     }
     outputs = {"data": ArgType.NDimArray}
@@ -43,29 +44,37 @@ class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
         matrix, point2idx, xlong, ylat = self._points2matrix(self.mean_space)
         max_flooding = 0
 
-        flood_ndarray = np.ones((365, len(xlong), len(ylat), 1)) * -999.0
+        flood_ndarray = np.ones((12, len(xlong), len(ylat)), dtype=object) * -999.0
 
-        for node in self.surf_graph.iter_nodes():
+        for node in self.graph.iter_nodes():
             xi, yi = point2idx[node.data["mint:index"]]
             recorded_at = (
                     self.start_time + datetime.timedelta(minutes=node.data["schema:recordedAt"] - 1440)
-            ).month
+            ).month - 1
 
-            flooding_value = 1.0 if node["mint:flooding"] >= self.threshold else 0.0
+            flooding_value = 1.0 if node.data["mint:flooding"] >= self.threshold else 0.0
 
             max_flooding = max(max_flooding, flooding_value)
 
-            if flood_ndarray[recorded_at][xi][yi][0] == -999.0:
-                flood_ndarray[recorded_at][xi][yi][0] = [flooding_value]
+            if flood_ndarray[recorded_at][xi][yi] == -999.0:
+                flood_ndarray[recorded_at][xi][yi] = [flooding_value]
             else:
-                flood_ndarray[recorded_at][xi][yi][0].append(flooding_value)
+                flood_ndarray[recorded_at][xi][yi].append(flooding_value)
 
-        for x in np.nditer(flood_ndarray, op_flags=["readwrite"]):
-            x[...] = np.mean(x)
+        for i in range(12):
+            for j in range(len(xlong)):
+                for k in range(len(ylat)):
+                    flood_ndarray[i][j][k] = np.mean(flood_ndarray[i][j][k])
+
+        if max_flooding == 0:
+            for i in range(12):
+                for j in range(len(xlong)):
+                    for k in range(len(ylat)):
+                        flood_ndarray[i][j][k] = 0
 
         flood_ndarray = xr.DataArray(
             flood_ndarray,
-            coords=[("time", [i for i in range(0, 13)]), ("Y", ylat), ("X", xlong)],
+            coords=[("month", [i for i in range(1, 13)]), ("Y", ylat), ("X", xlong)],
             attrs={
                 "title": "Surface Inundation",
                 "standard_name": "land_water_surface__height_flood_index",
@@ -92,11 +101,27 @@ class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
                 "date_modified": str(datetime.datetime.now()),
                 "creator_name": "Minh Pham",
                 "creator_email": "minhpham@usc.edu",
-                "time_coverage_start": self.start_time,
-                "time_coverage_end": self.end_time,
+                "time_coverage_start": str(self.start_time),
+                "time_coverage_end": str(self.end_time),
                 "time_coverage_resolution": time_resolution,
             },
         )
+
+        x_attrs = {
+            "standard_name": "longitude",
+            "long_name": "longitude",
+            "axis": "X",
+            "units": "degrees_east",
+        }
+        y_attrs = {
+            "standard_name": "latitude",
+            "long_name": "latitude",
+            "axis": "Y",
+            "units": "degrees_north",
+        }
+
+        flood_ndarray.X.attrs.update(x_attrs)
+        flood_ndarray.Y.attrs.update(y_attrs)
 
         return {"data": flood_ndarray}
 
