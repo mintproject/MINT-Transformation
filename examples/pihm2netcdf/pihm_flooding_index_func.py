@@ -88,6 +88,7 @@ class PihmFloodingIndexFunc(IFunc):
     def _points2matrix(
         self, mean_space: Union[str, float] = "auto"
     ) -> Tuple[np.ndarray, Dict[int, Tuple[int, int]], List[float], List[float]]:
+        print(self.graph.nodes)
         ylat = sorted({float(n.data["schema:latitude"]) for n in self.graph.iter_nodes()})
         xlong = sorted({float(n.data["schema:latitude"]) for n in self.graph.iter_nodes()})
 

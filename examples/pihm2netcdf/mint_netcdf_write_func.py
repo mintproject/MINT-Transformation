@@ -27,9 +27,22 @@ class MintNetCDFWriteFunc(IFunc):
         self.output_file = Path(output_file)
 
     def exec(self) -> dict:
-        self.ndarray.to_netcdf(self.output_file)
+        x_attrs = {
+            "standard_name": "longitude",
+            "long_name": "longitude",
+            "axis": "X",
+            "units": "degrees_east",
+        }
+        y_attrs = {
+            "standard_name": "latitude",
+            "long_name": "latitude",
+            "axis": "Y",
+            "units": "degrees_north",
+        }
 
-        return {"result": True}
+        self.ndarray.X.attrs.update(x_attrs)
+        self.ndarray.Y.attrs.update(y_attrs)
+        self.ndarray.to_netcdf(self.output_file)
 
     def validate(self) -> bool:
         return True

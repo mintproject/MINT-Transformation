@@ -30,10 +30,8 @@ if __name__ == "__main__":
         Cell2PointFunc.I.cell_file: wdir / "GISlayer" / "Cells.shp",
         Cell2PointFunc.I.point_file: wdir / "surf_points.csv",
         PihmMonthlyFloodingFunc.I.mean_space: 0.05,
-        PihmMonthlyFloodingFunc.I.start_time: datetime.strptime("2017-01-01 00:00:00", '%Y-%m-%d %H:%M:%S'),
-        PihmMonthlyFloodingFunc.I.end_time: datetime.strptime("2017-12-30 00:00:00", '%Y-%m-%d %H:%M:%S'),
-        PihmMonthlyFloodingFunc.I.threshold: 0.05,
-        MintNetCDFWriteFunc.I.output_file: "MONTHLY_GRIDDED_SURFACE_INUNDATION_2017.nc"
+        PihmMonthlyFloodingFunc.I.start_time: datetime.now(),
+        PihmMonthlyFloodingFunc.I.threshold: 0.05
     }
 
     outputs = pipeline.exec(inputs)
