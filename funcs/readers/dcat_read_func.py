@@ -38,8 +38,6 @@ class DcatReadFunc(IFunc):
             subprocess.check_call(f'wget {resource_url} -O {file_full_path}', shell=True)
             self.resources[resource_id] = file_full_path
 
-        # TODO: fix. file_full_path should be a list, currently a single str overrided
-
         self.repr = DRepr.parse(results[0]['dataset_metadata']['layout'])
 
     def exec(self) -> dict:
