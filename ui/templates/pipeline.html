@@ -4,20 +4,26 @@
 
 <div class="jumbotron vertical-center">
 
-  {% if pipeline_exe_msg != "" %}
-    <div class="alert alert-success" role="alert">
-    {{pipeline_exe_msg}}
+  {% if pipeline_exe_msg[0] != '' %}
+    <div class="alert alert-{{pipeline_exe_msg[1]}}" role="alert">
+    {{pipeline_exe_msg[0]}}
     </div>
   {% endif %}
 
+  <h3>Load Pipeline Configuration:</h3>
+  <form method="post" enctype="multipart/form-data">
+    <input type="file" name="loadfile">
+    <input type="submit" value="Upload">
+  </form>
+
+  </br>
   <form name="top_res" action="/pipeline" method="GET">
 
   <h2>Pipeline</h2></br>
 
   <button name="clear_pipe" class="btn btn-primary">Clear Pipeline</button>
   </br></br>
-  <input name="pipe_config_load_file" type="text">
-  <button name="load_pipe" class="btn btn-primary">Load Pipeline Configuration</button>
+
   </br></br>
   <input name="pipe_config_save_file" type="text">
   <button name="save_pipe" class="btn btn-primary">Save Pipeline Configuration</button>
