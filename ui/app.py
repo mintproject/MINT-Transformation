@@ -4,10 +4,16 @@ import funcs
 from funcs import *
 from dtran import Pipeline
 from json import dumps, JSONEncoder, JSONDecoder
+from uuid import uuid4
+from os.path import join
+from pathlib import Path
+
+UPLOAD_FOLDER = '/tmp/mint_dt/'
 
 app = Flask(__name__)
 app.secret_key = 'MFwwDQYJKoZIhvcNAQEBBQAD'
 app.config['SESSION_TYPE'] = 'filesystem'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 KEY_DESC           = 'description'
 KEY_MODL           = '__module__'
@@ -21,9 +27,7 @@ FORM_ADPTR_RMV     = 'remove_from_pipe'
 FORM_PIP_UPDT      = 'update_pipe'
 FORM_PIP_CLR       = 'clear_pipe'
 FORM_PIP_EXE       = 'exe_pipe'
-FORM_PIP_LOAD      = 'load_pipe'
 FORM_PIP_SAVE      = 'save_pipe'
-FORM_PIP_FILE_LOAD = 'pipe_config_load_file'
 FORM_PIP_FILE_SAVE = 'pipe_config_save_file'
 
 GRAPH_INST_W_REPR  = 'GraphInstanceWire'
@@ -37,7 +41,20 @@ class CustomEncoder(JSONEncoder):
     ''' Custom encoder used serialize dictionaries and classes (i.e. AdapterElement). '''
 
     def default(self, o):
+        ''' Default encoder. '''
+
         return {'__{}__'.format(o.__class__.__name__): o.__dict__}
+
+def upload_file(file):
+    ''' Upload user file to local machine. '''
+
+    Path(app.config['UPLOAD_FOLDER']).mkdir(exist_ok=True, parents=True)
+    if file.filename != '' and file:
+        filename = str(uuid4())
+        full_path_filename = join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(full_path_filename)
+        return full_path_filename
+    return ''
 
 def AdapterElement_from_json(json_obj):
     ''' Custom decoder used to deserialize AdapterElement class. '''
@@ -295,6 +312,20 @@ def execute_session_pipeline(session_pipeline):
     # TODO: create 'enums' for pipeline execution status
     return True
 
+def load_configuration_file(file_path):
+    ''' Load a pipeline configuation file into view. '''
+
+    sesh_pip = list()
+    session['sesh_g_instancs'] = dumps(['', GRAPH_INST_ADD])
+
+    # load a pipeline configuration from file
+    with open(file_path, 'r') as read_file:
+        for line_i, line_d in enumerate(read_file):
+            adapter_el = JSONDecoder(object_hook = AdapterElement_from_json).decode(line_d)
+            load_adapter = (line_i, adapter_el)
+            sesh_pip.append(load_adapter)
+    session['sesh_pip'] = dumps(sesh_pip, cls=CustomEncoder)
+
 # --- entrypoints -------------------------------------------------------------
 
 @app.route('/pipeline', methods=['GET', 'POST'])
@@ -303,6 +334,20 @@ def pipeline():
     during its construction and execution.  '''
 
     global g_adapterdb
+    pip_exe_msg = ('', '')
+
+    # we call post only when we upload data
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'loadfile' not in request.files:
+            pip_exe_msg = ('No file part given', 'danger')
+        file = request.files['loadfile']
+        full_path_fname = upload_file(file)
+        if full_path_fname != '':
+            load_configuration_file(full_path_fname, )
+            pip_exe_msg = ('Uploaded file successfully!', 'success')
+        else:
+            pip_exe_msg = ('Failed to upload file...', 'danger')
 
     # init wire 'instances' of graphs
     sesh_g_instancs = session.get('sesh_g_instancs', None)
@@ -321,7 +366,6 @@ def pipeline():
     # get list of adapters and their names
     list_of_adapters = g_adapterdb.get_list_of_adapters()
     list_of_adapter_names = g_adapterdb.get_list_of_adapter_names_for_dropdown()
-    pip_exe_msg = ""
 
     # set default option
     adp_id_str_chosen = list_of_adapter_names[0]
@@ -330,80 +374,64 @@ def pipeline():
         adp_id_str_chosen = request.args.get(FORM_ADPTR_SLCTD)
     adp = list_of_adapters[int(adp_id_str_chosen.split(' ')[0])]
 
-    # check if user loaded a pipeline config file
-    if FORM_PIP_LOAD in request.args and \
-        FORM_PIP_FILE_LOAD in request.args and \
-        request.args[FORM_PIP_FILE_LOAD] != '': 
+    if request.method != 'POST':
+        # TODO: change to 'download' flow (not save to local)
+        if FORM_PIP_SAVE in request.args and \
+            FORM_PIP_FILE_SAVE in request.args and \
+            request.args[FORM_PIP_FILE_SAVE] != '': # or save a pipeline config file
 
-        sesh_pip.clear()
-        session['sesh_g_instancs'] = dumps(['', GRAPH_INST_ADD])
-
-        # load a pipeline configuration from file
-        input_config_file = request.args[FORM_PIP_FILE_LOAD]
-        with open(input_config_file, 'r') as read_file:
-            for line_i, line_d in enumerate(read_file):
-                adapter_el = JSONDecoder(object_hook = AdapterElement_from_json).decode(line_d)
-                load_adapter = (line_i, adapter_el)
-                sesh_pip.append(load_adapter)
-        sesh_g_instancs = JSONDecoder().decode(session['sesh_g_instancs'])
-
-    elif FORM_PIP_SAVE in request.args and \
-        FORM_PIP_FILE_SAVE in request.args and \
-        request.args[FORM_PIP_FILE_SAVE] != '': # or save a pipeline config file
-
-        # save a pipeline configuration to file
-        output_config_file = request.args[FORM_PIP_FILE_SAVE]
-        # TODO: create path if it doesn't exist
-        with open(output_config_file, 'w') as write_file:
-            for _, pipadp in sesh_pip:
-                write_file.write(dumps(pipadp, cls=CustomEncoder) + '\n')
-    else:
-
-        # check if user cleared the pipeline
-        if FORM_PIP_CLR in request.args:
-            sesh_pip.clear()
-            sesh_g_instancs = ['', GRAPH_INST_ADD]
-
-        # check if user submitted an adapter
-        elif FORM_ADPTR_SUBMT in request.args:
-            new_adapter = (get_next_index_in_session_pipeline(sesh_pip), deepcopy(adp))
-            sesh_pip.append(new_adapter)
-
-        # check if user updated any field in pipeline (or graph instance added)
-        elif FORM_PIP_UPDT in request.args or \
-            was_graph_instance_added(request.args):
-
-            # iterate over adapter-cards
-            for arg_name, arg_val in request.args.items():
-                if ('inputs' in arg_name or 'outputs' in arg_name) and arg_val != '':
-
-                    input_not_output = True
-                    if 'outputs' in arg_name:
-                        input_not_output = False
-
-                    if GRAPH_INST_ADD == arg_val:
-                        sesh_g_instancs.append(GRAPH_INST_W_REPR + str(len(sesh_g_instancs) - 1))
-                        arg_val = sesh_g_instancs[-1]
-
-                    element_id_in_pipeline = int(arg_name.split('.')[0])
-                    element_attr_in_pipeline = arg_name.split('.')[2]
-                    update_session_pipeline_fields(sesh_pip, element_id_in_pipeline, input_not_output, element_attr_in_pipeline, arg_val)
-
-        # iterate over args and check is something should be removed
-        for arg_name, arg_val in request.args.items():
-            if FORM_ADPTR_RMV in arg_name:
-                element_id_in_pipeline = int(arg_name.split('.')[0])
-                remove_adapter_from_session_pipeline(sesh_pip, element_id_in_pipeline)
-                break
-
-        # execute pipeline if user requested that
-        if FORM_PIP_EXE in request.args:
-            exec_sts = execute_session_pipeline(sesh_pip)
-            if exec_sts:
-                pip_exe_msg = "Pipeline execution succeeded!"
-            else:
-                pip_exe_msg = "Oops! Pipeline execution failed, see log..."
+            # save a pipeline configuration to file
+            output_config_file = request.args[FORM_PIP_FILE_SAVE]
             
+            with open(output_config_file, 'w') as write_file:
+                for _, pipadp in sesh_pip:
+                    write_file.write(dumps(pipadp, cls=CustomEncoder) + '\n')
+        else:
+
+            # check if user cleared the pipeline
+            if FORM_PIP_CLR in request.args:
+                sesh_pip.clear()
+                sesh_g_instancs = ['', GRAPH_INST_ADD]
+
+            # check if user submitted an adapter
+            elif FORM_ADPTR_SUBMT in request.args:
+                new_adapter = (get_next_index_in_session_pipeline(sesh_pip), deepcopy(adp))
+                sesh_pip.append(new_adapter)
+
+            # check if user updated any field in pipeline (or graph instance added)
+            elif FORM_PIP_UPDT in request.args or \
+                was_graph_instance_added(request.args):
+
+                # iterate over adapter-cards
+                for arg_name, arg_val in request.args.items():
+                    if ('inputs' in arg_name or 'outputs' in arg_name) and arg_val != '':
+
+                        input_not_output = True
+                        if 'outputs' in arg_name:
+                            input_not_output = False
+
+                        if GRAPH_INST_ADD == arg_val:
+                            sesh_g_instancs.append(GRAPH_INST_W_REPR + str(len(sesh_g_instancs) - 1))
+                            arg_val = sesh_g_instancs[-1]
+
+                        element_id_in_pipeline = int(arg_name.split('.')[0])
+                        element_attr_in_pipeline = arg_name.split('.')[2]
+                        update_session_pipeline_fields(sesh_pip, element_id_in_pipeline, input_not_output, element_attr_in_pipeline, arg_val)
+
+            # iterate over args and check is something should be removed
+            for arg_name, arg_val in request.args.items():
+                if FORM_ADPTR_RMV in arg_name:
+                    element_id_in_pipeline = int(arg_name.split('.')[0])
+                    remove_adapter_from_session_pipeline(sesh_pip, element_id_in_pipeline)
+                    break
+
+            # execute pipeline if user requested that
+            if FORM_PIP_EXE in request.args:
+                exec_sts = execute_session_pipeline(sesh_pip)
+                if exec_sts:
+                    pip_exe_msg = ("Pipeline execution succeeded!", 'success')
+                else:
+                    pip_exe_msg = ("Oops! Pipeline execution failed, see log...", 'danger')
 
     session['sesh_pip'] = dumps(sesh_pip, cls=CustomEncoder)
     session['sesh_g_instancs'] = dumps(sesh_g_instancs)
