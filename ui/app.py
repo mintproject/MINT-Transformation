@@ -1,12 +1,13 @@
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, session, send_file
 from copy import deepcopy
+from io import BytesIO
 import funcs
 from funcs import *
 from dtran import Pipeline
 from json import dumps, JSONEncoder, JSONDecoder
-from uuid import uuid4
-from os.path import join
+from os.path import join, splitext
 from pathlib import Path
+from datetime import datetime
 
 UPLOAD_FOLDER = '/tmp/mint_dt/'
 
@@ -27,8 +28,6 @@ FORM_ADPTR_RMV     = 'remove_from_pipe'
 FORM_PIP_UPDT      = 'update_pipe'
 FORM_PIP_CLR       = 'clear_pipe'
 FORM_PIP_EXE       = 'exe_pipe'
-FORM_PIP_SAVE      = 'save_pipe'
-FORM_PIP_FILE_SAVE = 'pipe_config_save_file'
 
 GRAPH_INST_W_REPR  = 'GraphInstanceWire'
 GRAPH_INST_ADD     = 'Create graph instance'
@@ -50,7 +49,9 @@ def upload_file(file):
 
     Path(app.config['UPLOAD_FOLDER']).mkdir(exist_ok=True, parents=True)
     if file.filename != '' and file:
-        filename = str(uuid4())
+        _, fname_ext = splitext(file.filename)
+        fname_prefix = datetime.now().strftime("%Y_%m_%d__%H_%M_%S")
+        filename = str(fname_prefix + fname_ext)
         full_path_filename = join(app.config['UPLOAD_FOLDER'], filename)
         file.save(full_path_filename)
         return full_path_filename
@@ -312,8 +313,29 @@ def execute_session_pipeline(session_pipeline):
     # TODO: create 'enums' for pipeline execution status
     return True
 
+def download_configuration_file():
+    ''' Save a pipeline configuration from web browser view. '''
+
+    # init session pipeline
+    sesh_pip = session.get('sesh_pip', None)
+    if not sesh_pip:
+        sesh_pip = list()
+    else:
+        sesh_pip = JSONDecoder(object_hook = AdapterElement_from_json).decode(session['sesh_pip'])
+
+    tempfile = BytesIO()
+    for _, pipadp in sesh_pip:
+        tempfile.write((dumps(pipadp, cls=CustomEncoder) + '\n').encode())
+    tempfile.seek(0)
+    output_filename = datetime.now().strftime("pip_cfg__%Y_%m_%d__%H_%M_%S.json")
+    return send_file(tempfile,
+                     as_attachment=True,
+                     attachment_filename=output_filename,
+                     mimetype="application/json")
+
+
 def load_configuration_file(file_path):
-    ''' Load a pipeline configuation file into view. '''
+    ''' Load a pipeline configuation file into browser view. '''
 
     sesh_pip = list()
     session['sesh_g_instancs'] = dumps(['', GRAPH_INST_ADD])
@@ -339,15 +361,17 @@ def pipeline():
     # we call post only when we upload data
     if request.method == 'POST':
         # check if the post request has the file part
-        if 'loadfile' not in request.files:
-            pip_exe_msg = ('No file part given', 'danger')
-        file = request.files['loadfile']
-        full_path_fname = upload_file(file)
-        if full_path_fname != '':
-            load_configuration_file(full_path_fname, )
-            pip_exe_msg = ('Uploaded file successfully!', 'success')
+        if 'loadfile' in request.files and request.files['loadfile']:
+            file = request.files['loadfile']
+            full_path_fname = upload_file(file)
+            if full_path_fname != '':
+                load_configuration_file(full_path_fname, )
+                pip_exe_msg = ('Uploaded file successfully!', 'success')
+            else:
+                pip_exe_msg = ('Failed to upload file...', 'danger')
         else:
-            pip_exe_msg = ('Failed to upload file...', 'danger')
+            return download_configuration_file()
+
 
     # init wire 'instances' of graphs
     sesh_g_instancs = session.get('sesh_g_instancs', None)
@@ -375,63 +399,50 @@ def pipeline():
     adp = list_of_adapters[int(adp_id_str_chosen.split(' ')[0])]
 
     if request.method != 'POST':
-        # TODO: change to 'download' flow (not save to local)
-        if FORM_PIP_SAVE in request.args and \
-            FORM_PIP_FILE_SAVE in request.args and \
-            request.args[FORM_PIP_FILE_SAVE] != '': # or save a pipeline config file
+        # check if user cleared the pipeline
+        if FORM_PIP_CLR in request.args:
+            sesh_pip.clear()
+            sesh_g_instancs = ['', GRAPH_INST_ADD]
 
-            # save a pipeline configuration to file
-            output_config_file = request.args[FORM_PIP_FILE_SAVE]
-            
-            with open(output_config_file, 'w') as write_file:
-                for _, pipadp in sesh_pip:
-                    write_file.write(dumps(pipadp, cls=CustomEncoder) + '\n')
-        else:
+        # check if user submitted an adapter
+        elif FORM_ADPTR_SUBMT in request.args:
+            new_adapter = (get_next_index_in_session_pipeline(sesh_pip), deepcopy(adp))
+            sesh_pip.append(new_adapter)
 
-            # check if user cleared the pipeline
-            if FORM_PIP_CLR in request.args:
-                sesh_pip.clear()
-                sesh_g_instancs = ['', GRAPH_INST_ADD]
+        # check if user updated any field in pipeline (or graph instance added)
+        elif FORM_PIP_UPDT in request.args or \
+            was_graph_instance_added(request.args):
 
-            # check if user submitted an adapter
-            elif FORM_ADPTR_SUBMT in request.args:
-                new_adapter = (get_next_index_in_session_pipeline(sesh_pip), deepcopy(adp))
-                sesh_pip.append(new_adapter)
-
-            # check if user updated any field in pipeline (or graph instance added)
-            elif FORM_PIP_UPDT in request.args or \
-                was_graph_instance_added(request.args):
-
-                # iterate over adapter-cards
-                for arg_name, arg_val in request.args.items():
-                    if ('inputs' in arg_name or 'outputs' in arg_name) and arg_val != '':
-
-                        input_not_output = True
-                        if 'outputs' in arg_name:
-                            input_not_output = False
-
-                        if GRAPH_INST_ADD == arg_val:
-                            sesh_g_instancs.append(GRAPH_INST_W_REPR + str(len(sesh_g_instancs) - 1))
-                            arg_val = sesh_g_instancs[-1]
-
-                        element_id_in_pipeline = int(arg_name.split('.')[0])
-                        element_attr_in_pipeline = arg_name.split('.')[2]
-                        update_session_pipeline_fields(sesh_pip, element_id_in_pipeline, input_not_output, element_attr_in_pipeline, arg_val)
-
-            # iterate over args and check is something should be removed
+            # iterate over adapter-cards
             for arg_name, arg_val in request.args.items():
-                if FORM_ADPTR_RMV in arg_name:
-                    element_id_in_pipeline = int(arg_name.split('.')[0])
-                    remove_adapter_from_session_pipeline(sesh_pip, element_id_in_pipeline)
-                    break
+                if ('inputs' in arg_name or 'outputs' in arg_name) and arg_val != '':
 
-            # execute pipeline if user requested that
-            if FORM_PIP_EXE in request.args:
-                exec_sts = execute_session_pipeline(sesh_pip)
-                if exec_sts:
-                    pip_exe_msg = ("Pipeline execution succeeded!", 'success')
-                else:
-                    pip_exe_msg = ("Oops! Pipeline execution failed, see log...", 'danger')
+                    input_not_output = True
+                    if 'outputs' in arg_name:
+                        input_not_output = False
+
+                    if GRAPH_INST_ADD == arg_val:
+                        sesh_g_instancs.append(GRAPH_INST_W_REPR + str(len(sesh_g_instancs) - 1))
+                        arg_val = sesh_g_instancs[-1]
+
+                    element_id_in_pipeline = int(arg_name.split('.')[0])
+                    element_attr_in_pipeline = arg_name.split('.')[2]
+                    update_session_pipeline_fields(sesh_pip, element_id_in_pipeline, input_not_output, element_attr_in_pipeline, arg_val)
+
+        # iterate over args and check is something should be removed
+        for arg_name, arg_val in request.args.items():
+            if FORM_ADPTR_RMV in arg_name:
+                element_id_in_pipeline = int(arg_name.split('.')[0])
+                remove_adapter_from_session_pipeline(sesh_pip, element_id_in_pipeline)
+                break
+
+        # execute pipeline if user requested that
+        if FORM_PIP_EXE in request.args:
+            exec_sts = execute_session_pipeline(sesh_pip)
+            if exec_sts:
+                pip_exe_msg = ("Pipeline execution succeeded!", 'success')
+            else:
+                pip_exe_msg = ("Oops! Pipeline execution failed, see log...", 'danger')
 
     session['sesh_pip'] = dumps(sesh_pip, cls=CustomEncoder)
     session['sesh_g_instancs'] = dumps(sesh_g_instancs)

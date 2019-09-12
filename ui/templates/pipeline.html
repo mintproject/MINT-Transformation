@@ -10,10 +10,13 @@
     </div>
   {% endif %}
 
-  <h3>Load Pipeline Configuration:</h3>
+  
   <form method="post" enctype="multipart/form-data">
+    <h5>Load Pipeline Configuration:</h5>
     <input type="file" name="loadfile">
     <input type="submit" value="Upload">
+    <h5>Download Pipeline Configuration:</h5>
+    <input type="submit" value="Download">
   </form>
 
   </br>
@@ -22,12 +25,6 @@
   <h2>Pipeline</h2></br>
 
   <button name="clear_pipe" class="btn btn-primary">Clear Pipeline</button>
-  </br></br>
-
-  </br></br>
-  <input name="pipe_config_save_file" type="text">
-  <button name="save_pipe" class="btn btn-primary">Save Pipeline Configuration</button>
-
   </br></br>
 
   <div class="row container center" style="text-align: center;">
