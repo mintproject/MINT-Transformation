@@ -5,9 +5,8 @@ from collections import defaultdict
 
 import numpy as np
 import xarray as xr
-from netCDF4 import Dataset
 from drepr import Graph
-from scipy import stats
+from scipy import interpolate
 
 from dtran import ArgType
 from examples.pihm2netcdf.pihm_flooding_index_func import PihmFloodingIndexFunc
@@ -20,7 +19,6 @@ class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
         "mean_space": ArgType.String,
         "start_time": ArgType.DateTime,
         "end_time": ArgType.DateTime,
-        "threshold": ArgType.Number,
     }
     outputs = {"data": ArgType.NDimArray}
 
@@ -30,9 +28,8 @@ class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
             mean_space: str,
             start_time: datetime.datetime,
             end_time: datetime.datetime,
-            threshold: float,
     ):
-        super().__init__(graph, mean_space, start_time, threshold)
+        super().__init__(graph, mean_space, start_time)
         self.graph = graph
 
         if mean_space != "auto":
@@ -40,7 +37,6 @@ class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
         self.mean_space = mean_space
         self.start_time = start_time
         self.end_time = end_time
-        self.threshold = threshold
 
     def exec(self) -> dict:
         matrix, point2idx, xlong, ylat = self._points2matrix(self.mean_space)
@@ -51,7 +47,8 @@ class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
 
         for node in self.graph.iter_nodes():
             xi, yi = point2idx[node.data["mint:index"]]
-            recorded_at = (self.start_time + datetime.timedelta(minutes=node.data["schema:recordedAt"] - 1440)).month - 1
+            recorded_at = (self.start_time + datetime.timedelta(
+                minutes=node.data["schema:recordedAt"] - 1440)).month - 1
 
             flooding_value = node.data["mint:flooding"]
             max_flooding = max(max_flooding, flooding_value)
@@ -61,8 +58,13 @@ class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
         for (i, j, k), val in indices.items():
             flood_ndarray[i][j][k] = np.mean(val)
 
+        for i in range(flood_ndarray.shape[0]):
+            array = flood_ndarray[i]
+            array = PihmMonthlyAverageFloodingFunc._idw_interpolate(array)
+            flood_ndarray[i] = array
+
         time = [datetime.date(self.start_time.year, month, self.start_time.day).strftime('%Y-%m-%dT%H:%M:%SZ') for
-                      month in range(1, 13)]
+                month in range(1, 13)]
 
         flood_var = xr.DataArray(
             flood_ndarray,
@@ -97,14 +99,7 @@ class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
         flood_dataset = xr.Dataset(
             data_vars={"flood": flood_var},
             attrs={
-                "title": "Monthly gridded surface inundation for Pongo River in 2017",
-                "comment": "Outputs generated from the workflow",
-                "naming_authority": "edu.isi.workflow",
-                "id": "/MINT/NETCDF/MONTHLY_GRIDDED_SURFACE_INUNDATION_2017",
-                "date_created": datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
-                "date_modified": datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
-                "creator_name": "Minh Pham",
-                "creator_email": "minhpham@usc.edu",
+
                 "time_coverage_start": self.start_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
                 "time_coverage_end": self.end_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
                 "time_coverage_resolution": time_resolution,
@@ -131,3 +126,15 @@ class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
 
     def validate(self) -> bool:
         return True
+
+    @staticmethod
+    def _idw_interpolate(array):
+        known_indices = np.argwhere(array != -999)
+        unknown_indices = np.argwhere(array == -999)
+
+        dist = np.sqrt((known_indices[:, 0][None, :] - unknown_indices[:, 0][:, None]) ** 2 + (
+                known_indices[:, 1][None, :] - unknown_indices[:, 1][:, None]) ** 2)
+
+        idist = 1. / (dist + 1e-12) ** 2
+        array[array == -999] = np.sum(array[array != -999] * idist, axis=1) / np.sum(idist, axis=1)
+        return array

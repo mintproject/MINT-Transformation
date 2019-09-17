@@ -24,11 +24,11 @@ class PihmFloodingIndexFunc(IFunc):
     outputs = {"graph": ArgType.NDimArray}
 
     def __init__(
-        self,
-        graph: Graph,
-        mean_space: str,
-        start_time: datetime.datetime,
-        threshold: float,
+            self,
+            graph: Graph,
+            mean_space: str,
+            start_time: datetime.datetime,
+            threshold: float,
     ):
         self.graph = graph
 
@@ -47,7 +47,7 @@ class PihmFloodingIndexFunc(IFunc):
         for node in self.surf_graph.iter_nodes():
             xi, yi = point2idx[node.data["mint:index"]]
             recorded_at = (
-                self.start_time + datetime.timedelta(minutes=node.data["schema:recordedAt"] - 1440)
+                    self.start_time + datetime.timedelta(minutes=node.data["schema:recordedAt"] - 1440)
             ).day
 
             flooding_value = 1.0 if node["mint:flooding"] >= self.threshold else 0.0
@@ -86,7 +86,7 @@ class PihmFloodingIndexFunc(IFunc):
         return {"data": flood_ndarray}
 
     def _points2matrix(
-        self, mean_space: Union[str, float] = "auto"
+            self, mean_space: Union[str, float] = "auto"
     ) -> Tuple[np.ndarray, Dict[int, Tuple[int, int]], List[float], List[float]]:
         ylat = sorted({float(n.data["schema:latitude"]) for n in self.graph.iter_nodes()})
         xlong = sorted({float(n.data["schema:longitude"]) for n in self.graph.iter_nodes()})
@@ -112,7 +112,7 @@ class PihmFloodingIndexFunc(IFunc):
 
     @staticmethod
     def _get_evenly_spacing_axis(
-        vmin: float, vmax: float, spacing: float, is_rounding_point: bool
+            vmin: float, vmax: float, spacing: float, is_rounding_point: bool
     ) -> List[float]:
         if is_rounding_point:
             vmin = vmin - vmin % spacing
