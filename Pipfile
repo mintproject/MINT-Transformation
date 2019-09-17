@@ -13,6 +13,9 @@ pydrepr = {git = "https://github.com/binh-vu/temp.git",ref = "pyrepr"}
 arpeggio = "*"
 rdflib = "*"
 xarray = "*"
+rioxarray = "*"
+gdal = "*"
+pygdal = "*"
 
 [requires]
 python_version = "3.7"
