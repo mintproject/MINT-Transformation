@@ -29,7 +29,7 @@ class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
             start_time: datetime.datetime,
             end_time: datetime.datetime,
     ):
-        super().__init__(graph, mean_space, start_time)
+        super().__init__(graph, mean_space, start_time, threshold=0)
         self.graph = graph
 
         if mean_space != "auto":
@@ -80,19 +80,6 @@ class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
                 "fill_value": -999.0,
             },
         )
-        # time_var = xr.DataArray(time, coords=[("time", time)])
-        # xlong_var = xr.DataArray(xlong, coords=[("X", xlong)], attrs={
-        #     "standard_name": "longitude",
-        #     "long_name": "longitude",
-        #     "axis": "X",
-        #     "units": "degrees_east",
-        # })
-        # ylat_var = xr.DataArray(ylat, coords=[("Y", ylat)], attrs={
-        #     "standard_name": "latitude",
-        #     "long_name": "latitude",
-        #     "axis": "Y",
-        #     "units": "degrees_north",
-        # })
 
         time_resolution = "P1M"
 
