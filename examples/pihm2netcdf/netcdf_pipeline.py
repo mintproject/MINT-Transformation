@@ -33,7 +33,7 @@ if __name__ == "__main__":
         PihmMonthlyAverageFloodingFunc.I.mean_space: 0.05,
         PihmMonthlyAverageFloodingFunc.I.start_time: datetime.strptime("2017-01-01 00:00:00", '%Y-%m-%d %H:%M:%S'),
         PihmMonthlyAverageFloodingFunc.I.end_time: datetime.strptime("2017-12-31 00:00:00", '%Y-%m-%d %H:%M:%S'),
-        MintNetCDFWriteFunc.I.output_file: "MONTHLY_GRIDDED_SURFACE_INUNDATION_2017.nc",
+        MintNetCDFWriteFunc.I.output_file: wdir / "MONTHLY_GRIDDED_SURFACE_INUNDATION_2017.nc",
         MintNetCDFWriteFunc.I.title: "Monthly gridded surface inundation for Pongo River in 2017",
         MintNetCDFWriteFunc.I.comment: "Outputs generated from the workflow",
         MintNetCDFWriteFunc.I.naming_authority: "edu.isi.workflow",
