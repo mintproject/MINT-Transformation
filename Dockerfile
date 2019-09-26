@@ -1,21 +1,17 @@
-FROM ubuntu:16.04
-MAINTAINER Basel Shbita "shbita@usc.edu"
+FROM continuumio/miniconda3
 
-# install python3.6 and wget
-RUN apt-get update && \
-    apt-get install -y software-properties-common wget && \
-    add-apt-repository -y ppa:jonathonf/python-3.6
-RUN apt-get update -y
-RUN apt-get install -y build-essential python3.6 python3.6-dev python3-pip python3.6-venv
+# update conda
+RUN conda update -n base -c defaults conda
 
-# update pip
-RUN python3.6 -m pip install pip --upgrade
+# TODO: fix the following, it needs to run from bash context
 
-# install GDAL/OGR
-RUN add-apt-repository -y ppa:ubuntugis/ppa && \
-    apt-get update -y && \
-    apt-get install -y gdal-bin libgdal-dev python-gdal python3-gdal
+# create Topoflow env
+#RUN conda create --name tf4
+#RUN conda activate tf4
 
-# download example netcdf file
-RUN mkdir examples
-ADD https://workflow.isi.edu/MINT/FLDAS/FLDAS_NOAH01_A_EA_D.001/2001/01/FLDAS_NOAH01_A_EA_D.A20010102.001.nc /examples
+# install GDAL/OGR and other required libs
+#RUN conda install -c conda-forge gdal scipy pydap
+#RUN conda install numpy dask
+
+# regrid command
+#RUN /opt/conda/envs/tf4/bin/python regrid.py

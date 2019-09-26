@@ -1,4 +1,3 @@
-
 #  Copyright (c) 2019, Scott D. Peckham
 #  August, September 2019
 
@@ -651,9 +650,6 @@ def create_rts_from_nc_files( rts_file='TEST.rts',
     print( 'n_grids   =', count )
     print( 'Finished saving data to rts file.')
     print( ' ')
-    
-#   create_rts_from_nc_files()
-#-------------------------------------------------------------------   
 
-          
- 
+
+create_rts_from_nc_files()
