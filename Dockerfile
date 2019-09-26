@@ -3,15 +3,9 @@ FROM continuumio/miniconda3
 # update conda
 RUN conda update -n base -c defaults conda
 
-# TODO: fix the following, it needs to run from bash context
+# run conda Topoflow4 environment
+ADD environment.yml /tmp/environment.yml
+RUN conda env create -f /tmp/environment.yml
 
-# create Topoflow env
-#RUN conda create --name tf4
-#RUN conda activate tf4
-
-# install GDAL/OGR and other required libs
-#RUN conda install -c conda-forge gdal scipy pydap
-#RUN conda install numpy dask
-
-# regrid command
-#RUN /opt/conda/envs/tf4/bin/python regrid.py
+# run TopoFlow4 env
+# CMD conda activate tf4

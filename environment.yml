@@ -1,0 +1,10 @@
+name: tf4
+channels:
+- conda-forge
+- defaults
+dependencies:
+- gdal
+- scipy
+- pydap
+- numpy
+- dask
