@@ -26,3 +26,21 @@ Run the following command from the root folder:
 python ui/app.py
 ```
 Open URL `http://0.0.0.0:5000` on your browser
+
+## Running using Docker
+Build image
+```
+docker build -t mint_dt .
+```
+Run image with local mount and port 5000 exposed
+```
+docker run --rm -p 5000:5000 -v $(pwd):/ws -it mint_dt
+```
+Activate local conda env
+```
+conda activate mintdt
+```
+Run the UI
+```
+cd ws && python ui/app.py
+```
