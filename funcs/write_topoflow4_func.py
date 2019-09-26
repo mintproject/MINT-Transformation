@@ -492,7 +492,7 @@ def create_rts_from_nc_files( nc_dir_path, rts_file='TEST.rts',
     if (IN_MEMORY):
         tmp_file = '/vsimem/TEMP.tif'
     else:
-        tmp_file = 'TEMP.tif'
+        tmp_file = '/tmp/TEMP.tif'
   
     #-------------------------    
     # Open RTS file to write
@@ -515,7 +515,7 @@ def create_rts_from_nc_files( nc_dir_path, rts_file='TEST.rts',
     #### rts_nodata = -9999.0    #################
     rts_nodata = 0.0    # (good for rainfall rates; not general)
     Pmax   = -1
-    tif_file = 'TEMP1.tif'
+    tif_file = '/tmp/TEMP1.tif'
              
     for nc_file in nc_file_list:
         #-------------------------------
