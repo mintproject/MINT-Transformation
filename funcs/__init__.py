@@ -7,4 +7,4 @@ from .trans_unit_func import UnitTransFunc
 from .write_func import GraphWriteFunc, VisJsonWriteFunc
 from .graph_str2str_func import GraphStr2StrFunc
 from .merge_func import MergeFunc
-from .write_topoflow4_func import Topoflow4WriteFunc
+from .write_topoflow4_func import Topoflow4ClimateWriteFunc, Topoflow4SoilWriteFunc
