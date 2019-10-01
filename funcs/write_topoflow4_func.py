@@ -529,7 +529,7 @@ def create_rts_from_nc_files( nc_dir_path, rts_file='TEST.rts',
     if NC4:
         suffix += '4'
 
-    nc_file_list = glob.glob(join(nc_dir_path, suffix))
+    nc_file_list = sorted(glob.glob(join(nc_dir_path, suffix)))
     var_name = "HQprecipitation"    # HQ = high quality;  1/2 hourly, mmph
     count = 0
     bad_count = 0
