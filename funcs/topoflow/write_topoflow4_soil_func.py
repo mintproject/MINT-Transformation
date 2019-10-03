@@ -7,7 +7,8 @@ import numpy as np
 from scipy.special import gamma
 
 from dtran import IFunc, ArgType
-from .write_topoflow4_climate_func import gdal_regrid_to_dem_grid
+from funcs.topoflow.rti_files import generate_rti_file
+from funcs.topoflow.write_topoflow4_climate_func import gdal_regrid_to_dem_grid
 
 
 class Topoflow4SoilWriteFunc(IFunc):
@@ -15,17 +16,30 @@ class Topoflow4SoilWriteFunc(IFunc):
     inputs = {
         "input_dir": ArgType.String,
         "output_dir": ArgType.FilePath,
-        "layer": ArgType.String
+        "layer": ArgType.String,
+        "DEM_bounds": ArgType.String,
+        "DEM_xres": ArgType.String,
+        "DEM_yres": ArgType.String,
+        "DEM_ncols": ArgType.String,
+        "DEM_nrows": ArgType.String,
     }
     outputs = {}
 
-    def __init__(self, input_dir: str, output_dir: Union[str, Path], layer: str):
+    def __init__(self, input_dir: str, output_dir: Union[str, Path], layer: str, DEM_bounds: str, DEM_xres: str, DEM_yres: str,
+                 DEM_ncols: str, DEM_nrows: str):
+        self.DEM = {
+            "bounds": [float(x.strip()) for x in DEM_bounds.split(",")],
+            "xres": float(DEM_xres),
+            "yres": float(DEM_yres),
+            "ncols": float(DEM_ncols),
+            "nrows": float(DEM_nrows),
+        }
         self.input_dir = str(input_dir)
         self.output_dir = str(output_dir)
         self.layer = layer
 
     def exec(self) -> dict:
-        save_soil_hydraulic_vars(self.input_dir, self.output_dir, self.layer)
+        save_soil_hydraulic_vars(self.input_dir, self.output_dir, self.DEM, self.layer)
         return {}
 
     def validate(self) -> bool:
@@ -33,7 +47,7 @@ class Topoflow4SoilWriteFunc(IFunc):
 
 
 # -------------------------------------------------------------------
-def read_soil_grid_files(input_dir, layer=1):
+def read_soil_grid_files(input_dir, DEM_info, layer=1):
     # -------------------------------------------------------------
     # Read soil property data from ISRIC - SoilGrids files,
     # as needed to compute Wosten (1998) pedotransfer functions.
@@ -71,16 +85,13 @@ def read_soil_grid_files(input_dir, layer=1):
 
     # resample the tiff files
     # TODO: expose
-    DEM_bounds = [24.079583333333, 6.565416666666, 27.379583333333, 10.132083333333]
-    DEM_xres = 1. / 120  # (30 arcsecs = 30/3600 degrees)
-    DEM_yres = 1. / 120  # (30 arcsecs = 30/3600 degrees)
     ############
 
     results = []
     for file in [file1, file2, file3, file4]:
         f = gdal.Open(file)
         results.append(gdal_regrid_to_dem_grid(f, '/tmp/TEMP.tif',
-                                               0.0, DEM_bounds, DEM_xres, DEM_yres,
+                                               0.0, DEM_info['bounds'], DEM_info['xres'], DEM_info['yres'],
                                                RESAMPLE_ALGO='bilinear'))
         f = None
 
@@ -308,8 +319,8 @@ def get_tBC_from_vG_vars(alpha, n, L):
 
 #   get_tBC_from_vG_vars()
 # -------------------------------------------------------------------
-def save_soil_hydraulic_vars(input_dir, output_dir, layer=1):
-    (C, S, OM, D) = read_soil_grid_files(input_dir, layer=layer)
+def save_soil_hydraulic_vars(input_dir, output_dir, DEM_info: dict, layer=1):
+    (C, S, OM, D) = read_soil_grid_files(input_dir, DEM_info, layer=layer)
 
     topsoil = (layer == 1)
     subsoil = not (topsoil)
@@ -353,6 +364,9 @@ def save_soil_hydraulic_vars(input_dir, output_dir, layer=1):
     G = np.float32(G)
     G.tofile(G_unit)
     G_unit.close()
+
+    for fpath in [Ks_file,qs_file,pB_file,c_file,lam_file,G_file,]:
+        generate_rti_file(fpath, fpath.replace(".bin", ".rti"), DEM_info["ncols"], DEM_info['nrows'], DEM_info["xres"], DEM_info['yres'])
 
 #   save_soil_hydraulic_vars()
 # -------------------------------------------------------------------
