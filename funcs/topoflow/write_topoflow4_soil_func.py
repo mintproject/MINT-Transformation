@@ -13,6 +13,9 @@ from funcs.topoflow.write_topoflow4_climate_func import gdal_regrid_to_dem_grid
 
 class Topoflow4SoilWriteFunc(IFunc):
     id = "topoflow4_soil_write_func"
+    description = ''' A reader-transformation-writer multi-adapter.
+    Creates Bin (and RTI) files from tiff (soil) files.
+    '''
     inputs = {
         "input_dir": ArgType.String,
         "output_dir": ArgType.FilePath,

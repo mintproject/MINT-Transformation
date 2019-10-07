@@ -5,6 +5,9 @@ from dtran import IFunc, ArgType
 
 class MergeFunc(IFunc):
     id = "merge_func"
+    description = ''' A transformation adapter.
+    Merges two graphs into one.
+    '''
     inputs = {"graph1": ArgType.Graph(None), "graph2": ArgType.Graph(None)}
     outputs = {"data": ArgType.Graph(None)}
 

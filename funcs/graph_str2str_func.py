@@ -12,6 +12,9 @@ from dtran.ifunc import IFunc
 
 class GraphStr2StrFunc(IFunc):
     id = "graph_str2str_func"
+    description = ''' A transformation adapter.
+    Maps an existing set of strings (semantic attributes) to a new desired set of strings.
+    '''
     inputs = {"graph": ArgType.Graph(None), "semantic_type": ArgType.String, "str2str": ArgType.String}
     outputs = {}
 

@@ -9,6 +9,9 @@ from dtran.ifunc import IFunc
 
 class LambdaTransFunc(IFunc):
     id = "lambda_trans"
+    description = ''' A transformation adapter.
+    Alters the graph by performing a transformation function (lambda transformation).
+    '''
     inputs = {"graph": ArgType.Graph(None), "transform_func": ArgType.Function,
               "output_label": ArgType.String}
     outputs = {"graph": ArgType.Graph(None)}

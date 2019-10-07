@@ -18,6 +18,9 @@ from funcs.topoflow.rti_files import generate_rti_file
 
 class Topoflow4ClimateWriteFunc(IFunc):
     id = "topoflow4_climate_write_func"
+    description = ''' A reader-transformation-writer multi-adapter.
+    Creates an RTS (and RTI) file from NetCDF (climate) files.
+    '''
     inputs = {
         "input_dir": ArgType.String,
         "output_file": ArgType.FilePath,
