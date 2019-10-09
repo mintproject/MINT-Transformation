@@ -10,3 +10,6 @@ RUN conda update -n base -c defaults conda
 # run conda Topoflow4 environment
 ADD environment.yml /tmp/environment.yml
 RUN conda env create -f /tmp/environment.yml
+
+#ENV PATH="/opt/conda/envs/mintdt/bin:${PATH}"
+#RUN sed -i '$ d' /root/.bashrc && sed -i '$ d' /root/.bashrc

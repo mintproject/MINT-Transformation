@@ -80,15 +80,16 @@ def read_soil_grid_files(input_dir, DEM_info, layer=1):
     #   sl1, sl2,  sl3,  sl4,  sl5,  sl6,  sl7
     # -------------------------------------------------------------
     layer_str = str(layer)
-    file1 = os.path.join(input_dir, 'SoilGrids_CLYPPT_M_sl' + layer_str + '_1km.TIF')
-    file2 = os.path.join(input_dir, 'SoilGrids_SLTPPT_M_sl' + layer_str + '_1km.TIF')
-    file3 = os.path.join(input_dir, 'SoilGrids_ORCDRC_M_sl' + layer_str + '_1km.TIF')
-    file4 = os.path.join(input_dir, 'SoilGrids_BLDFIE_M_sl' + layer_str + '_1km.TIF')
-    # -------------------------------------------------------------
+    match_files = []
+    for fpath in Path(input_dir).iterdir():
+        if fpath.name.find(f"_M_sl{layer_str}_1km") != -1 and (fpath.name.endswith(".tiff") or fpath.name.endswith(".TIF")):
+            match_files.append(fpath)
 
-    # resample the tiff files
-    # TODO: expose
-    ############
+    file1 = [str(x) for x in match_files if x.name.find("CLYPPT_") != -1][0]
+    file2 = [str(x) for x in match_files if x.name.find("SLTPPT_") != -1][0]
+    file3 = [str(x) for x in match_files if x.name.find("ORCDRC_") != -1][0]
+    file4 = [str(x) for x in match_files if x.name.find("BLDFIE_") != -1][0]
+    # -------------------------------------------------------------
 
     results = []
     for file in [file1, file2, file3, file4]:

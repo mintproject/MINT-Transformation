@@ -199,7 +199,7 @@ def bounds_disjoint(bounds1, bounds2, VERBOSE=False):
 # -------------------------------------------------------------------
 def gdal_regrid_to_dem_grid(ds_in, tmp_file,
                             nodata, DEM_bounds, DEM_xres, DEM_yres,
-                            RESAMPLE_ALGO='bilinear', VERBOSE=False):
+                            RESAMPLE_ALGO='bilinear'):
     # -----------------------------------
     # Specify the resampling algorithm
     # -----------------------------------
@@ -221,6 +221,7 @@ def gdal_regrid_to_dem_grid(ds_in, tmp_file,
     # Use gdal.Warp to clip and resample to DEM grid
     # then save results to a GeoTIFF file (tmp_file).
     # --------------------------------------------------
+    # gdal_bbox = [DEM_bounds[0], DEM_bounds[2], DEM_bounds[1], DEM_bounds[3]]
     ds_tmp = gdal.Warp(tmp_file, ds_in,
                        format='GTiff',  # (output format string)
                        outputBounds=DEM_bounds, xRes=DEM_xres, yRes=DEM_yres,
