@@ -34,11 +34,11 @@ import numpy  # (for things like uint8(), int16(), float64())
 #
 # -------------------------------------------------------------------------
 
-def generate_rti_file(grid_file, rti_file, ncols=396, nrows=428, xres=1./120, yres=1./120, silent=False):
+def generate_rti_file(grid_file, rti_file, ncols=396, nrows=428, xres=1./120, yres=1./120, pixel_geom=0, silent=False):
     # ------------------------
     # Create a new RTI file
     # ------------------------
-    info = make_info(grid_file, ncols, nrows, xres=xres, yres=yres, SILENT=silent)
+    info = make_info(grid_file, ncols, nrows, xres=xres, yres=yres, pixel_geom=pixel_geom, SILENT=silent)
     write_info(rti_file, info, SILENT=silent)
 
 

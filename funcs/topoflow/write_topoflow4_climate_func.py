@@ -25,21 +25,21 @@ class Topoflow4ClimateWriteFunc(IFunc):
         "input_dir": ArgType.String,
         "output_file": ArgType.FilePath,
         "DEM_bounds": ArgType.String,
-        "DEM_xres": ArgType.String,
-        "DEM_yres": ArgType.String,
+        "DEM_xres_arcsecs": ArgType.String,
+        "DEM_yres_arcsecs": ArgType.String,
         "DEM_ncols": ArgType.String,
         "DEM_nrows": ArgType.String,
     }
     outputs = {}
 
-    def __init__(self, input_dir: str, output_file: Union[str, Path], DEM_bounds: str, DEM_xres: str, DEM_yres: str,
+    def __init__(self, input_dir: str, output_file: Union[str, Path], DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str,
                  DEM_ncols: str, DEM_nrows: str):
         self.DEM = {
             "bounds": [float(x.strip()) for x in DEM_bounds.split(",")],
-            "xres": float(DEM_xres),
-            "yres": float(DEM_yres),
-            "ncols": float(DEM_ncols),
-            "nrows": float(DEM_nrows),
+            "xres": float(DEM_xres_arcsecs) / 3600.0,
+            "yres": float(DEM_yres_arcsecs) / 3600.0,
+            "ncols": int(DEM_ncols),
+            "nrows": int(DEM_nrows),
         }
         self.input_dir = str(input_dir)
         self.output_file = str(output_file)
@@ -51,134 +51,6 @@ class Topoflow4ClimateWriteFunc(IFunc):
     def validate(self) -> bool:
         return True
 
-
-def regrid_geotiff_to_dem(in_file=None, out_file=None,
-                          DEM_bounds=None, DEM_xres=None, DEM_yres=None):
-    # ---------------------------------------------------------------
-    # Note:  DEM_bounds = [dem_xmin, dem_ymin, dem_xmax, dem_ymax]
-    #        Give xres, yres in decimal degrees for Geographic.
-    #        gdal.Warp() clips to a bounding box, and can also
-    #        resample to a different resolution.
-    #        gdal.Translate() is faster for simple clipping.
-    # ---------------------------------------------------------------
-    if (in_file == None):
-        # -----------------------------------------------------------
-        # Use Pongo_30sec DEM as a test, which works well.
-        # However,  the soil data has same resolution (xres, yres)
-        # as the DEM, of 30 arcseconds.  In addition, grid cells
-        # outside of South Sudan have NODATA values.
-        # -----------------------------------------------------------
-        in_file = 'SLTPPT_M_sl1_1km_South Sudan.tiff'
-        out_file = 'Pongo_SLTPPT_sl1.tiff'
-        DEM_bounds = [24.079583333333, 6.565416666666, 27.379583333333, 10.132083333333]
-        DEM_xres = 1. / 120  # (30 arcsecs = 30/3600 degrees)
-        DEM_yres = 1. / 120  # (30 arcsecs = 30/3600 degrees)
-
-    f1 = gdal.Open(in_file, gdal.GA_ReadOnly)
-    ## data_xres = f1.RasterXsize
-    ### data_yres = f1.RasterYsize
-    # print( f1.RasterCount )
-    # print( data_xres, data_yres )
-
-    out_unit = gdal.Warp(out_file, f1,
-                         format='GTiff',  # (output format string)
-                         outputBounds=DEM_bounds, xRes=DEM_xres, yRes=DEM_yres,
-                         resampleAlg=gdal.GRA_Bilinear)
-    ## resampleAlg = gdal.GRA_NearestNeighbour )
-    # (near, bilinear, cubic, cubicspline, lanczos, average, etc.)
-    out_unit = None  # Close out_file
-
-    # --------------------------------------------------------
-    # Example:  Use gdal.Translate to clip to bounding box.
-    # --------------------------------------------------------
-    # ds = gdal.Open('original.tif')
-    # ds = gdal.Translate('new.tif', ds, projWin = [-75.3, 5.5, -73.5, 3.7])
-    # ds = None
-
-    # --------------------------------------------------------
-    # This shows some of the other keywords to gdal.Warp.
-    # --------------------------------------------------------
-    # WarpOptions(options=[], format=None, outputBounds=None,
-    # outputBoundsSRS=None, xRes=None, yRes=None, targetAlignedPixels=False,
-    # width=0, height=0, srcSRS=None, dstSRS=None, srcAlpha=False,
-    # dstAlpha=False, warpOptions=None, errorThreshold=None,
-    # warpMemoryLimit=None, creationOptions=None, outputType=GDT_Unknown,
-    # workingType=GDT_Unknown, resampleAlg=None, srcNodata=None,
-    # dstNodata=None, multithread=False, tps=False, rpc=False,
-    # geoloc=False, polynomialOrder=None, transformerOptions=None,
-    # cutlineDSName=None, cutlineLayer=None, cutlineWhere=None,
-    # cutlineSQL=None, cutlineBlend=None, cropToCutline=False,
-    # copyMetadata=True, metadataConflictValue=None,
-    # setColorInterpretation=False, callback=None, callback_data=None)
-    # 
-    # Create a WarpOptions() object that can be passed to gdal.Warp()
-    # Keyword arguments are : options --- can be be an array of strings,
-    # a string or let empty and filled from other keywords.
-
-
-#    regrid_geotiff_to_dem()
-# -------------------------------------------------------------------
-# def download_data():
-# 
-#     from pydap.client import open_url
-#     from pydap.cas.urs import setup_session
-#     dataset_url = 'http://server.example.com/path/to/dataset'
-#     session = setup_session(username, password, check_url=dataset_url)
-#     dataset = open_url(dataset_url, session=session)
-# 
-# #    download_data()
-# -------------------------------------------------------------------
-def read_nc_grid(nc_file=None, var_name='HQprecipitation',
-                 REPORT=False):
-    if (nc_file == None):
-        nc_file = 'TEST.nc4'
-
-    ds = gdal.Open("NETCDF:{0}:{1}".format(nc_file, layer_name))
-    grid = ds.ReadAsArray(0, 0, ds.RasterXSize, ds.RasterYSize)
-    ds = None  # (close ds)
-
-    if (REPORT):
-        print('grid.min() =', grid.min())
-        print('grid.max() =', grid.max())
-        print('grid.shape =', grid.shape)
-
-    return grid
-
-    # --------------------
-    # This doesn't work
-    # --------------------
-
-
-#     ds = gdal.Open( nc_file )
-#     # print( ds.RasterCount )
-#     # print( ds.RasterYSize, ds.RasterXsize )
-#     data = ds.ReadAsArray()
-#     # print( data.shape )
-#     print( data.min() )
-#     print( data.max() )
-#     ds = None  # (close ds)
-
-#   read_nc_grid()
-# -------------------------------------------------------------------
-# def read_nc_as_array( nc_file=None, var_name='HQprecipitation',
-#                       REPORT=False):
-#                       
-#     ds = gdal.Open( nc_file )
-#     if (ds is None):
-#         print( 'Open failed.')
-#          sys.exit()
-#     
-#     if (ds.GetSubDatasets() >= 1):
-#         subdataset = 'NETCDF:"' + nc_file + '":' + var_name
-#         ds_sd = gdal.Open( subdataset )
-#         NDV   = ds_sd.GetRasterBand(1).GetNoDataValue()
-#         ncols = ds_sd.RasterXsize
-#         nrows = ds_sd.RasterYsize
-#         GeoT  = ds_sd.GetGeoTransform()
-#         ds    = None
-#         ds_sd = None  
-#   
-# #   read_nc_as_array()
 # -------------------------------------------------------------------
 def gdal_open_nc_file(nc_file, var_name, VERBOSE=False):
     ### ds_in = gdal.Open("NETCDF:{0}:{1}".format(nc_file, var_name), gdal.GA_ReadOnly )
@@ -484,8 +356,7 @@ def fix_gpm_file_as_geotiff(nc_file, var_name, out_file,
 #   fix_gpm_file_as_geotiff()         
 # -------------------------------------------------------------------
 def create_rts_from_nc_files(nc_dir_path, rts_file, DEM_info: dict,
-                             IN_MEMORY=False, VERBOSE=False,
-                             NC4=False):
+                             IN_MEMORY=False, VERBOSE=False):
     # ------------------------------------------------------
     # For info on GDAL constants, see:
     # https://gdal.org/python/osgeo.gdalconst-module.html
@@ -518,11 +389,11 @@ def create_rts_from_nc_files(nc_dir_path, rts_file, DEM_info: dict,
     # Get list of all nc files in working directory
     # ------------------------------------------------
 
-    suffix = '*.nc'
-    if NC4:
-        suffix += '4'
+    nc_file_list = sorted(glob.glob(join(nc_dir_path, '*.nc4')))
+    if len(nc_file_list) == 0:
+        # couldn't find .NC4, look for .NC
+        nc_file_list = sorted(glob.glob(join(nc_dir_path, '*.nc')))
 
-    nc_file_list = sorted(glob.glob(join(nc_dir_path, suffix)))
     var_name = "HQprecipitation"  # HQ = high quality;  1/2 hourly, mmph
     count = 0
     bad_count = 0
@@ -578,7 +449,7 @@ def create_rts_from_nc_files(nc_dir_path, rts_file, DEM_info: dict,
         # -----------------------------------------------
         # Check if the bounding boxes actually overlap
         # -----------------------------------------------
-        ds_bounds = get_raster_bounds(ds_in, VERBOSE=False)
+        ds_bounds = get_raster_bounds(ds_in, VERBOSE=True)
         if (bounds_disjoint(ds_bounds, DEM_bounds)):
             print('###############################################')
             print('WARNING: Bounding boxes do not overlap.')
@@ -668,7 +539,7 @@ def create_rts_from_nc_files(nc_dir_path, rts_file, DEM_info: dict,
 
     # Generate RTI file
     rti_fname = rts_file.replace('.rts', '.rti')
-    generate_rti_file(rts_file, rti_fname, DEM_ncols, DEM_nrows, DEM_xres, DEM_yres)
+    generate_rti_file(rts_file, rti_fname, DEM_ncols, DEM_nrows, DEM_xres, DEM_yres, pixel_geom=0)
 
     print(' ')
     print('Max precip rate =', Pmax)

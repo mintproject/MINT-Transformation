@@ -21,21 +21,21 @@ class Topoflow4SoilWriteFunc(IFunc):
         "output_dir": ArgType.FilePath,
         "layer": ArgType.String,
         "DEM_bounds": ArgType.String,
-        "DEM_xres": ArgType.String,
-        "DEM_yres": ArgType.String,
+        "DEM_xres_arcsecs": ArgType.String,
+        "DEM_yres_arcsecs": ArgType.String,
         "DEM_ncols": ArgType.String,
         "DEM_nrows": ArgType.String,
     }
     outputs = {}
 
-    def __init__(self, input_dir: str, output_dir: Union[str, Path], layer: str, DEM_bounds: str, DEM_xres: str, DEM_yres: str,
+    def __init__(self, input_dir: str, output_dir: Union[str, Path], layer: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str,
                  DEM_ncols: str, DEM_nrows: str):
         self.DEM = {
             "bounds": [float(x.strip()) for x in DEM_bounds.split(",")],
-            "xres": float(DEM_xres),
-            "yres": float(DEM_yres),
-            "ncols": float(DEM_ncols),
-            "nrows": float(DEM_nrows),
+            "xres": float(DEM_xres_arcsecs) / 3600.0,
+            "yres": float(DEM_yres_arcsecs) / 3600.0,
+            "ncols": int(DEM_ncols),
+            "nrows": int(DEM_nrows),
         }
         self.input_dir = str(input_dir)
         self.output_dir = str(output_dir)
@@ -369,7 +369,7 @@ def save_soil_hydraulic_vars(input_dir, output_dir, DEM_info: dict, layer=1):
     G_unit.close()
 
     for fpath in [Ks_file,qs_file,pB_file,c_file,lam_file,G_file,]:
-        generate_rti_file(fpath, fpath.replace(".bin", ".rti"), DEM_info["ncols"], DEM_info['nrows'], DEM_info["xres"], DEM_info['yres'])
+        generate_rti_file(fpath, fpath.replace(".bin", ".rti"), DEM_info["ncols"], DEM_info['nrows'], DEM_info["xres"], DEM_info['yres'], pixel_geom=0)
 
 #   save_soil_hydraulic_vars()
 # -------------------------------------------------------------------

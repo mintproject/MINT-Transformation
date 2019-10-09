@@ -13,13 +13,13 @@ if __name__ == "__main__":
     )
 
     inputs = {
-        Topoflow4ClimateWriteFunc.I.input_dir: "./examples/scotts_transformations/rivertools/12_NC_Files",
-        Topoflow4ClimateWriteFunc.I.output_file: "./examples/scotts_transformations/rivertools/12_NC_Files/test_scott.rts",
-        Topoflow4ClimateWriteFunc.I.DEM_bounds: "24.079583333333, 6.565416666666, 27.379583333333, 10.132083333333",
-        Topoflow4ClimateWriteFunc.I.DEM_ncols: "396",
-        Topoflow4ClimateWriteFunc.I.DEM_nrows: "428",
-        Topoflow4ClimateWriteFunc.I.DEM_xres: "0.008333",
-        Topoflow4ClimateWriteFunc.I.DEM_yres: "0.008333",
+        Topoflow4ClimateWriteFunc.I.input_dir: "./new_gpm_subset",
+        Topoflow4ClimateWriteFunc.I.output_file: "./new_gpm_subset/test_scott.rts",
+        Topoflow4ClimateWriteFunc.I.DEM_bounds: "7.362083333332, 9.503749999999, 34.221249999999, 36.446249999999",
+        Topoflow4ClimateWriteFunc.I.DEM_ncols: "267",
+        Topoflow4ClimateWriteFunc.I.DEM_nrows: "257",
+        Topoflow4ClimateWriteFunc.I.DEM_xres_arcsecs: "30",
+        Topoflow4ClimateWriteFunc.I.DEM_yres_arcsecs: "30",
     }
 
     outputs = pipeline.exec(inputs)
