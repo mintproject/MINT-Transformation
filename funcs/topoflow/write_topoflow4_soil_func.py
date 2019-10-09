@@ -80,10 +80,10 @@ def read_soil_grid_files(input_dir, DEM_info, layer=1):
     #   sl1, sl2,  sl3,  sl4,  sl5,  sl6,  sl7
     # -------------------------------------------------------------
     layer_str = str(layer)
-    file1 = os.path.join(input_dir, 'CLYPPT_M_sl' + layer_str + '_1km_South Sudan.tiff')
-    file2 = os.path.join(input_dir, 'SLTPPT_M_sl' + layer_str + '_1km_South Sudan.tiff')
-    file3 = os.path.join(input_dir, 'ORCDRC_M_sl' + layer_str + '_1km_South Sudan.tiff')
-    file4 = os.path.join(input_dir, 'BLDFIE_M_sl' + layer_str + '_1km_South Sudan.tiff')
+    file1 = os.path.join(input_dir, 'SoilGrids_CLYPPT_M_sl' + layer_str + '_1km.tiff')
+    file2 = os.path.join(input_dir, 'SoilGrids_SLTPPT_M_sl' + layer_str + '_1km.tiff')
+    file3 = os.path.join(input_dir, 'SoilGrids_ORCDRC_M_sl' + layer_str + '_1km.tiff')
+    file4 = os.path.join(input_dir, 'SoilGrids_BLDFIE_M_sl' + layer_str + '_1km.tiff')
     # -------------------------------------------------------------
 
     # resample the tiff files

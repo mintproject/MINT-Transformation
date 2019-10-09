@@ -13,8 +13,8 @@ if __name__ == "__main__":
     )
 
     inputs = {
-        Topoflow4ClimateWriteFunc.I.input_dir: "./new_gpm_subset",
-        Topoflow4ClimateWriteFunc.I.output_file: "./new_gpm_subset/test_scott.rts",
+        Topoflow4ClimateWriteFunc.I.input_dir: "./oct_eval_data/gpm_2014_01_01",
+        Topoflow4ClimateWriteFunc.I.output_file: "./oct_eval_data/gpm_2014_01_01//test_scott.rts",
         Topoflow4ClimateWriteFunc.I.DEM_bounds: "7.362083333332, 9.503749999999, 34.221249999999, 36.446249999999",
         Topoflow4ClimateWriteFunc.I.DEM_ncols: "267",
         Topoflow4ClimateWriteFunc.I.DEM_nrows: "257",
