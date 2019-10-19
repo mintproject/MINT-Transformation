@@ -11,7 +11,7 @@ dependencies:
   - numpy
   - dask
   - pip:
-    - git+https://github.com/binh-vu/temp.git@pyrepr
+    - drepr
     - ujson
     - netCDF4
     - arpeggio
