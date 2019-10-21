@@ -14,7 +14,7 @@ def create_pipeline(config):
     parsed_pipeline, parsed_inputs = parser.parse()
 
     # Validate parsed info
-    parsed_pipeline.validate()
+    parsed_pipeline.validate(parsed_inputs)
 
     # Execute the pipeline
     outputs = parsed_pipeline.exec(parsed_inputs)

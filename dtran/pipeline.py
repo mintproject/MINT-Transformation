@@ -78,13 +78,12 @@ class Pipeline(object):
 
         return output
 
-    def validate(self) -> bool:
+    def validate(self, inputs: dict) -> bool:
         """
         Validate if the pipeline is correct
         :param self:
         :return:
         """
-        # TODO: use iFunc.validate? error handling
         return True
 
     def get_func_order(self, func_id: str) -> int:
