@@ -394,6 +394,7 @@ def extract_grid_data(args):
     # Check if the bounding boxes actually overlap
     # -----------------------------------------------
     ds_bounds = get_raster_bounds(ds_in, VERBOSE=True)
+    BAD_FILE = False
     if (bounds_disjoint(ds_bounds, DEM_bounds)):
         print('###############################################')
         print('WARNING: Bounding boxes do not overlap.')
