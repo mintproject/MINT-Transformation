@@ -360,11 +360,86 @@ def fix_gpm_file_as_geotiff(nc_file, var_name, out_file,
 def get_tiff_file(input_tif_dir, ncfile):
     return os.path.join(input_tif_dir, f"{Path(ncfile).stem}.tif")
 
-def fix_gpm_file_as_geotiff_wrap(args):
-    nc_file, tif_file, var_name, rts_nodata = args
+def extract_grid_data(args):
+    tif_file = '/vsimem/test.tif'
+    output_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_xres, DEM_yres, VERBOSE = args
     fix_gpm_file_as_geotiff(nc_file, var_name, tif_file,
-                            out_nodata=rts_nodata)
-    return 1
+                                out_nodata=rts_nodata)
+    ds_in = gdal.Open(tif_file)
+    grid1 = ds_in.ReadAsArray()
+    gmax = grid1.max()
+    band = ds_in.GetRasterBand(1)
+    nc_nodata = band.GetNoDataValue()
+
+    if (VERBOSE):
+        print('===============================================================')
+        print('count =', (count + 1))
+        print('===============================================================')
+        print('grid1: min   =', grid1.min(), 'max =', grid1.max())
+        print('grid1.shape  =', grid1.shape)
+        print('grid1.dtype  =', grid1.dtype)
+        print('grid1 nodata =', nc_nodata)
+        w = np.where(grid1 > nc_nodata)
+        nw = w[0].size
+        print('grid1 # data =', nw)
+        print(' ')
+
+    # --------------------------------------
+    # Use gdal.Info() to print/check info
+    # --------------------------------------
+    ## print( gdal.Info( ds_in ) )
+    ## print( '===============================================================')
+
+    # -----------------------------------------------
+    # Check if the bounding boxes actually overlap
+    # -----------------------------------------------
+    ds_bounds = get_raster_bounds(ds_in, VERBOSE=True)
+    if (bounds_disjoint(ds_bounds, DEM_bounds)):
+        print('###############################################')
+        print('WARNING: Bounding boxes do not overlap.')
+        print('         New grid will contain only nodata.')
+        print('###############################################')
+        print('count =', count)
+        print('file  =', nc_file)
+        print('ds_bounds  =', ds_bounds)
+        print('DEM_bounds =', DEM_bounds)
+        print(' ')
+        BAD_FILE = True
+
+    # -------------------------------------------
+    # Replace nodata value and save as GeoTIFF
+    # -------------------------------------------
+    #         new_file = 'TEMP2.tif'
+    #         resave_grid_to_geotiff( ds_in, new_file, grid1, nodata )
+    #         ds_in = None  # Close the nc_file
+    #         ds_in = gdal.Open( new_file )   # Open the GeoTIFF file; new nodata
+
+    # -------------------------------------------
+    # Clip and resample data to the DEM's grid
+    # then save to a temporary GeoTIFF file.
+    # -------------------------------------------
+    if not (BAD_FILE):
+        grid2 = gdal_regrid_to_dem_grid(ds_in, '/vsimem/test2.tif',
+                                        rts_nodata, DEM_bounds, DEM_xres, DEM_yres,
+                                        RESAMPLE_ALGO='bilinear')
+        if (VERBOSE):
+            print('grid2: min  =', grid2.min(), 'max =', grid2.max())
+            print('grid2.shape =', grid2.shape)
+            print('grid2.dtype =', grid2.dtype)
+            w = np.where(grid2 > rts_nodata)
+            nw = w[0].size
+            print('grid2 # data =', nw)
+            print(' ')
+        ds_in = None  # Close the tmp_file
+        gdal.Unlink('/vsimem/test.tif')
+        gdal.Unlink('/vsimem/test2.tif')
+    else:
+        grid2 = np.zeros((DEM_nrows, DEM_ncols), dtype='float32')
+        grid2 += rts_nodata
+
+    grid2 = np.float32(grid2)
+    grid2.tofile(os.path.join(output_dir, f"{Path(nc_file).stem}.bin"))
+    return gmax, BAD_FILE
 
 #   fix_gpm_file_as_geotiff()
 # -------------------------------------------------------------------
@@ -401,7 +476,6 @@ def create_rts_from_nc_files(nc_dir_path, input_tif_dir, rts_file, DEM_info: dic
     # ------------------------------------------------
     # Get list of all nc files in working directory
     # ------------------------------------------------
-
     nc_file_list = sorted(glob.glob(join(nc_dir_path, '*.nc4')))
     if len(nc_file_list) == 0:
         # couldn't find .NC4, look for .NC
@@ -418,7 +492,7 @@ def create_rts_from_nc_files(nc_dir_path, input_tif_dir, rts_file, DEM_info: dic
     # ------------------------
     # BINH: run multiprocessing to generate tiff file first
     from multiprocessing import Pool
-    pool = Pool(4)
+    pool = Pool()
 
     print(">>> preprocessing geotiff files")
     nc_file_list_need_tif = [
@@ -430,135 +504,23 @@ def create_rts_from_nc_files(nc_dir_path, input_tif_dir, rts_file, DEM_info: dic
     print(">>> finish geotiff files")
     # ------------------------
 
-    for nc_file in tqdm(nc_file_list):
-        # -------------------------------
-        # Open the original netCDF file
-        # --------------------------------
-        ## (ds_in, grid1, nodata) = gdal_open_nc_file( nc_file, var_name, VERBOSE=True)
-
-        # ------------------------------------------
-        # Option to fix problem with bounding box
-        # ------------------------------------------
-        ### fix_raster_bounds( ds_in )
-
-        # ------------------------------------------
-        # Fix GPM netCDF file, resave as GeoTIFF,
-        # then open the new GeoTIFF file
-        # ------------------------------------------
-        # NOTE: Change in favour of parallel processing
-        # fix_gpm_file_as_geotiff(nc_file, var_name, tif_file,
-        #                         out_nodata=rts_nodata)
-        ds_in = gdal.Open(get_tiff_file(input_tif_dir, nc_file))
-        grid1 = ds_in.ReadAsArray()
-        gmax = grid1.max()
+    args = [
+        # output_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_xres, DEM_yres, VERBOSE
+        (input_tif_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_xres, DEM_yres, False)
+        for nc_file in nc_file_list
+    ]
+    for gmax, bad_file in tqdm(pool.imap_unordered(extract_grid_data, args), total=len(args)):
+        count += 1
         Pmax = max(Pmax, gmax)
-        band = ds_in.GetRasterBand(1)
-        nc_nodata = band.GetNoDataValue()
-
-        if (VERBOSE):
-            print('===============================================================')
-            print('count =', (count + 1))
-            print('===============================================================')
-            print('grid1: min   =', grid1.min(), 'max =', grid1.max())
-            print('grid1.shape  =', grid1.shape)
-            print('grid1.dtype  =', grid1.dtype)
-            print('grid1 nodata =', nc_nodata)
-            w = np.where(grid1 > nc_nodata)
-            nw = w[0].size
-            print('grid1 # data =', nw)
-            print(' ')
-
-        # --------------------------------------
-        # Use gdal.Info() to print/check info
-        # --------------------------------------
-        ## print( gdal.Info( ds_in ) )
-        ## print( '===============================================================')
-
-        # -----------------------------------------------
-        # Check if the bounding boxes actually overlap
-        # -----------------------------------------------
-        ds_bounds = get_raster_bounds(ds_in, VERBOSE=True)
-        if (bounds_disjoint(ds_bounds, DEM_bounds)):
-            print('###############################################')
-            print('WARNING: Bounding boxes do not overlap.')
-            print('         New grid will contain only nodata.')
-            print('###############################################')
-            print('count =', count)
-            print('file  =', nc_file)
-            print('ds_bounds  =', ds_bounds)
-            print('DEM_bounds =', DEM_bounds)
-            print(' ')
+        if bad_file:
             bad_count += 1
-            BAD_FILE = True
-
-        # -------------------------------------------
-        # Replace nodata value and save as GeoTIFF
-        # -------------------------------------------
-        #         new_file = 'TEMP2.tif'
-        #         resave_grid_to_geotiff( ds_in, new_file, grid1, nodata )
-        #         ds_in = None  # Close the nc_file
-        #         ds_in = gdal.Open( new_file )   # Open the GeoTIFF file; new nodata
-
-        # -------------------------------------------
-        # Clip and resample data to the DEM's grid
-        # then save to a temporary GeoTIFF file.
-        # -------------------------------------------
-        if not (BAD_FILE):
-            grid2 = gdal_regrid_to_dem_grid(ds_in, tmp_file,
-                                            rts_nodata, DEM_bounds, DEM_xres, DEM_yres,
-                                            RESAMPLE_ALGO='bilinear')
-            if (VERBOSE):
-                print('grid2: min  =', grid2.min(), 'max =', grid2.max())
-                print('grid2.shape =', grid2.shape)
-                print('grid2.dtype =', grid2.dtype)
-                w = np.where(grid2 > rts_nodata)
-                nw = w[0].size
-                print('grid2 # data =', nw)
-                print(' ')
-            ds_in = None  # Close the tmp_file
-            if (IN_MEMORY):
-                gdal.Unlink(tmp_file)
-        else:
-            grid2 = np.zeros((DEM_nrows, DEM_ncols), dtype='float32')
-            grid2 += rts_nodata
 
         # -------------------------
         # Write grid to RTS file
         # -------------------------
-        grid2 = np.float32(grid2)
-        grid2.tofile(rts_unit)
-        count += 1
-
-        # --------------------------------------------
-        # Read resampled data from tmp GeoTIFF file
-        # --------------------------------------------
-        # This step shouldn't be necessary. #######
-        # --------------------------------------------
-    #         ds_tmp = gdal.Open( tmp_file )
-    #         ## ds_tmp = gdal.Open( tmp_file, gdal.GA_ReadOnly  )
-    #         ## print( gdal.Info( ds_tmp ) )
-    #         grid3  = ds_tmp.ReadAsArray()
-    #         if (VERBOSE):
-    #             print( 'grid3: min, max =', grid3.min(), grid3.max() )
-    #             print( 'grid3.shape =', grid3.shape)
-    #             print( 'grid3.dtype =', grid3.dtype)
-    #             w  = np.where(grid3 > nodata)
-    #             nw = w[0].size
-    #             print( 'grid3 # data =', nw)
-    #         ds_tmp = None   # Close tmp file
-    #
-    #         if (IN_MEMORY):
-    #             gdal.Unlink( tmp_file )
-    #         #-------------------------
-    #         # Write grid to RTS file
-    #         #-------------------------
-    #         grid3 = np.float32( grid3 )
-    #         ## rts_unit.write( grid3 )  # (doesn't work)
-    #         grid3.tofile( rts_unit )
-    #         count += 1
-
-    #         if (count == 300):  ##################################
-    #             break
+        # grid2 = np.float32(grid2)
+        # grid2.tofile(rts_unit)
+        # count += 1
 
     # ---------------------
     # Close the RTS file
