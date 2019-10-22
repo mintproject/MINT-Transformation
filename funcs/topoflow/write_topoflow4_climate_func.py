@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 from typing import Union
+from tqdm import tqdm
 
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc
@@ -79,7 +80,7 @@ def gdal_open_nc_file(nc_file, var_name, VERBOSE=False):
 def get_raster_bounds(ds, VERBOSE=False):
     # -------------------------------------------------------------
     # Note:  The bounds depend on the map projection and are not
-    # necessarily a Geographic bounding box of lons and lats.    
+    # necessarily a Geographic bounding box of lons and lats.
     # -------------------------------------------------------------
     # See:
     # https://pcjericks.github.io/py-gdalogr-cookbook/raster_layers.html
@@ -404,7 +405,7 @@ def create_rts_from_nc_files(nc_dir_path, rts_file, DEM_info: dict,
     Pmax = -1
     tif_file = '/tmp/TEMP1.tif'
 
-    for nc_file in nc_file_list:
+    for nc_file in tqdm(nc_file_list):
         # -------------------------------
         # Open the original netCDF file
         # --------------------------------

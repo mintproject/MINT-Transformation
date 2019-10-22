@@ -18,3 +18,4 @@ dependencies:
     - rdflib
     - flask
     - requests
+    - tqdm
