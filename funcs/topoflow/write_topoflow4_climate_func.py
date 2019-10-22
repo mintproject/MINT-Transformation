@@ -48,7 +48,7 @@ class Topoflow4ClimateWriteFunc(IFunc):
         self.output_file = str(output_file)
 
     def exec(self) -> dict:
-        create_rts_from_nc_files(self.input_dir, self.output_file, self.DEM)
+        create_rts_from_nc_files(self.input_dir, self.input_tiff_dir, self.output_file, self.DEM)
         return {}
 
     def validate(self) -> bool:
@@ -357,19 +357,18 @@ def fix_gpm_file_as_geotiff(nc_file, var_name, out_file,
     outRaster = None
 
 
-def get_tiff_file(ncfile):
-        fpath = Path(ncfile)
-        return str(fpath.parent / f"{fpath.stem}.tif")
+def get_tiff_file(input_tif_dir, ncfile):
+    return os.path.join(input_tif_dir, f"{fpath.stem}.tif")
 
 def fix_gpm_file_as_geotiff_wrap(args):
-    nc_file, var_name, rts_nodata = args
-    fix_gpm_file_as_geotiff(nc_file, var_name, get_tiff_file(nc_file),
+    nc_file, tif_file, var_name, rts_nodata = args
+    fix_gpm_file_as_geotiff(nc_file, var_name, tif_file,
                             out_nodata=rts_nodata)
-
+    return 1
 
 #   fix_gpm_file_as_geotiff()
 # -------------------------------------------------------------------
-def create_rts_from_nc_files(nc_dir_path, rts_file, DEM_info: dict,
+def create_rts_from_nc_files(nc_dir_path, input_tif_dir, rts_file, DEM_info: dict,
                              IN_MEMORY=False, VERBOSE=False):
     # ------------------------------------------------------
     # For info on GDAL constants, see:
@@ -419,11 +418,11 @@ def create_rts_from_nc_files(nc_dir_path, rts_file, DEM_info: dict,
     # ------------------------
     # BINH: run multiprocessing to generate tiff file first
     from multiprocessing import Pool
-    pool = Pool()
+    pool = Pool(4)
 
     nc_file_list_need_tif = [
-        (fpath, var_name, rts_nodata)
-        for fpath in nc_file_list if not Path(get_tiff_file(fpath)).exists()
+        (fpath, get_tiff_file(input_tif_dir, fpath), var_name, rts_nodata)
+        for fpath in nc_file_list if not Path(get_tiff_file(input_tif_dir, fpath)).exists()
     ]
     for _ in tqdm(pool.imap_unordered(fix_gpm_file_as_geotiff_wrap, nc_file_list_need_tif), total=len(nc_file_list_need_tif)):
         pass
@@ -447,7 +446,7 @@ def create_rts_from_nc_files(nc_dir_path, rts_file, DEM_info: dict,
         # NOTE: Change in favour of parallel processing
         # fix_gpm_file_as_geotiff(nc_file, var_name, tif_file,
         #                         out_nodata=rts_nodata)
-        ds_in = gdal.Open(get_tiff_file(nc_file))
+        ds_in = gdal.Open(get_tiff_file(input_tif_dir, nc_file))
         grid1 = ds_in.ReadAsArray()
         gmax = grid1.max()
         Pmax = max(Pmax, gmax)
