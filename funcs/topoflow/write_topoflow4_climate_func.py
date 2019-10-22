@@ -24,6 +24,7 @@ class Topoflow4ClimateWriteFunc(IFunc):
     '''
     inputs = {
         "input_dir": ArgType.String,
+        "input_tiff_dir": ArgType.String,
         "output_file": ArgType.FilePath,
         "DEM_bounds": ArgType.String,
         "DEM_xres_arcsecs": ArgType.String,
@@ -33,7 +34,7 @@ class Topoflow4ClimateWriteFunc(IFunc):
     }
     outputs = {}
 
-    def __init__(self, input_dir: str, output_file: Union[str, Path], DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str,
+    def __init__(self, input_dir: str, input_tiff_dir: str, output_file: Union[str, Path], DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str,
                  DEM_ncols: str, DEM_nrows: str):
         self.DEM = {
             "bounds": [float(x.strip()) for x in DEM_bounds.split(",")],
@@ -43,6 +44,7 @@ class Topoflow4ClimateWriteFunc(IFunc):
             "nrows": int(DEM_nrows),
         }
         self.input_dir = str(input_dir)
+        self.input_tiff_dir = str(input_tiff_dir)
         self.output_file = str(output_file)
 
     def exec(self) -> dict:
@@ -355,7 +357,7 @@ def fix_gpm_file_as_geotiff(nc_file, var_name, out_file,
     outRaster = None
 
 
-#   fix_gpm_file_as_geotiff()         
+#   fix_gpm_file_as_geotiff()
 # -------------------------------------------------------------------
 def create_rts_from_nc_files(nc_dir_path, rts_file, DEM_info: dict,
                              IN_MEMORY=False, VERBOSE=False):
@@ -403,7 +405,23 @@ def create_rts_from_nc_files(nc_dir_path, rts_file, DEM_info: dict,
     #### rts_nodata = -9999.0    #################
     rts_nodata = 0.0  # (good for rainfall rates; not general)
     Pmax = -1
-    tif_file = '/tmp/TEMP1.tif'
+
+    # ------------------------
+    # BINH: run multiprocessing to generate tiff file first
+    from multiprocessing import Pool
+    pool = Pool()
+    def get_tiff_file(ncfile):
+        fpath = Path(ncfile)
+        return str(fpath.parent / f"{fpath.stem}.tif")
+
+    def fix_gpm_file_as_geotiff_wrap(nc_file):
+        fix_gpm_file_as_geotiff(nc_file, var_name, get_tiff_file(nc_file),
+                                out_nodata=rts_nodata)
+
+    nc_file_list_need_tif = [fpath for fpath in nc_file_list if not Path(get_tiff_file(fpath)).exists()]
+    for _ in tqdm(pool.imap_unordered(fix_gpm_file_as_geotiff_wrap, nc_file_list_need_tif), total=len(nc_file_list_need_tif)):
+        pass
+    # ------------------------
 
     for nc_file in tqdm(nc_file_list):
         # -------------------------------
@@ -417,12 +435,13 @@ def create_rts_from_nc_files(nc_dir_path, rts_file, DEM_info: dict,
         ### fix_raster_bounds( ds_in )
 
         # ------------------------------------------
-        # Fix GPM netCDF file, resave as GeoTIFF, 
+        # Fix GPM netCDF file, resave as GeoTIFF,
         # then open the new GeoTIFF file
         # ------------------------------------------
-        fix_gpm_file_as_geotiff(nc_file, var_name, tif_file,
-                                out_nodata=rts_nodata)
-        ds_in = gdal.Open(tif_file)
+        # NOTE: Change in favour of parallel processing
+        # fix_gpm_file_as_geotiff(nc_file, var_name, tif_file,
+        #                         out_nodata=rts_nodata)
+        ds_in = gdal.Open(get_tiff_file(nc_file))
         grid1 = ds_in.ReadAsArray()
         gmax = grid1.max()
         Pmax = max(Pmax, gmax)

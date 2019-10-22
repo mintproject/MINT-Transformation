@@ -16,8 +16,9 @@ if __name__ == "__main__":
     )
 
     inputs = {
-        Topoflow4ClimateWriteFunc.I.input_dir: "./oct_eval_data/gpm_2014_01_01",
-        Topoflow4ClimateWriteFunc.I.output_file: f"./oct_eval_data/gpm_2014_01_01/test_scott_{area_str}.rts",
+        Topoflow4ClimateWriteFunc.I.input_dir: "/data/mint/gpm",
+        Topoflow4ClimateWriteFunc.I.input_tiff_dir: "/data/mint/gpm_tiff",
+        Topoflow4ClimateWriteFunc.I.output_file: f"/data/mint/climate_{area_str}.rts",
         Topoflow4ClimateWriteFunc.I.DEM_bounds: area['bbox'],
         Topoflow4ClimateWriteFunc.I.DEM_ncols: area['ncols'],
         Topoflow4ClimateWriteFunc.I.DEM_nrows: area['nrows'],
