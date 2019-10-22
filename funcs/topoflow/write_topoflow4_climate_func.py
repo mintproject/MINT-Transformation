@@ -361,11 +361,18 @@ def get_tiff_file(input_tif_dir, ncfile):
     return os.path.join(input_tif_dir, f"{Path(ncfile).stem}.tif")
 
 def extract_grid_data(args):
-    tif_file = '/vsimem/test.tif'
     output_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_xres, DEM_yres, VERBOSE = args
-    fix_gpm_file_as_geotiff(nc_file, var_name, tif_file,
+    IN_MEMORY = False
+    if IN_MEMORY:
+        tif_file1 = f'/vsimem/{Path(nc_file).stem}.tmp.tif'
+        tif_file2 = f'/vsimem/{Path(nc_file).stem}.tmp.2.tif'
+    else:
+        tif_file1 = f'/tmp/{Path(nc_file).stem}.tmp.tif'
+        tif_file2 = f'/tmp/{Path(nc_file).stem}.tmp.2.tif'
+
+    fix_gpm_file_as_geotiff(nc_file, var_name, tif_file1,
                                 out_nodata=rts_nodata)
-    ds_in = gdal.Open(tif_file)
+    ds_in = gdal.Open(tif_file1)
     grid1 = ds_in.ReadAsArray()
     gmax = grid1.max()
     band = ds_in.GetRasterBand(1)
@@ -420,7 +427,7 @@ def extract_grid_data(args):
     # then save to a temporary GeoTIFF file.
     # -------------------------------------------
     if not (BAD_FILE):
-        grid2 = gdal_regrid_to_dem_grid(ds_in, '/vsimem/test2.tif',
+        grid2 = gdal_regrid_to_dem_grid(ds_in, tif_file2,
                                         rts_nodata, DEM_bounds, DEM_xres, DEM_yres,
                                         RESAMPLE_ALGO='bilinear')
         if (VERBOSE):
@@ -432,8 +439,10 @@ def extract_grid_data(args):
             print('grid2 # data =', nw)
             print(' ')
         ds_in = None  # Close the tmp_file
-        gdal.Unlink('/vsimem/test.tif')
-        gdal.Unlink('/vsimem/test2.tif')
+
+        if IN_MEMORY:
+            gdal.Unlink(tif_file1)
+            gdal.Unlink(tif_file2)
     else:
         grid2 = np.zeros((DEM_nrows, DEM_ncols), dtype='float32')
         grid2 += rts_nodata
