@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 from pathlib import Path
 
-import numpy as np, os
+from datetime import datetime
+import numpy as np, os, time
 from typing import Union
 from tqdm import tqdm
 
@@ -271,6 +272,7 @@ def resave_grid_to_geotiff(ds_in, new_file, grid1, nodata):
 # -------------------------------------------------------------------
 def fix_gpm_file_as_geotiff(nc_file, var_name, out_file,
                             out_nodata=0.0, VERBOSE=False):
+    logs = ["convert gpm file to geotiff: %s at %s" % (Path(nc_file).stem, datetime.now().strftime("%H:%M:%S"))]
     ### raster = gdal.Open("NETCDF:{0}:{1}".format(nc_file, var_name), gdal.GA_ReadOnly )
     raster = gdal.Open("NETCDF:{0}:{1}".format(nc_file, var_name))
     band = raster.GetRasterBand(1)
@@ -280,6 +282,8 @@ def fix_gpm_file_as_geotiff(nc_file, var_name, out_file,
     bounds = get_raster_bounds(raster)  ######
     nodata = band.GetNoDataValue()
     array = band.ReadAsArray()
+    logs.append("finish read netcdf data at %s" % datetime.now().strftime("%H:%M:%S"))
+
     ## array = raster.ReadAsArray(0, 0, ds_in.RasterXSize, ds_in.RasterYSize)
     # ----------------------------------------------
     # Get geotransform for array in nc_file
@@ -338,6 +342,7 @@ def fix_gpm_file_as_geotiff(nc_file, var_name, out_file,
         print('geotransform  =', geotransform)
         print('geotransform2 =', geotransform2)
 
+    logs.append("finish rotating and transforming netcdf data at %s" % datetime.now().strftime("%H:%M:%S"))
     # ------------------------------------
     # Write new array to a GeoTIFF file
     # ------------------------------------
@@ -355,6 +360,8 @@ def fix_gpm_file_as_geotiff(nc_file, var_name, out_file,
     # Close the out_file
     # ---------------------
     outRaster = None
+    logs.append("finish write geotiff data at %s" % datetime.now().strftime("%H:%M:%S"))
+    print(">>>", "|**|".join(logs))
 
 
 def get_tiff_file(input_tif_dir, ncfile):
@@ -372,6 +379,7 @@ def extract_grid_data(args):
 
     fix_gpm_file_as_geotiff(nc_file, var_name, tif_file1,
                                 out_nodata=rts_nodata)
+
     ds_in = gdal.Open(tif_file1)
     grid1 = ds_in.ReadAsArray()
     gmax = grid1.max()
@@ -520,6 +528,7 @@ def create_rts_from_nc_files(nc_dir_path, input_tif_dir, rts_file, DEM_info: dic
         for nc_file in nc_file_list
     ]
     for gmax, bad_file in tqdm(pool.imap_unordered(extract_grid_data, args), total=len(args)):
+    # for gmax, bad_file in tqdm((extract_grid_data(a) for a in args), total=len(args)):
         count += 1
         Pmax = max(Pmax, gmax)
         if bad_file:
