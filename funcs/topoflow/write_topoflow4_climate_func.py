@@ -494,14 +494,14 @@ def create_rts_from_nc_files(nc_dir_path, input_tif_dir, rts_file, DEM_info: dic
     from multiprocessing import Pool
     pool = Pool()
 
-    print(">>> preprocessing geotiff files")
-    nc_file_list_need_tif = [
-        (fpath, get_tiff_file(input_tif_dir, fpath), var_name, rts_nodata)
-        for fpath in nc_file_list if not Path(get_tiff_file(input_tif_dir, fpath)).exists()
-    ]
-    for _ in tqdm(pool.imap_unordered(fix_gpm_file_as_geotiff_wrap, nc_file_list_need_tif), total=len(nc_file_list_need_tif)):
-        pass
-    print(">>> finish geotiff files")
+    # print(">>> preprocessing geotiff files")
+    # nc_file_list_need_tif = [
+    #     (fpath, get_tiff_file(input_tif_dir, fpath), var_name, rts_nodata)
+    #     for fpath in nc_file_list if not Path(get_tiff_file(input_tif_dir, fpath)).exists()
+    # ]
+    # for _ in tqdm(pool.imap_unordered(fix_gpm_file_as_geotiff_wrap, nc_file_list_need_tif), total=len(nc_file_list_need_tif)):
+    #     pass
+    # print(">>> finish geotiff files")
     # ------------------------
 
     args = [
