@@ -358,7 +358,7 @@ def fix_gpm_file_as_geotiff(nc_file, var_name, out_file,
 
 
 def get_tiff_file(input_tif_dir, ncfile):
-    return os.path.join(input_tif_dir, f"{fpath.stem}.tif")
+    return os.path.join(input_tif_dir, f"{Path(ncfile).stem}.tif")
 
 def fix_gpm_file_as_geotiff_wrap(args):
     nc_file, tif_file, var_name, rts_nodata = args
