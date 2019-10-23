@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from pathlib import Path
-
+from netCDF4 import Dataset
 from datetime import datetime
 import numpy as np, os, time
 from typing import Union
@@ -25,7 +25,7 @@ class Topoflow4ClimateWriteFunc(IFunc):
     '''
     inputs = {
         "input_dir": ArgType.String,
-        "input_tiff_dir": ArgType.String,
+        "temp_dir": ArgType.String,
         "output_file": ArgType.FilePath,
         "DEM_bounds": ArgType.String,
         "DEM_xres_arcsecs": ArgType.String,
@@ -35,7 +35,7 @@ class Topoflow4ClimateWriteFunc(IFunc):
     }
     outputs = {}
 
-    def __init__(self, input_dir: str, input_tiff_dir: str, output_file: Union[str, Path], DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str,
+    def __init__(self, input_dir: str, temp_dir: str, output_file: Union[str, Path], DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str,
                  DEM_ncols: str, DEM_nrows: str):
         self.DEM = {
             "bounds": [float(x.strip()) for x in DEM_bounds.split(",")],
@@ -45,11 +45,11 @@ class Topoflow4ClimateWriteFunc(IFunc):
             "nrows": int(DEM_nrows),
         }
         self.input_dir = str(input_dir)
-        self.input_tiff_dir = str(input_tiff_dir)
+        self.temp_dir = str(temp_dir)
         self.output_file = str(output_file)
 
     def exec(self) -> dict:
-        create_rts_from_nc_files(self.input_dir, self.input_tiff_dir, self.output_file, self.DEM)
+        create_rts_from_nc_files(self.input_dir, self.temp_dir, self.output_file, self.DEM)
         return {}
 
     def validate(self) -> bool:
@@ -281,15 +281,28 @@ def fix_gpm_file_as_geotiff(nc_file, var_name, out_file,
     proj = raster.GetProjectionRef()
     bounds = get_raster_bounds(raster)  ######
     nodata = band.GetNoDataValue()
-    array = band.ReadAsArray()
-    logs.append("finish read netcdf data at %s" % datetime.now().strftime("%H:%M:%S"))
+    geotransform = raster.GetGeoTransform()
+    logs.append("finish read metadata data at %s" % datetime.now().strftime("%H:%M:%S"))
+
+    # ----------------
+    # BINH: using netcdf to read data instead of gdal
+    # array = band.ReadAsArray()
+    ds = Dataset(nc_file, "r")
+    # bottom-up on the y-axis (netcdf compare to gdal north-up 90 -> -90)
+    variable = ds.variables[var_name][0][::-1]
+    new_array = np.asarray(variable)
+    # assert np.allclose(array, new_array, atol=1e-7)
+    # print(">>>> MATCH!!!")
+    array = new_array
+    # ----------------
+    logs.append("finish read array data at %s" % datetime.now().strftime("%H:%M:%S"))
 
     ## array = raster.ReadAsArray(0, 0, ds_in.RasterXSize, ds_in.RasterYSize)
     # ----------------------------------------------
     # Get geotransform for array in nc_file
     # Note:  These look strange, but are CORRECT.
     # ----------------------------------------------
-    geotransform = raster.GetGeoTransform()
+
     ulx = geotransform[0]
     xres = geotransform[1]
     xrtn = geotransform[2]
@@ -364,11 +377,12 @@ def fix_gpm_file_as_geotiff(nc_file, var_name, out_file,
     print(">>>", "|**|".join(logs))
 
 
-def get_tiff_file(input_tif_dir, ncfile):
-    return os.path.join(input_tif_dir, f"{Path(ncfile).stem}.tif")
+def get_tiff_file(temp_bin_dir, ncfile):
+    return os.path.join(temp_bin_dir, f"{Path(ncfile).stem}.tif")
+
 
 def extract_grid_data(args):
-    output_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_xres, DEM_yres, VERBOSE = args
+    output_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_nrows, DEM_ncols, DEM_xres, DEM_yres, VERBOSE = args
     IN_MEMORY = False
     if IN_MEMORY:
         tif_file1 = f'/vsimem/{Path(nc_file).stem}.tmp.tif'
@@ -388,8 +402,6 @@ def extract_grid_data(args):
 
     if (VERBOSE):
         print('===============================================================')
-        print('count =', (count + 1))
-        print('===============================================================')
         print('grid1: min   =', grid1.min(), 'max =', grid1.max())
         print('grid1.shape  =', grid1.shape)
         print('grid1.dtype  =', grid1.dtype)
@@ -408,14 +420,13 @@ def extract_grid_data(args):
     # -----------------------------------------------
     # Check if the bounding boxes actually overlap
     # -----------------------------------------------
-    ds_bounds = get_raster_bounds(ds_in, VERBOSE=True)
+    ds_bounds = get_raster_bounds(ds_in, VERBOSE=False)
     BAD_FILE = False
     if (bounds_disjoint(ds_bounds, DEM_bounds)):
         print('###############################################')
         print('WARNING: Bounding boxes do not overlap.')
         print('         New grid will contain only nodata.')
         print('###############################################')
-        print('count =', count)
         print('file  =', nc_file)
         print('ds_bounds  =', ds_bounds)
         print('DEM_bounds =', DEM_bounds)
@@ -449,11 +460,17 @@ def extract_grid_data(args):
         ds_in = None  # Close the tmp_file
 
         if IN_MEMORY:
-            gdal.Unlink(tif_file1)
             gdal.Unlink(tif_file2)
+        else:
+            os.remove(tif_file2)
     else:
         grid2 = np.zeros((DEM_nrows, DEM_ncols), dtype='float32')
         grid2 += rts_nodata
+
+    if IN_MEMORY:
+        gdal.Unlink(tif_file1)
+    else:
+        os.remove(tif_file1)
 
     grid2 = np.float32(grid2)
     grid2.tofile(os.path.join(output_dir, f"{Path(nc_file).stem}.bin"))
@@ -461,7 +478,7 @@ def extract_grid_data(args):
 
 #   fix_gpm_file_as_geotiff()
 # -------------------------------------------------------------------
-def create_rts_from_nc_files(nc_dir_path, input_tif_dir, rts_file, DEM_info: dict,
+def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, rts_file, DEM_info: dict,
                              IN_MEMORY=False, VERBOSE=False):
     # ------------------------------------------------------
     # For info on GDAL constants, see:
@@ -481,11 +498,6 @@ def create_rts_from_nc_files(nc_dir_path, input_tif_dir, rts_file, DEM_info: dic
     # -----------------------------------------
     # Use a temp file in memory or on disk ?
     # -----------------------------------------
-    if (IN_MEMORY):
-        tmp_file = '/vsimem/TEMP.tif'
-    else:
-        tmp_file = '/tmp/TEMP.tif'
-
     # -------------------------
     # Open RTS file to write
     # -------------------------
@@ -508,14 +520,14 @@ def create_rts_from_nc_files(nc_dir_path, input_tif_dir, rts_file, DEM_info: dic
     Pmax = -1
 
     # ------------------------
-    # BINH: run multiprocessing to generate tiff file first
+    # BINH: run multiprocessing
     from multiprocessing import Pool
     pool = Pool()
 
     # print(">>> preprocessing geotiff files")
     # nc_file_list_need_tif = [
-    #     (fpath, get_tiff_file(input_tif_dir, fpath), var_name, rts_nodata)
-    #     for fpath in nc_file_list if not Path(get_tiff_file(input_tif_dir, fpath)).exists()
+    #     (fpath, get_tiff_file(temp_bin_dir, fpath), var_name, rts_nodata)
+    #     for fpath in nc_file_list if not Path(get_tiff_file(temp_bin_dir, fpath)).exists()
     # ]
     # for _ in tqdm(pool.imap_unordered(fix_gpm_file_as_geotiff_wrap, nc_file_list_need_tif), total=len(nc_file_list_need_tif)):
     #     pass
@@ -523,8 +535,8 @@ def create_rts_from_nc_files(nc_dir_path, input_tif_dir, rts_file, DEM_info: dic
     # ------------------------
 
     args = [
-        # output_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_xres, DEM_yres, VERBOSE
-        (input_tif_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_xres, DEM_yres, False)
+        # output_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_nrows, DEM_ncols, DEM_xres, DEM_yres, VERBOSE
+        (temp_bin_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_nrows, DEM_ncols, DEM_xres, DEM_yres, False)
         for nc_file in nc_file_list
     ]
     for gmax, bad_file in tqdm(pool.imap_unordered(extract_grid_data, args), total=len(args)):
@@ -540,6 +552,12 @@ def create_rts_from_nc_files(nc_dir_path, input_tif_dir, rts_file, DEM_info: dic
         # grid2 = np.float32(grid2)
         # grid2.tofile(rts_unit)
         # count += 1
+
+    print(">>> write to files")
+    grid_files = sorted(glob.glob(join(temp_bin_dir, '*.bin')))
+    for grid_file in tqdm(grid_files):
+        grid = np.fromfile(grid_file, dtype=np.float32)
+        grid.tofile(rts_unit)
 
     # ---------------------
     # Close the RTS file
