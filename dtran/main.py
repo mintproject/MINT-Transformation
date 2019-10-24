@@ -12,9 +12,13 @@ def cli():
     ignore_unknown_options=True,
     allow_extra_args=True,
 ))
-@click.option("--config", help="full path to config")
+@click.option("--config", help="Full path to the config.")
+@click.option(
+    "--dryrun", is_flag=True,
+    help="Only check parsed inputs without actual execution."
+)
 @click.pass_context
-def create_pipeline(ctx, config=None):
+def create_pipeline(ctx, config=None, dryrun=False):
     """
     Creates a pipeline and execute it based on given config and input(optional).
     To specify the input to pipeline, use (listed in ascending priority):
@@ -35,6 +39,10 @@ def create_pipeline(ctx, config=None):
 
     parser = ConfigParser(user_inputs)
     parsed_pipeline, parsed_inputs = parser.parse(config)
+
+    if dryrun:
+        print(parsed_inputs)
+        return
 
     # Execute the pipeline
     parsed_pipeline.exec(parsed_inputs)
