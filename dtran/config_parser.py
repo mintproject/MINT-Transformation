@@ -12,8 +12,10 @@ from dtran import Pipeline
 wired_pattern = re.compile(r'^\$\..+\..+$')
 keys_pattern = re.compile(r'^\w+$')
 
+
 class OrderedDictField(fields.Dict):
     mapping_type = OrderedDict
+
 
 class AdapterSchema(Schema):
     adapter = fields.Str(required=True)
@@ -22,6 +24,7 @@ class AdapterSchema(Schema):
 
     class Meta:
         ordered = True
+
 
 class PipelineSchema(Schema):
     version = fields.Str(required=True)
@@ -67,6 +70,7 @@ class PipelineSchema(Schema):
         for name in mappings:
             mappings[name] = f"{mappings[name][0].id}__{mappings[name][1]}__"
         return Pipeline(func_classes, wired), inputs, mappings
+
 
 class ConfigParser:
     def __init__(self):
