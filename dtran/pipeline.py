@@ -78,7 +78,7 @@ class Pipeline(object):
 
         return output
 
-    def validate(self) -> bool:
+    def validate(self, inputs: dict) -> bool:
         """
         Validate if the pipeline is correct
         :param self:

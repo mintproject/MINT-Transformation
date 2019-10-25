@@ -12,7 +12,6 @@ from dtran.argtype import ArgType
 from dtran.ifunc import IFunc
 
 
-
 class GraphWriteFunc(IFunc):
     id = "graph_write_func"
     description = ''' A writer adapter.
