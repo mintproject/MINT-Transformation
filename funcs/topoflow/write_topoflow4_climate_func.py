@@ -82,7 +82,7 @@ class Topoflow4ClimateWritePerMonthFunc(IFunc):
                 grid_files_per_month[month] = []
             grid_files_per_month[month].append(grid_file)
 
-        print(grid_files_per_month)
+        print(grid_files_per_month, join(self.grid_dir, '*.bin'))
 
         for month, grid_files in grid_files_per_month.items():
             print(">>> Process month", month)
