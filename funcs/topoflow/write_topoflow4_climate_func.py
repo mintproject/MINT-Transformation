@@ -77,12 +77,10 @@ class Topoflow4ClimateWritePerMonthFunc(IFunc):
     def exec(self) -> dict:
         grid_files_per_month = {}
         for grid_file in glob.glob(join(self.grid_dir, '*.bin')):
-            month = self.date_regex.match(grid_file).group('month')
+            month = self.date_regex.match(Path(grid_file).name).group('month')
             if month not in grid_files_per_month:
                 grid_files_per_month[month] = []
             grid_files_per_month[month].append(grid_file)
-
-        print(grid_files_per_month, join(self.grid_dir, '*.bin'))
 
         for month, grid_files in grid_files_per_month.items():
             print(">>> Process month", month)
