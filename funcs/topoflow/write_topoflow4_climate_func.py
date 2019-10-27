@@ -4,7 +4,7 @@ from pathlib import Path
 from netCDF4 import Dataset
 from datetime import datetime
 import numpy as np, os, time
-from typing import Union
+from typing import Union, List
 from tqdm import tqdm
 
 from dtran.argtype import ArgType
