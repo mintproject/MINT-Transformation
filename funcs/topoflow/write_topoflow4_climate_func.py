@@ -55,6 +55,41 @@ class Topoflow4ClimateWriteFunc(IFunc):
     def validate(self) -> bool:
         return True
 
+
+class Topoflow4ClimateWritePerMonthFunc(IFunc):
+    id = "topoflow4_climate_write_per_month_func"
+    description = ''' A reader-transformation-writer multi-adapter.
+    Creates RTS (and RTI) files per month from NetCDF (climate) files.
+    '''
+    inputs = {
+        "grid_dir": ArgType.String,
+        "date_regex": ArgType.String,
+        "output_file": ArgType.FilePath,
+    }
+    outputs = {}
+
+    def __init__(self, grid_dir: str, date_regex: str, output_file: Union[str, Path]):
+        self.grid_dir = str(grid_dir)
+        self.date_regex = re.compile(str(date_regex))
+        self.output_file = str(output_file)
+
+    def exec(self) -> dict:
+        grid_files_per_month = {}
+        for grid_file in glob.glob(join(self.grid_dir, '*.bin')):
+            month = self.date_regex.match(grid_file).group('month')
+            if month not in grid_files_per_month:
+                grid_files_per_month[month] = []
+            grid_files_per_month[month].append(grid_file)
+
+        for month, grid_files in grid_files_per_month.items():
+            print(">>> Process month", month)
+            output_file = Path(self.output_file).parent / f"{Path(self.output_file).stem}.{month}.rts"
+            write_grid_files_to_rts(grid_files, output_file)
+        return {}
+
+    def validate(self) -> bool:
+        return True
+
 # -------------------------------------------------------------------
 def gdal_open_nc_file(nc_file, var_name, VERBOSE=False):
     ### ds_in = gdal.Open("NETCDF:{0}:{1}".format(nc_file, var_name), gdal.GA_ReadOnly )
@@ -476,6 +511,18 @@ def extract_grid_data(args):
     grid2.tofile(os.path.join(output_dir, f"{Path(nc_file).stem}.bin"))
     return gmax, BAD_FILE
 
+
+def write_grid_files_to_rts(grid_files: List[str], rts_output_file: str):
+    """
+    grid_files need to be sorted in time-order
+    """
+    rts_unit = open(rts_output_file, 'wb')
+    grid_files = sorted(grid_files)
+    for grid_file in tqdm(grid_files):
+        grid = np.fromfile(grid_file, dtype=np.float32)
+        grid.tofile(rts_unit)
+    rts_unit.close()
+
 #   fix_gpm_file_as_geotiff()
 # -------------------------------------------------------------------
 def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, rts_file, DEM_info: dict,
@@ -494,14 +541,6 @@ def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, rts_file, DEM_info: dict
     DEM_ncols = DEM_info["ncols"]
     DEM_nrows = DEM_info["nrows"]
     #######################################################
-
-    # -----------------------------------------
-    # Use a temp file in memory or on disk ?
-    # -----------------------------------------
-    # -------------------------
-    # Open RTS file to write
-    # -------------------------
-    rts_unit = open(rts_file, 'wb')
 
     # ------------------------------------------------
     # Get list of all nc files in working directory
@@ -538,6 +577,8 @@ def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, rts_file, DEM_info: dict
         # output_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_nrows, DEM_ncols, DEM_xres, DEM_yres, VERBOSE
         (temp_bin_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_nrows, DEM_ncols, DEM_xres, DEM_yres, False)
         for nc_file in nc_file_list
+        # skip generated files
+        if not os.path.exists(os.path.join(temp_bin_dir, f"{Path(nc_file).stem}.bin"))
     ]
     for gmax, bad_file in tqdm(pool.imap_unordered(extract_grid_data, args), total=len(args)):
     # for gmax, bad_file in tqdm((extract_grid_data(a) for a in args), total=len(args)):
@@ -553,16 +594,12 @@ def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, rts_file, DEM_info: dict
         # grid2.tofile(rts_unit)
         # count += 1
 
+    # -------------------------
+    # Open RTS file to write
+    # -------------------------
     print(">>> write to files")
     grid_files = sorted(glob.glob(join(temp_bin_dir, '*.bin')))
-    for grid_file in tqdm(grid_files):
-        grid = np.fromfile(grid_file, dtype=np.float32)
-        grid.tofile(rts_unit)
-
-    # ---------------------
-    # Close the RTS file
-    # ---------------------
-    rts_unit.close()
+    write_grid_files_to_rts(grid_files, rts_file)
 
     # Generate RTI file
     rti_fname = rts_file.replace('.rts', '.rti')

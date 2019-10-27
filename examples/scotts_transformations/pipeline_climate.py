@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     inputs = {
         Topoflow4ClimateWriteFunc.I.input_dir: "/data/mint/gpm",
-        Topoflow4ClimateWriteFunc.I.temp_dir: "/data/mint/gpm_tmp",
+        Topoflow4ClimateWriteFunc.I.temp_dir: f"/data/mint/gpm_grid_{area_str}",
         Topoflow4ClimateWriteFunc.I.output_file: f"/data/mint/climate_{area_str}.rts",
         Topoflow4ClimateWriteFunc.I.DEM_bounds: area['bbox'],
         Topoflow4ClimateWriteFunc.I.DEM_ncols: area['ncols'],
