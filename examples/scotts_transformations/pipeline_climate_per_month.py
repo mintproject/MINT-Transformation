@@ -18,7 +18,7 @@ if __name__ == "__main__":
     inputs = {
         Topoflow4ClimateWritePerMonthFunc.I.grid_dir: f"/data/mint/gpm_grid_{area_str}",
         Topoflow4ClimateWritePerMonthFunc.I.date_regex: '3B-HHR-E.MS.MRG.3IMERG.(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})',
-        Topoflow4ClimateWritePerMonthFunc.I.output_file: f"/data/mint/climate_{area_str}.rts",
+        Topoflow4ClimateWritePerMonthFunc.I.output_file: f"/data/mint/{area_str}/climate.rts",
     }
 
     outputs = pipeline.exec(inputs)
