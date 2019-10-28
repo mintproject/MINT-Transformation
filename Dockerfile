@@ -10,5 +10,6 @@ RUN conda env create -f /tmp/environment.yml
 RUN sed -i '$ d' ~/.bashrc && \
     echo "conda activate mintdt" >> ~/.bashrc
 
+RUN bash -c 'source ~/.bashrc && conda activate mintdt && pip install xarray'
 ADD entrypoint.sh /
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]

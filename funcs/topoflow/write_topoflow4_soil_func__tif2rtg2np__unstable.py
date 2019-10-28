@@ -12,8 +12,8 @@ import numpy as np
 from scipy.special import gamma
 
 from dtran import IFunc, ArgType
-from funcs.topoflow.rti_files import generate_rti_file
-from funcs.topoflow.write_topoflow4_climate_func import gdal_regrid_to_dem_grid
+import funcs.topoflow.rti_files as rti_files
+import funcs.topoflow.write_topoflow4_climate_func as rg
 
 
 class Topoflow4SoilWriteFunc(IFunc):
@@ -145,23 +145,12 @@ def save_soil_hydraulic_vars(input_dir, output_dir, DEM_info: dict, layer=1):
     L_unit.close()
 
     for fpath in [Ks_file, qs_file, pB_file, c_file, lam_file, G_file, a_file, n_file, L_file]:
-        generate_rti_file(fpath, fpath.replace(".bin", ".rti"), DEM_info["ncols"],
-                          DEM_info['nrows'], DEM_info["xres"], DEM_info['yres'], pixel_geom=0)
+        rti_files.generate_rti_file(fpath, fpath.replace(".bin", ".rti"), DEM_info["ncols"],
+                                   DEM_info['nrows'], DEM_info["xres"], DEM_info['yres'], pixel_geom=0)
 
 # -------------------------------------------------------------------
 def read_soil_grid_files(input_dir, DEM_info: dict,
-                         res_str='1km', layer=1):
-
-    layer_str = str(layer)
-    match_files = []
-    for fpath in Path(input_dir).iterdir():
-        if fpath.name.find(f"_M_sl{layer_str}_{res_str}") != -1 and (fpath.name.endswith(".tiff") or fpath.name.endswith(".TIF")):
-            match_files.append(fpath)
-
-    C_file = [str(x) for x in match_files if x.name.find("CLYPPT_") != -1][0]
-    S_file = [str(x) for x in match_files if x.name.find("SLTPPT_") != -1][0]
-    OM_file = [str(x) for x in match_files if x.name.find("ORCDRC_") != -1][0]
-    D_file = [str(x) for x in match_files if x.name.find("BLDFIE_") != -1][0]
+                         res_str='1km', layer=1, VERBOSE=True):
 
     #-------------------------------------------------------------
     # Read soil property data from a set TIF files, clip and resample
@@ -179,25 +168,39 @@ def read_soil_grid_files(input_dir, DEM_info: dict,
     #   0.0, 0.05, 0.15, 0.30, 0.60, 1.00, 2.00
     #   sl1, sl2,  sl3,  sl4,  sl5,  sl6,  sl7
     #--------------------------------------------------- 
+    layer_str = str(layer)
+    match_files = []
+    for fpath in Path(input_dir).iterdir():
+        if fpath.name.find(f"_M_sl{layer_str}_{res_str}") != -1 and (fpath.name.endswith(".tiff") or fpath.name.endswith(".TIF")):
+            match_files.append(fpath)
 
-    out_nodata = -9999.0
+    C_file_pre = [str(x) for x in match_files if x.name.find("CLYPPT_") != -1][0]
+    S_file_pre = [str(x) for x in match_files if x.name.find("SLTPPT_") != -1][0]
+    OM_file_pre = [str(x) for x in match_files if x.name.find("ORCDRC_") != -1][0]
+    D_file_pre = [str(x) for x in match_files if x.name.find("BLDFIE_") != -1][0]
 
-    results = []
-    for file in [C_file, S_file, OM_file, D_file]:
-        f = gdal.Open(file)
-        results.append(gdal_regrid_to_dem_grid(f, '/tmp/TEMP.tif',
-                                               out_nodata, DEM_info['bounds'], DEM_info['xres'], DEM_info['yres'],
-                                               RESAMPLE_ALGO='bilinear'))
-        f = None
+    print([C_file_pre, S_file_pre, OM_file_pre, D_file_pre])
 
-    (C, S, OM, D) = results
+    # Transform to RTG.
+    [C_file, S_file, OM_file, D_file] = transform_isric_soil_grid_files([C_file_pre, S_file_pre, OM_file_pre, D_file_pre], DEM_info)
+    # These grids now contain data from ISRIC - SoilGrids, but have
+    # been clipped and resampled to a DEM grid to be used by TopoFlow.
+    
+    print([C_file, S_file, OM_file, D_file])
 
+    #-------------------------------
+    # Read the soil property grids
     #------------------------------------------------
     # Wosten C = clay mass fraction, [kg/kg], as %.
     # Same units in ISRIC and Wosten.
     #------------------------------------------------
+    C = np.fromfile(open(C_file, 'rb'), dtype=np.float32)
+
+    #------------------------------------------------
     # Wosten S = silt mass fraction, [kg/kg], as %.
     # Same units in ISRIC and Wosten.
+    #------------------------------------------------    
+    S = np.fromfile(open(S_file, 'rb'), dtype=np.float32)
     #----------------------------------------------------------
     # Wosten OM = organic matter mass fraction, [kg/kg], as %
     # ISRIC units = [g / kg]  
@@ -210,6 +213,7 @@ def read_soil_grid_files(input_dir, DEM_info: dict,
     # OM [g/kg] * (1 kg / 1000 g) = (OM/1000) [kg/kg]
     # (OM/1000) [kg/kg] * 100 = (OM/10) %.
     #--------------------------------------------------
+    OM = np.fromfile(open(OM_file, 'rb'), dtype=np.float32)
     OM = (OM / 10.0)
     #--------------------------------------
     # Wosten D = bulk density, [g / cm^3]
@@ -219,12 +223,13 @@ def read_soil_grid_files(input_dir, DEM_info: dict,
     # D [kg / m^3] * (1000 g / 1 kg) * (1 m / 100 cm)^3
     # D [kg / m^3] * (1 / 1000) = D [g / cm^3]
     #----------------------------------------------------
+    D = np.fromfile(open(D_file, 'rb'), dtype=np.float32)
     D = (D / 1000.0)
 
     #--------------------------------------
     # Check if grid values are reasonable
     #--------------------------------------
-    w1 = np.logical_or( C < 0, C > 100.0 )
+    w1 = np.logical_or(C < 0, C > 100.0)
     n1 = w1.sum()
     if (n1 > 0):
         cmin = C.min()
@@ -235,7 +240,7 @@ def read_soil_grid_files(input_dir, DEM_info: dict,
         print('   max(C) = ' + str(cmax) )
         print()
     #--------------------------------------------------------
-    w2 = np.logical_or( S < 0, S > 100.0 )
+    w2 = np.logical_or(S < 0, S > 100.0)
     n2 = w2.sum()
     if (n2 > 0):
         Smin = S.min()
@@ -246,7 +251,7 @@ def read_soil_grid_files(input_dir, DEM_info: dict,
         print('   max(S) = ' + str(Smax) )
         print()
     #--------------------------------------------------------
-    w3 = np.logical_or( OM < 0, OM > 100.0 )
+    w3 = np.logical_or(OM < 0, OM > 100.0)
     n3 = w3.sum()
     if (n3 > 0):
         OMmin = OM.min()
@@ -261,7 +266,7 @@ def read_soil_grid_files(input_dir, DEM_info: dict,
             ## print('   Possible nodata value.')
         print()
     #-------------------------------------------------------- 
-    w4 = np.logical_or( D < 0, D > 2.65 )
+    w4 = np.logical_or(D < 0, D > 2.65)
     n4 = w4.sum()
     if (n4 > 0):
         Dmin = D.min()
@@ -308,16 +313,95 @@ def read_soil_grid_files(input_dir, DEM_info: dict,
     #------------------------------------   
     return (C, S, OM, D)
 
+def transform_isric_soil_grid_files(list_of_files, DEM_info: dict, VERBOSE=True):
+
+    n_grids = 0
+    bad_box_count = 0
+    out_nodata = -9999.0
+    tmp_file = '/tmp/TEMP.tif'
+
+    list_of_transformed_files = []
+
+    results = []
+    for file in list_of_files:
+        f = gdal.Open(file)
+
+        # grid1 = f.ReadAsArray()
+        band  = f.GetRasterBand(1)
+        tiff_nodata = band.GetNoDataValue()
+
+        # if (VERBOSE):
+        #     print(f'===============================================================')
+        #     print(f'ISRIC File = {file}')
+        #     print(f'===============================================================')
+        #     print(f'grid1: min   = {grid1.min()}, max = {grid1.max()}')
+        #     print(f'grid1.shape  = {grid1.shape}')
+        #     print(f'grid1.dtype  = {grid1.dtype}')
+
+        #-----------------------------------------------        
+        # Check if the bounding boxes actually overlap
+        #-----------------------------------------------
+        bad_box = False
+        f_bounds = rg.get_raster_bounds(f, VERBOSE=VERBOSE)
+        if (rg.bounds_disjoint(f_bounds, DEM_info["bounds"])):
+            print(f'###############################################')
+            print(f'WARNING: Bounding boxes do not overlap.')
+            print(f'         New grid will contain only nodata.')
+            print(f'###############################################')
+            print(f'ds_bounds  = {f_bounds}')
+            print(f'DEM_bounds = {DEM_info["bounds"]}\n')
+            bad_box_count += 1
+            bad_box = True
+
+        #-------------------------------------------
+        # Clip and resample data to the DEM's grid
+        # then save to a temporary GeoTIFF file.
+        #-------------------------------------------
+        if not(bad_box):
+            grid2 = rg.gdal_regrid_to_dem_grid(f, tmp_file,
+                        out_nodata, DEM_info['bounds'], DEM_info['xres'], DEM_info['yres'],
+                        RESAMPLE_ALGO='bilinear')
+            if (VERBOSE):
+                print(f'grid2: min  = {grid2.min()}, max = {grid2.max()}')
+                print(f'grid2.shape = {grid2.shape}')
+                print(f'grid2.dtype = {grid2.dtype}')
+        else:
+            grid2 = np.zeros((DEM_info['nrows'], DEM_info['ncols']), dtype='float32')
+            grid2 += out_nodata
+
+        del f
+
+        #--------------------------------  
+        # Write grid to new output file
+        #------------------------------------
+        grid2 = np.float32(grid2)
+        out_file = Path(file).parent / (Path(file).stem + '.rtg')
+        list_of_transformed_files.append(out_file)
+        out_unit = open(out_file, 'wb')
+        grid2.tofile(out_unit)
+        out_unit.close()
+        n_grids += 1
+
+    print(f'Finished transforming ISRIC soil grid files.')
+    print(f'   Number of grids = {str(n_grids)}')
+    print(f'   Number outside of model domain = {str(bad_box_count)}')
+
+    return list_of_transformed_files
+
 # -------------------------------------------------------------------
-def wosten_theta_s(C, S, OM, D, topsoil, subsoil):
-    # --------------------------------
+def wosten_theta_s( C, S, OM, D, topsoil, subsoil ):
+
+    #--------------------------------    
     # From Wosten (1998). R^2 = 76%
-    # -------------------------------------------------------------
-    # Equations in Wosten (1998) and Wosten et al. (2001) agree.
-    # -------------------------------------------------------------
-    p1 = 0.7919 + 0.001691 * C - 0.29619 * D
-    p2 = -0.000001491 * (S ** 2) + 0.0000821 * (OM ** 2)
-    p3 = 0.02427 * (1 / C) + 0.01113 * (1 / S) + 0.01472 * np.log(S)
+    #-------------------------------------------------------
+    # Note that theta_s should be in [0, 1], unitless
+    #-------------------------------------------------------
+    # Equations in Wosten (1998), Wosten et al. (2001) and
+    # Matula et al. (2007) all agree.
+    #-------------------------------------------------------
+    p1 = 0.7919 + 0.001691*C - 0.29619*D
+    p2 = -0.000001491*S**2 + 0.0000821*OM**2  
+    p3 = 0.02427 * (1/C) + 0.01113 * (1/S) + 0.01472 * np.log(S)
     p4 = (-0.0000733 * OM * C) - (0.000619 * D * C)
     p5 = (-0.001183 * D * OM) - (0.0001664 * topsoil * S)
 
@@ -342,25 +426,27 @@ def wosten_theta_s(C, S, OM, D, topsoil, subsoil):
     return theta_s
 
 # -------------------------------------------------------------------
-def wosten_K_s(C, S, OM, D, topsoil, subsoil):
-    # ---------------------------------
+def wosten_K_s( C, S, OM, D, topsoil, subsoil ):
+
+    #-------------------------------------   
     # From Wosten (1998). R^2 = 19%.
     # K_s^* = ln(K_s), K_s > 0.
-    # ---------------------------------
-    ####### Are units cm/day ??  ##########
-
+    # Units in Wosten (1998) are cm/day.
+    # Note that K_s should be > 0.
+    #-------------------------------------
+    
     ######################################################
     # NOTE!!  In term p5, the coefficient is given by:
     #         0.02986 in Wosten (1998) and:
     #         0.2986 in Wosten et al. (2001).
     ######################################################
-    p1 = 7.755 + 0.0352 * S + 0.93 * topsoil
-    p2 = -0.967 * (D ** 2) - 0.000484 * (C ** 2) - 0.000322 * (S ** 2)
-    p3 = (0.001 / S) - (0.0748 / OM) - 0.643 * np.log(S)
+    p1 = 7.755 + 0.0352*S + 0.93*topsoil
+    p2 = -0.967*D**2 - 0.000484*C**2 - 0.000322*S**2
+    p3 = (0.001 / S) - (0.0748 / OM) - 0.643*np.log(S)
     p4 = (-0.01398 * D * C) - (0.1673 * D * OM)
-    # ----------------
+    #----------------
     # Wosten (1998)
-    # ----------------
+    #----------------
     p5 = (0.02986 * topsoil * C) - 0.03305 * topsoil * S
     #-----------------------    
     # Wosten et al. (2001)
@@ -402,21 +488,23 @@ def wosten_K_s(C, S, OM, D, topsoil, subsoil):
     return Ks
 
 # -------------------------------------------------------------------
-def wosten_alpha(C, S, OM, D, topsoil, subsoil):
-    # ---------------------------------
+def wosten_alpha( C, S, OM, D, topsoil, subsoil):
+
+    #---------------------------------   
     # From Wosten (1998). R^2 = 20%.
     # a^* = ln(a), a > 0.
-    # ---------------------------------
-    p1 = -14.96 + 0.03135 * C + 0.0351 * S + 0.646 * OM + 15.29 * D
-    p2 = -0.192 * topsoil - 4.671 * (D ** 2) - 0.000781 * (C ** 2) - 0.00687 * (OM ** 2)
-    # ----------------
-    # Wosten (1998)
-    # ----------------
-    p3 = (0.0449 / OM) + 0.0663 * np.log(S) + 0.1482 * np.log(OM)
+    # Units are [1 / cm] ??    ###############  CHECK
+    #---------------------------------
+    p1 = -14.96 + 0.03135*C + 0.0351*S + 0.646*OM + 15.29*D
+    p2 = -0.192*topsoil - 4.671*D**2 - 0.000781*C**2 - 0.00687*OM**2
+    #-----------------------------------------
+    # Wosten (1998) and Matula et al. (2007)
+    #-----------------------------------------
+    p3 = (0.0449 / OM) + 0.0663*np.log(S) + 0.1482*np.log(OM)
     p4 = (-0.04546 * D * S) + (0.4852 * D * OM)
-    # -----------------------
+    #-----------------------    
     # Wosten et al. (2001)
-    # -----------------------
+    #-----------------------
     ## p3 = (0.449 / OM) + 0.0663*np.log(S) + 0.1482*np.log(OM)
     ## p4 = (-0.4546 * D * S) - (0.4852 * D * OM)
     p5 = 0.00673 * topsoil * C
@@ -467,22 +555,23 @@ def wosten_alpha(C, S, OM, D, topsoil, subsoil):
     return alpha
 
 # -------------------------------------------------------------------
-def wosten_n(C, S, OM, D, topsoil, subsoil):
-    # ------------------------------------------
+def wosten_n( C, S, OM, D, topsoil, subsoil ):
+
+    #------------------------------------------   
     # From Wosten (1998). R^2 = 54%.
-    # n^* = ln(n-1), n > 1.
+    # n^* = ln(n-1), n > 1, unitless.
     # Wosten (1998) assumes that m = 1 - 1/n.
-    # -------------------------------------------------------------
+    #-------------------------------------------------------------
     # Equations in Wosten (1998) and Wosten et al. (2001) agree.
-    # -------------------------------------------------------------
+    #-------------------------------------------------------------
     # In Matula et al. (2007), p2 has: (0.002885 * OM)
     #-------------------------------------------------------------
-    p1 = -25.23 - 0.02195 * C + 0.0074 * S - 0.1940 * OM + 45.5 * D
-    p2 = -7.24 * (D ** 2) + 0.0003658 * (C ** 2) + 0.002885 * (OM ** 2) - (12.81 / D)
+    p1 = -25.23 - 0.02195*C + 0.0074*S - 0.1940*OM + 45.5*D
+    p2 = -7.24*D**2 + 0.0003658*C**2 + 0.002885*OM**2 - (12.81 / D)
     p3 = (-0.1524 / S) - (0.01958 / OM) - 0.2876 * np.log(S)
     p4 = (-0.0709 * np.log(OM)) - (44.6 * np.log(D))
     p5 = (-0.02264 * D * C) + (0.0896 * D * OM) + (0.00718 * topsoil * C)
-
+    
     n = (np.exp(p1 + p2 + p3 + p4 + p5) + 1)
 
     #--------------------------------------
@@ -503,21 +592,22 @@ def wosten_n(C, S, OM, D, topsoil, subsoil):
     return n
 
 # -------------------------------------------------------------------
-def wosten_L(C, S, OM, D, topsoil, subsoil):
-    # -----------------------------------------
-    # From Wosten (1998). R^2 = 12%.
-    # L^* = ln[(L+10)/(10-L)], -10 < L < +10.
+def wosten_L( C, S, OM, D, topsoil, subsoil ):
+
+    #-------------------------------------------------------    
+    # From Wosten (1998). R^2 = 12%. 
+    # L^* = ln[(L+10)/(10-L)], -10 < L < +10, unitless.
     # Mualem (1976) says L should be about 0.5 on average.
+    # Do modern van Genuchten formulas assume L = 1/2 ??
     # See:  Wosten et al. (2001) for more about L.
-    # -------------------------------------------------------------
+    #-------------------------------------------------------------
     # Equations in Wosten (1998) and Wosten et al. (2001) agree.
-    # -------------------------------------------------------------
-    p1 = 0.0202 + 0.0006193 * (C ** 2) - 0.001136 * (OM ** 2)
+    #-------------------------------------------------------------
+    p1 = 0.0202 + 0.0006193*C**2  - 0.001136*OM**2
     p2 = -0.2316 * np.log(OM) - (0.03544 * D * C)
     p3 = (0.00283 * D * S) + (0.0488 * D * OM)
-
+    
     s1 = (p1 + p2 + p3)
-
     L = 10 * (np.exp(s1) - 1)/(np.exp(s1) + 1)
 
     #--------------------------------------
@@ -535,22 +625,24 @@ def wosten_L(C, S, OM, D, topsoil, subsoil):
 
 # -------------------------------------------------------------------
 def get_wosten_vars(C, S, OM, D, topsoil, subsoil):
-    # ----------------------------------------------------------
+
+    #----------------------------------------------------------
     # Use the Wosten (1998) pedotransfer functions to compute
     # theta_s, K_s, and van Genuchten parameters, then save
     # them to files.
-    # ----------------------------------------------------------
-    theta_s = wosten_theta_s(C, S, OM, D, topsoil, subsoil)
-    K_s = wosten_K_s(C, S, OM, D, topsoil, subsoil)
-    alpha = wosten_alpha(C, S, OM, D, topsoil, subsoil)
-    n = wosten_n(C, S, OM, D, topsoil, subsoil)
-    L = wosten_L(C, S, OM, D, topsoil, subsoil)
-
+    #----------------------------------------------------------
+    theta_s = wosten_theta_s( C, S, OM, D, topsoil, subsoil )
+    K_s     = wosten_K_s( C, S, OM, D, topsoil, subsoil )
+    alpha   = wosten_alpha( C, S, OM, D, topsoil, subsoil )
+    n       = wosten_n( C, S, OM, D, topsoil, subsoil )
+    L       = wosten_L( C, S, OM, D, topsoil, subsoil )
+    
     return (theta_s, K_s, alpha, n, L)
 
 # -------------------------------------------------------------------
-def get_tBC_from_vG_vars(alpha, n, L):
-    # --------------------------------------------------------
+def get_tBC_from_vG_vars( alpha, n, L ):
+
+    #--------------------------------------------------------
     # Convert van Genuchten parameters to those of the
     # transitional Brooks-Corey model.  Although K
     # is computed quite differently for the transitional
@@ -558,31 +650,31 @@ def get_tBC_from_vG_vars(alpha, n, L):
     # for ψ are the same if we use the formulas below.
     # For more information, see:
     # https://csdms.colorado.edu/wiki/
-    #   Model_help:TopoFlow-Soil_Properties_Page
-    # ---------------------------------------------------------
+    #   Model_help:TopoFlow-Soil_Properties_Page   
+    #---------------------------------------------------------
     # NOTE: L is often fixed at 1/2, but Wosten lets it vary.
     # See p. 51 in Wosten (1998).
     # Also see p. 1 in Schaap and van Genuchten (2005).
-    # ---------------------------------------------------------
+    #---------------------------------------------------------
     # These equations appear to be general:
-    # ---------------------------------------------------------
+    #---------------------------------------------------------
     # (1)  m      = (1 - 1/n)
     # (1') n      = 1 / (1 - m)
     # (1") n-1    = m / (1 - m)
     # (2)  eta    = 2 + (3 * lambda)
-    # ---------------------------------------------------------
+    #---------------------------------------------------------
     # These equations come from forcing the transitional
     # Brooks-Corey and van Genuchten equations for pressure
     # head (psi) to match exactly (eta is not involved):
     # tBC params = psi_B, c, lambda  (and eta)
     # vG  params = alpha, m, n, L
-    # ---------------------------------------------------------
+    #---------------------------------------------------------
     # NOTE:  We only need alpha and n (not L) to set the
     #        transitional Brooks-Corey parameters.  We
     #        cannot make the functional forms match for K.
-    # ---------------------------------------------------------
-    # (3) psi_B    = 1 / alpha_g
-    # (4) c        = n
+    #---------------------------------------------------------
+    # (3) psi_B    = 1 / alpha_g   (both < 0)
+    # (4) c        = n             (both > 1)
     # (5) lambda   = m * c = m * n    (Note: c/lambda = 1/m)
     #
     # Using (4) and (5) and (1):
@@ -591,18 +683,19 @@ def get_tBC_from_vG_vars(alpha, n, L):
     # Using (6) and (2)
     # eta    = 2 + (3*lambda) = 2 + 3*(n-1) = 3*n - 1
     # eta    = 3/(1-m) - 1 = [3 - (3-m)]/(1-m) = (2+m)/(1-m)
-    # ---------------------------------------------------------
-    # (n > 1) => 0 < m < 1
+    #---------------------------------------------------------
+    # (n > 1) => 0 < m < 1  
     # (n > 1) => (lambda > 0)
     # (n > 1) => (eta > 2)
-    # ---------------------------------------------------------
-    psi_B = (1.0 / alpha)
-    c = n
-    lam = (n - 1)
-    eta = 3 * n - 1
-    # ----------------------------------
-    # Compute Green-Ampt parameter, G
-    # ----------------------------------
+    #---------------------------------------------------------  
+    psi_B  = (1.0 / alpha)
+    c      = n
+    lam    = (n - 1)
+    eta    = 3*n - 1
+    
+    #------------------------------------------
+    # Compute the Green-Ampt parameter, G > 0
+    #------------------------------------------
     # G = capillary length scale > 0
     # psi_B = bubbling pressure head < 0
     # Both have same units of:  ?????????
@@ -631,5 +724,5 @@ def get_tBC_from_vG_vars(alpha, n, L):
         print('   min(G) = ' + str(Gmin) )
         print('   max(G) = ' + str(Gmax) )
         print()
-
+           
     return (psi_B, c, lam, eta, G)
