@@ -23,11 +23,7 @@ class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
     outputs = {"data": ArgType.NDimArray}
 
     def __init__(
-            self,
-            graph: Graph,
-            mean_space: str,
-            start_time: datetime.datetime,
-            end_time: datetime.datetime,
+        self, graph: Graph, mean_space: str, start_time: datetime.datetime, end_time: datetime.datetime
     ):
         super().__init__(graph, mean_space, start_time, threshold=0)
         self.graph = graph
@@ -47,8 +43,9 @@ class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
 
         for node in self.graph.iter_nodes():
             xi, yi = point2idx[node.data["mint:index"]]
-            recorded_at = (self.start_time + datetime.timedelta(
-                minutes=node.data["schema:recordedAt"] - 1440)).month - 1
+            recorded_at = (
+                self.start_time + datetime.timedelta(minutes=node.data["schema:recordedAt"] - 1440)
+            ).month - 1
 
             flooding_value = node.data["mint:flooding"]
             max_flooding = max(max_flooding, flooding_value)
@@ -56,15 +53,22 @@ class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
             indices[(recorded_at, xi, yi)].append(flooding_value)
 
         for (i, j, k), val in indices.items():
-            flood_ndarray[i][j][k] = np.mean(val)
+            flood_ndarray[i][j][k] = np.max(val)
 
         for i in range(flood_ndarray.shape[0]):
             array = flood_ndarray[i]
+            print(i, np.max(array))
             array = PihmMonthlyAverageFloodingFunc._idw_interpolate(array)
             flood_ndarray[i] = array
 
-        time = [datetime.date(self.start_time.year, month, self.start_time.day).strftime('%Y-%m-%dT%H:%M:%SZ') for
-                month in range(1, 13)]
+        for (i, j, k), val in indices.items():
+            if flood_ndarray[i][j][k] <= 0.0:
+                flood_ndarray[i][j][k] = 0
+
+        time = [
+            datetime.date(self.start_time.year, month, self.start_time.day).strftime("%Y-%m-%dT%H:%M:%SZ")
+            for month in range(1, 13)
+        ]
 
         flood_var = xr.DataArray(
             flood_ndarray,
@@ -86,9 +90,8 @@ class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
         flood_dataset = xr.Dataset(
             data_vars={"flood": flood_var},
             attrs={
-
-                "time_coverage_start": self.start_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                "time_coverage_end": self.end_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                "time_coverage_start": self.start_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "time_coverage_end": self.end_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "time_coverage_resolution": time_resolution,
             },
         )
@@ -119,9 +122,11 @@ class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
         known_indices = np.argwhere(array != -999)
         unknown_indices = np.argwhere(array == -999)
 
-        dist = np.sqrt((known_indices[:, 0][None, :] - unknown_indices[:, 0][:, None]) ** 2 + (
-                known_indices[:, 1][None, :] - unknown_indices[:, 1][:, None]) ** 2)
+        dist = np.sqrt(
+            (known_indices[:, 0][None, :] - unknown_indices[:, 0][:, None]) ** 2
+            + (known_indices[:, 1][None, :] - unknown_indices[:, 1][:, None]) ** 2
+        )
 
-        idist = 1. / (dist + 1e-12) ** 2
+        idist = 1.0 / (dist + 1e-12) ** 2
         array[array == -999] = np.sum(array[array != -999] * idist, axis=1) / np.sum(idist, axis=1)
         return array

@@ -1,0 +1,20 @@
+name: mintdt
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.7
+  - pip
+  - gdal
+  - scipy
+  - pydap
+  - numpy
+  - dask
+  - pip:
+    - drepr
+    - ujson
+    - netCDF4
+    - arpeggio
+    - rdflib
+    - flask
+    - requests

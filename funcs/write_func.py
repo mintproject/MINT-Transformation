@@ -12,9 +12,11 @@ from dtran.argtype import ArgType
 from dtran.ifunc import IFunc
 
 
-
 class GraphWriteFunc(IFunc):
     id = "graph_write_func"
+    description = ''' A writer adapter.
+    Generates a csv/json file.
+    '''
     inputs = {
         "graph": ArgType.Graph(None),
         "main_class": ArgType.String,
@@ -125,6 +127,9 @@ class GraphWriteFunc(IFunc):
 
 class VisJsonWriteFunc(GraphWriteFunc):
     id = "vis_json_write_func"
+    description = ''' A writer adapter.
+    Generates a json file following the format of the MINT-Data-Catalog Visualizer.
+    '''
     inputs = {
         "graph": ArgType.Graph(None),
         "main_class": ArgType.String,

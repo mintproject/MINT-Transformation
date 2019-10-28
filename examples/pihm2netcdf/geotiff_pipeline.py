@@ -33,7 +33,7 @@ if __name__ == "__main__":
             "2017-01-01 00:00:00", "%Y-%m-%d %H:%M:%S"
         ),
         PihmMonthlyAverageFloodingFunc.I.end_time: datetime.strptime(
-            "2017-12-31 00:00:00", "%Y-%m-%d %H:%M:%S"
+            "2017-12-31 23:59:59", "%Y-%m-%d %H:%M:%S"
         ),
         # MintGeoTiffWriteFunc.I.output_file: wdir / "MONTHLY_GRIDDED_SURFACE_INUNDATION_2017.tif",
         MintGeoTiffWriteFunc.I.output_file: wdir / "MONTHLY_GRIDDED_SURFACE_INUNDATION_2017",

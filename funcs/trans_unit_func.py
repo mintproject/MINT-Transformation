@@ -9,6 +9,9 @@ from drepr import Graph
 
 class UnitTransFunc(IFunc):
     id = "unit_trans"
+    description = ''' A transformation adapter.
+    Alters the graph by performing unit conversion on some values in the graph.
+    '''
     inputs = {
         "graph": ArgType.Graph(None),
         "unit_value": ArgType.String,

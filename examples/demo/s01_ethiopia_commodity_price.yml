@@ -2,7 +2,7 @@ version: "1"
 resources: csv
 preprocessing:
   - type: pmap
-    input: [1.., 4]
+    path: [1.., 4]
     code: |
       return value.replace("M", "-") + "-01"
 attributes:
