@@ -9,7 +9,7 @@ from importlib import import_module
 
 from dtran import Pipeline
 
-wired_pattern = re.compile(r'^\$\..+\..+$')
+wired_pattern = re.compile(r'^\$\.\w+\.\w+$')
 keys_pattern = re.compile(r'^\w+$')
 
 
