@@ -13,7 +13,7 @@ from dtran.ifunc import IFunc
 from os.path import join
 
 import gdal, osr  ## ogr
-import glob
+import glob, os
 from scipy.special import gamma
 
 from funcs.topoflow.rti_files import generate_rti_file
@@ -48,6 +48,9 @@ class Topoflow4ClimateWriteFunc(IFunc):
         self.input_dir = str(input_dir)
         self.temp_dir = str(temp_dir)
         self.output_file = str(output_file)
+
+        Path(self.input_dir).mkdir(exist_ok=True, parents=True)
+        Path(self.temp_dir).mkdir(exist_ok=True, parents=True)
 
     def exec(self) -> dict:
         create_rts_from_nc_files(self.input_dir, self.temp_dir, self.output_file, self.DEM)

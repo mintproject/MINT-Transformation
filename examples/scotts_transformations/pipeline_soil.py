@@ -9,7 +9,15 @@ if __name__ == "__main__":
     import sys
     area_str = sys.argv[1]
     layer_str = sys.argv[2]
-    area = BARO if area_str == "baro" else LOL_KURU
+    if area_str == "baro_res30":
+        area = BARO["res30"]
+    elif area_str == "baro_res60":
+        area = BARO["res60"]
+    elif area_str == "kuru_res30":
+        area = LOL_KURU["res30"]
+    elif area_str == "kuru_res60":
+        area = LOL_KURU["res60"]
+
     pipeline = Pipeline(
         [Topoflow4SoilWriteFunc],
         wired=[ ],

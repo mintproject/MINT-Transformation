@@ -38,7 +38,8 @@ def generate_rti_file(grid_file, rti_file, ncols=396, nrows=428, xres=1./120, yr
     # ------------------------
     # Create a new RTI file
     # ------------------------
-    info = make_info(grid_file, ncols, nrows, xres=xres, yres=yres, pixel_geom=pixel_geom, SILENT=silent)
+    # convert resolution to unit of arcseconds
+    info = make_info(grid_file, ncols, nrows, xres=xres*3600, yres=yres*3600, pixel_geom=pixel_geom, SILENT=silent)
     write_info(rti_file, info, SILENT=silent)
 
 
