@@ -25,13 +25,9 @@ def create_pipeline(ctx, config=None):
     # Accept user-specified inputs: expect format of --key=value
     user_inputs = {}
     for arg in ctx.args:
-        try:
-            key, value = arg[2:].split("=")
-            func_name, attr_name = key.split(".")
-            user_inputs[(func_name, attr_name)] = value
-        except ValueError:
-            print(f"user input: '{arg}' should have format '--FuncName.Attr=value'")
-            return
+        key, value = arg[2:].split("=")
+        func_name, attr_name = key.split(".")
+        user_inputs[(func_name, attr_name)] = value
 
     parser = ConfigParser(user_inputs)
     parsed_pipeline, parsed_inputs = parser.parse(config)
