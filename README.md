@@ -34,11 +34,7 @@ docker build -t mint_dt .
 ```
 Run image with local mount and port 5000 exposed
 ```
-docker run --rm -p 5000:5000 -v $(pwd):/ws -it mint_dt
-```
-Activate local conda env
-```
-conda activate mintdt
+docker run --rm -p 5000:5000 -v $(pwd):/ws -it mint_dt bash
 ```
 Run the UI
 ```
