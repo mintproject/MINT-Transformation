@@ -63,7 +63,7 @@ class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
         for i in range(12):
             for j in range(len(xlong)):
                 for k in range(len(ylat)):
-                    flood_ndarray[i][j][k] = np.mean(flood_ndarray[i][j][k])
+                    flood_ndarray[i][j][k] = np.max(flood_ndarray[i][j][k])
 
         if max_flooding == 0:
             for i in range(12):

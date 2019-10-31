@@ -40,6 +40,10 @@ class MintNetCDFWriteFunc(IFunc):
         self.creator_email = creator_email
 
     def exec(self) -> dict:
+        x_min = min(self.ndarray.coords["X"])
+        x_max = max(self.ndarray.coords["X"])
+        y_min = min(self.ndarray.coords["Y"])
+        y_max = max(self.ndarray.coords["Y"])
         self.ndarray.attrs.update({
             "title": self.title,
             "comment": self.comment,
@@ -48,6 +52,8 @@ class MintNetCDFWriteFunc(IFunc):
             "date_created": datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
             "date_modified": datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
             "creator_name": self.creator_name,
+            "geospatial_bounds_crs": "+init=epsg:4326",
+            "geospatial_bounds": [x_min, y_min, x_max, y_max],
             "creator_email": self.creator_email}
         )
         self.ndarray.to_netcdf(self.output_file, format="NETCDF4")

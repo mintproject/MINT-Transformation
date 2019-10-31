@@ -1,17 +1,13 @@
 import json
-from datetime import datetime
 import os
+from datetime import datetime
 from pathlib import Path
 
 from dtran import Pipeline
-from examples.pihm2cycles.cycle_write_func import CyclesWriteFunc
-from examples.pihm2cycles.pihm2cycles_func import Pihm2CyclesFunc
 from examples.pihm2netcdf.cell2point_func import Cell2PointFunc
 from examples.pihm2netcdf.mint_netcdf_write_func import MintNetCDFWriteFunc
-from examples.pihm2netcdf.pihm_monthly_flooding_func import PihmMonthlyFloodingFunc
 from examples.pihm2netcdf.pihm_monthly_average_flooding_func import PihmMonthlyAverageFloodingFunc
 from funcs import ReadFunc
-from funcs.merge_func import MergeFunc
 
 if __name__ == "__main__":
     wdir = Path(os.path.abspath(__file__)).parent / "resources"
@@ -32,7 +28,7 @@ if __name__ == "__main__":
         Cell2PointFunc.I.point_file: wdir / "surf_points.csv",
         PihmMonthlyAverageFloodingFunc.I.mean_space: 0.05,
         PihmMonthlyAverageFloodingFunc.I.start_time: datetime.strptime("2017-01-01 00:00:00", '%Y-%m-%d %H:%M:%S'),
-        PihmMonthlyAverageFloodingFunc.I.end_time: datetime.strptime("2017-12-31 00:00:00", '%Y-%m-%d %H:%M:%S'),
+        PihmMonthlyAverageFloodingFunc.I.end_time: datetime.strptime("2017-12-31 23:59:59", '%Y-%m-%d %H:%M:%S'),
         MintNetCDFWriteFunc.I.output_file: wdir / "MONTHLY_GRIDDED_SURFACE_INUNDATION_2017.nc",
         MintNetCDFWriteFunc.I.title: "Monthly gridded surface inundation for Pongo River in 2017",
         MintNetCDFWriteFunc.I.comment: "Outputs generated from the workflow",

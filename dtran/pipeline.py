@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+from pathlib import Path
 from typing import *
 from dtran.ifunc import IFunc
 from dtran.wireio import WiredIOArg
@@ -107,7 +107,9 @@ class Pipeline(object):
                 try:
                     output[WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)] = result[argname]
                 except TypeError:
-                    print(f"Error while wiring output of {func_cls} from {argname} to {WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)}")
+                    print(
+                        f"Error while wiring output of {func_cls} from {argname} to {WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)}"
+                    )
                     raise
 
         return output
@@ -127,3 +129,10 @@ class Pipeline(object):
             )
 
         return self.id2order[func_id][0][-1]
+
+    def save(self, save_path: Union[str, Path]):
+        pass
+
+    @staticmethod
+    def load(load_path: Union[str, Path]):
+        pass
