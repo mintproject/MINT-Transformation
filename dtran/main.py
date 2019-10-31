@@ -32,7 +32,6 @@ def exec_pipeline(ctx, config=None):
         except ValueError:
             print(f"user input: '{arg}' should have format '--FuncName.Attr=value'")
             return
-
     parser = ConfigParser(user_inputs)
     parsed_pipeline, parsed_inputs = parser.parse(config)
 
