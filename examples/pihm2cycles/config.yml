@@ -1,0 +1,50 @@
+version: "1"
+adapters:
+  my_read_func_1:
+    comment: My first read func adapter
+    adapter: funcs.ReadFunc
+    inputs:
+      repr_file: ./resources/pg_gw.model.yml
+      resources: '{"default": "/ws/examples/pihm2cycles/resources/pg.GW.csv", "cycle_mapping": "/ws/examples/pihm2cycles/resources/cycles_soil.csv"}'
+  my_read_func_2:
+    comment: My second read func adapter
+    adapter: funcs.ReadFunc
+    inputs:
+      repr_file: ./resources/pg_infil.model.yml
+      resources: '{"default": "/ws/examples/pihm2cycles/resources/pg.infil.csv", "cycle_mapping": "/ws/examples/pihm2cycles/resources/cycles_soil.csv"}'
+  my_merge_func:
+    comment: My merge func adapter
+    adapter: funcs.MergeFunc
+    inputs:
+      graph1: $.my_read_func_1.data
+      graph2: $.my_read_func_2.data
+  my_read_func_3:
+    comment: My third read func adapter
+    adapter: funcs.ReadFunc
+    inputs:
+      repr_file: ./resources/pihm_soil.model.yml
+      resources: ./resources/pihm_soil.csv
+  my_read_func_4:
+    comment: My fourth read func adapter
+    adapter: funcs.ReadFunc
+    inputs:
+      repr_file: ./resources/cycles_soil.model.yml
+      resources: ./resources/cycles_soil.csv
+  my_pihm_cycles_func:
+    comment: My pihm to cycles func
+    adapter: pihm2cycles_func.Pihm2CyclesFunc
+    inputs:
+      pihm_data_graph: $.my_merge_func.data
+      pihm_soil_graph: $.my_read_func_3.data
+      pid_graph: $.my_read_func_4.data
+      cycles_layers: "[0.05, 0.05, 0.10, 0.2, 0.4, 0.4, 0.4, 0.4]"
+      patch_id: 1
+      gw_depth: 30
+  my_cycles_write_func:
+    comment: My cycles write func
+    adapter: cycle_write_func.CyclesWriteFunc
+    inputs:
+      reinit_graph: $.my_pihm_cycles_func.reinit_graph
+      soil_graph: $.my_pihm_cycles_func.cycle_soil_graph
+      reinit_file: ./resources/cycles.REINIT
+      soil_file: ./resources/cycles.soil
