@@ -1,0 +1,36 @@
+version: "1"
+adapters:
+  my_cell_point_func:
+    comment: My cell to point func adapter
+    adapter: cell2point_func.Cell2PointFunc
+    inputs:
+      cell2point_file: ./resources/cell2points.R
+      cell_file: ./resources/GISlayer/Cells.shp
+      point_file: ./resources/surf_points.csv
+  my_read_func:
+    comment: My first read func adapter
+    adapter: funcs.ReadFunc
+    inputs:
+      repr_file: ./resources/points.model.yml
+      resources: '{"surf": "/ws/examples/pihm2netcdf/resources/surf.csv", "points": "/ws/examples/pihm2netcdf/resources/surf_points.csv"}'
+  my_pihm_month_average_flooding_func:
+    comment: My pihm monthly average flooding func adapter
+    adapter: pihm_monthly_average_flooding_func.PihmMonthlyAverageFloodingFunc
+    inputs:
+      graph: $.my_read_func.data
+      mean_space: 0.05
+      start_time: "2017-01-01 00:00:00"
+      end_time: "2017-12-31 23:59:59"
+  my_mint_netcdf_write_func:
+    comment: My mint netcdf write adapter
+    adapter: mint_netcdf_write_func.MintNetCDFWriteFunc
+    inputs:
+      data: $.my_pihm_month_average_flooding_func.data
+      output_file: ./resources/MONTHLY_GRIDDED_SURFACE_INUNDATION_2017_test.nc
+      title: "Monthly gridded surface inundation for Pongo River in 2017"
+      comment: "Outputs generated from the workflow"
+      naming_authority: "edu.isi.workflow"
+      id: "/MINT/NETCDF/MONTHLY_GRIDDED_SURFACE_INUNDATION_2017"
+      creator_name: "Minh Pham"
+      creator_email: "minhpham@usc.edu"
+

@@ -9,7 +9,7 @@ from drepr import Graph
 from scipy import interpolate
 
 from dtran import ArgType
-from examples.pihm2netcdf.pihm_flooding_index_func import PihmFloodingIndexFunc
+from pihm_flooding_index_func import PihmFloodingIndexFunc
 
 
 class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
