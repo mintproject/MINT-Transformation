@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 from typing import *
 from pathlib import Path
-from collections import OrderedDict
 from datetime import datetime
+from dateutil import parser
 
 
 class ArgType(object):
@@ -16,11 +16,13 @@ class ArgType(object):
     Boolean: 'ArgType' = None
     DateTime: 'ArgType' = None
 
-    def __init__(self, id: str, optional: bool = False, val: Any = None, validate: Callable[[Any], bool] = lambda val: True):
+    def __init__(self, id: str, optional: bool = False, val: Any = None,
+                 validate: Callable[[Any], bool] = lambda val: True, from_str: Callable[[str], Any] = lambda val: val):
         self.id = id
         self.val = val
         self.optional = optional
         self.validate = validate
+        self.from_str = from_str
 
     def __eq__(self, other):
         if other is None or not isinstance(other, ArgType):
@@ -33,51 +35,28 @@ class ArgType(object):
             return self
         return ArgType(self.id, optional, val)
 
+    def is_valid(self, val: Any):
+        try:
+            return self.validate(val)
+        except (TypeError, ValueError):
+            return False
 
-def validate_file_path(value):
-    try:
-        str(Path(value))
-        return True
-    except TypeError:
-        raise TypeError('Invalid Argument type. Expected FilePath')
-
-
-def validate_ordered_dict(value):
-    try:
-        OrderedDict(value)
-        return True
-    except ValueError:
-        raise TypeError('Invalid Argument type. Expected OrderedDict')
+    def type_cast(self, val: str):
+        if not isinstance(val, str):
+            raise NotImplementedError('type_casting is only supported from string type currently')
+        try:
+            return self.from_str(val)
+        except (TypeError, ValueError, KeyError):
+            raise ValueError(f"could not convert string to {self.id}")
 
 
-def validate_string(value):
-    if isinstance(value, str):
-        return True
-    raise TypeError('Invalid Argument type. Expected String')
-
-
-def validate_number(value):
-    if isinstance(value, int) or isinstance(value, float):
-        return True
-    raise TypeError('Invalid Argument type. Expected Number')
-
-
-def validate_boolean(value):
-    if isinstance(value, bool):
-        return True
-    raise TypeError('Invalid Argument type. Expected Boolean')
-
-
-def validate_datetime(value):
-    if isinstance(value, datetime):
-        return True
-    raise TypeError('Invalid Argument type. Expected DateTime')
-
-
-ArgType.FilePath = ArgType("file_path", validate=validate_file_path)
-ArgType.OrderedDict = ArgType("ordered_dict", validate=validate_ordered_dict)
+ArgType.FilePath = ArgType("file_path", validate=lambda val: Path(val).parent.exists(), from_str=lambda val: str(Path(val)))
+ArgType.OrderedDict = ArgType("ordered_dict", validate=lambda val: isinstance(val, dict))
 ArgType.NDimArray = ArgType("ndim_array")
-ArgType.String = ArgType("string", validate=validate_string)
-ArgType.Number = ArgType("number", validate=validate_number)
-ArgType.Boolean = ArgType("boolean", validate=validate_boolean)
-ArgType.DateTime = ArgType("datetime", validate=validate_datetime)
+ArgType.String = ArgType("string", validate=lambda val: isinstance(val, str))
+ArgType.Number = ArgType("number", validate=lambda val: isinstance(val, int) or isinstance(val, float),
+                         from_str=lambda val: ('.' in val and float(val)) or int(val))
+ArgType.Boolean = ArgType("boolean", validate=lambda val: isinstance(val, bool),
+                          from_str=lambda val: {'True': True, 'true': True, 'False': False, 'false': False}[val])
+ArgType.DateTime = ArgType("datetime", validate=lambda val: isinstance(val, datetime),
+                           from_str=lambda val: parser.parse(val))
