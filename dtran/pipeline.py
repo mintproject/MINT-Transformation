@@ -63,7 +63,8 @@ class Pipeline(object):
                 if gname in self.wired:
                     continue
                 argtype = func_cls.inputs[argname]
-                self.schema[gname] = fields.Raw(required=not argtype.optional, validate=argtype.validate)
+                self.schema[gname] = fields.Raw(required=not argtype.optional, validate=argtype.is_valid,
+                                                error_messages={'validator_failed': f"Invalid Argument type. Expected {argtype.id}"})
         self.schema = Schema.from_dict(self.schema)
 
     def exec(self, inputs: dict) -> dict:
