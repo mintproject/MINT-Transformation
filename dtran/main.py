@@ -21,15 +21,20 @@ def create_pipeline(ctx, config=None):
     1) config file option: --config path_to_file
     2) arg params: e.g. --FuncName.Attr=value
     """
-    parser = ConfigParser()
-    parsed_pipeline, parsed_inputs, mappings = parser.parse(config)
 
     # Accept user-specified inputs: expect format of --key=value
+    user_inputs = {}
     for arg in ctx.args:
-        key, value = arg[2:].split("=")
-        func_name, attr_name = key.split(".")
-        if func_name in mappings:
-            parsed_inputs[mappings[func_name] + attr_name] = value
+        try:
+            key, value = arg[2:].split("=")
+            func_name, attr_name = key.split(".")
+            user_inputs[(func_name, attr_name)] = value
+        except ValueError:
+            print(f"user input: '{arg}' should have format '--FuncName.Attr=value'")
+            return
+
+    parser = ConfigParser(user_inputs)
+    parsed_pipeline, parsed_inputs = parser.parse(config)
 
     # Execute the pipeline
     parsed_pipeline.exec(parsed_inputs)
