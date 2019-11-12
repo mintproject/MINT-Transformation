@@ -18,7 +18,7 @@ adapters:
     adapter: pihm_monthly_average_flooding_func.PihmMonthlyAverageFloodingFunc
     inputs:
       graph: $.my_read_func.data
-      mean_space: 0.05
+      mean_space: "0.05"
       start_time: "2017-01-01 00:00:00"
       end_time: "2017-12-31 23:59:59"
   my_mint_netcdf_write_func:
