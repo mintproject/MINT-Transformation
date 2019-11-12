@@ -13,7 +13,7 @@ if __name__ == "__main__":
     wdir = Path(os.path.abspath(__file__)).parent / "resources"
 
     pipeline = Pipeline(
-        [ReadFunc, Cell2PointFunc, PihmMonthlyAverageFloodingFunc, MintNetCDFWriteFunc],
+        [Cell2PointFunc, ReadFunc, PihmMonthlyAverageFloodingFunc, MintNetCDFWriteFunc],
         wired=[
             ReadFunc.O.data == PihmMonthlyAverageFloodingFunc.I.graph,
             PihmMonthlyAverageFloodingFunc.O.data == MintNetCDFWriteFunc.I.data,
