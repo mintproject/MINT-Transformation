@@ -7,7 +7,7 @@ from dtran import ArgType, IFunc
 
 class Cell2PointFunc(IFunc):
     id = "cell2point_func"
-    inputs = {"cell2point_file": ArgType, "cell_file": ArgType.FilePath, "point_file": ArgType.FilePath}
+    inputs = {"cell2point_file": ArgType.FilePath, "cell_file": ArgType.FilePath, "point_file": ArgType.FilePath}
     outputs = {"point_file": ArgType.FilePath}
 
     def __init__(self, cell_file: Union[str, Path], point_file: Union[str, Path], cell2point_file):

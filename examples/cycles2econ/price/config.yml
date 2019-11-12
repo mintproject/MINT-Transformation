@@ -1,0 +1,33 @@
+version: "1"
+adapters:
+  my_read_func:
+    comment: My read func adapter
+    adapter: funcs.ReadFunc
+    inputs:
+      repr_file: ./wfp_food_prices_south-sudan.repr.yml
+      resources: ./wfp_food_prices_south-sudan.csv
+  my_unit_trans_func:
+    comment: My unit transform func adapter
+    adapter: funcs.UnitTransFunc
+    inputs:
+      graph: $.my_read_func.data
+      unit_value: dcat:measure_1_value
+      unit_label: sdmx-attribute:unitMeasure
+      unit_desired: $/kg
+  my_graph_write_func:
+    comment: My graph write func adapter
+    adapter: funcs.GraphWriteFunc
+    inputs:
+      graph: $.my_unit_trans_func.graph
+      main_class: qb:Observation
+      mapped_columns: {}
+      output_file: ./price-test.csv
+  my_vis_json_write_func:
+    comment: My vis json write func adapter
+    adapter: funcs.VisJsonWriteFunc
+    inputs:
+      graph: $.my_unit_trans_func.graph
+      filter: "@type = 'qb:Observation' and sdmx-attribute:refArea.contains('Aweil (Town)') and sdmx-dimension:refPeriod = '2016-10-15' and dcat-dimension:thing in {'Sorghum (white, imported) - Retail', 'Cassava - Retail', 'Sesame - Retail', 'Groundnuts (shelled) - Retail', 'Maize (white) - Retail'}"
+      main_class: qb:Observation
+      mapped_columns: {}
+      output_file: ./visualization-test.json

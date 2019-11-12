@@ -1,0 +1,14 @@
+version: "1"
+adapters:
+  my_topo_soil_write_func:
+    comment: My topoflow soil write adapter
+    adapter: funcs.Topoflow4SoilWriteFunc
+    inputs:
+      layer: ""
+      input_dir: "/ws/oct_eval_data/soilGrids/"
+      output_dir: "/ws/examples/scotts_transformations/tmp/soil_baro_l"
+      DEM_bounds: "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999"
+      DEM_ncols: "267"
+      DEM_nrows: "257"
+      DEM_xres_arcsecs: "30"
+      DEM_yres_arcsecs: "30"
