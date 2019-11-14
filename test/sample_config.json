@@ -1,0 +1,33 @@
+{
+  "version": "1",
+  "adapters": {
+    "MyCustomName1": {
+      "comment": "My First Adapter",
+      "adapter": "funcs.ReadFunc",
+      "inputs": {
+        "repr_file": "./examples/demo/s01_ethiopia_commodity_price.yml",
+        "resources": "./examples/demo/s01_ethiopia_commodity_price.csv"
+      }
+    },
+    "MyCustomName2": {
+      "comment": "My Second Adapter",
+      "adapter": "funcs.UnitTransFunc",
+      "inputs": {
+        "graph": "$.MyCustomName1.data",
+        "unit_value": "rdf:value",
+        "unit_label": "eg:unit",
+        "unit_desired": "$/liter"
+      }
+    },
+    "MyCustomName3": {
+      "comment": "My Third Adapter",
+      "adapter": "funcs.GraphWriteFunc",
+      "inputs": {
+        "graph": "$.MyCustomName2.graph",
+        "main_class": "qb:Observation",
+        "output_file": "./examples/demo/s01_ethiopia_commodity_price_write.csv",
+        "mapped_columns": {}
+      }
+    }
+  }
+}
