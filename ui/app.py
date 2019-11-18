@@ -466,6 +466,17 @@ def index():
 
     return render_template('index.html')
 
+
+# Set "homepage" to index.html
+@app.route('/test')
+def test_api():
+    from flask import jsonify
+    print("returning a = 123, b = 234")
+    return jsonify({
+        "a": 123,
+        "b": 234
+    })
+
 # --- main --------------------------------------------------------------------
 
 if __name__ == '__main__':

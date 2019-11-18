@@ -1,0 +1,188 @@
+/***************** LIBERTINE *****************/
+@font-face {
+  font-family: Libertine;
+  src: url("/static/fonts/Libertine/LinLibertine_R.otf") format("opentype");
+}
+@font-face {
+  font-family: Libertine;
+  src: url("/static/fonts/Libertine/LinLibertine_RBI.otf") format("opentype");
+  font-weight: bold;
+  font-style: italic;
+}
+@font-face {
+  font-family: Libertine;
+  src: url("/static/fonts/Libertine/LinLibertine_RB.otf") format("opentype");
+  font-weight: bold;
+}
+@font-face {
+  font-family: Libertine;
+  src: url("/static/fonts/Libertine/LinLibertine_RI.otf") format("opentype");
+  font-style: italic;
+}
+@font-face {
+  font-family: Libertine;
+  src: url("/static/fonts/Libertine/LinLibertine_RZI.otf") format("opentype");
+  font-weight: 600;
+  font-style: italic;
+}
+@font-face {
+  font-family: Libertine;
+  src: url("/static/fonts/Libertine/LinLibertine_RZ.otf") format("opentype");
+  font-weight: 600;
+}
+@font-face {
+  font-family: LibertineMono;
+  src: url("/static/fonts/Libertine/LinLibertine_MBO.otf") format("opentype");
+  font-weight: bold;
+  font-style: italic, oblique;
+}
+@font-face {
+  font-family: LibertineMono;
+  src: url("/static/fonts/Libertine/LinLibertine_MB.otf") format("opentype");
+  font-weight: bold;
+}
+@font-face {
+  font-family: LibertineMono;
+  src: url("/static/fonts/Libertine/LinLibertine_MO.otf") format("opentype");
+  font-style: italic, oblique;
+}
+@font-face {
+  font-family: LibertineMono;
+  src: url("/static/fonts/Libertine/LinLibertine_M.otf") format("opentype");
+}
+@font-face {
+  font-family: LibertineDisplay;
+  src: url("/static/fonts/Libertine/LinLibertine_DR.otf") format("opentype");
+}
+@font-face {
+  font-family: LibertineCapital;
+  src: url("/static/fonts/Libertine/LinLibertine_I.otf") format("opentype");
+}
+/***************** Biolinum (monospace) *****************/
+@font-face {
+  font-family: Biolinum;
+  src: url("/static/fonts/Biolinum/LinBiolinum_RBO.otf") format("opentype");
+  font-weight: bold;
+  font-style: italic, oblique;
+}
+@font-face {
+  font-family: Biolinum;
+  src: url("/static/fonts/Biolinum/LinBiolinum_RB.otf") format("opentype");
+  font-weight: bold;
+}
+@font-face {
+  font-family: Biolinum;
+  src: url("/static/fonts/Biolinum/LinBiolinum_RI.otf") format("opentype");
+  font-style: italic;
+}
+@font-face {
+  font-family: Biolinum;
+  src: url("/static/fonts/Biolinum/LinBiolinum_R.otf") format("opentype");
+}
+@font-face {
+  font-family: BiolinumKeyboard;
+  src: url("/static/fonts/Biolinum/LinBiolinum_K.otf") format("opentype");
+}
+/***************** FreightSans *****************/
+@font-face {
+  font-family: FreightSans;
+  font-weight: 700;
+  font-style: normal;
+  src: url("/static/fonts/FreightSans/freight-sans-bold.woff2") format("woff2"),
+    url("/static/fonts/FreightSans/freight-sans-bold.woff") format("woff");
+}
+@font-face {
+  font-family: FreightSans;
+  font-weight: 700;
+  font-style: italic;
+  src: url("/static/fonts/FreightSans/freight-sans-bold-italic.woff2")
+      format("woff2"),
+    url("/static/fonts/FreightSans/freight-sans-bold-italic.woff")
+      format("woff");
+}
+@font-face {
+  font-family: FreightSans;
+  font-weight: 500;
+  font-style: normal;
+  src: url("/static/fonts/FreightSans/freight-sans-medium.woff2")
+      format("woff2"),
+    url("/static/fonts/FreightSans/freight-sans-medium.woff") format("woff");
+}
+@font-face {
+  font-family: FreightSans;
+  font-weight: 500;
+  font-style: italic;
+  src: url("/static/fonts/FreightSans/freight-sans-medium-italic.woff2")
+      format("woff2"),
+    url("/static/fonts/FreightSans/freight-sans-medium-italic.woff")
+      format("woff");
+}
+@font-face {
+  font-family: FreightSans;
+  font-weight: 100;
+  font-style: normal;
+  src: url("/static/fonts/FreightSans/freight-sans-light.woff2") format("woff2"),
+    url("/static/fonts/FreightSans/freight-sans-light.woff") format("woff");
+}
+@font-face {
+  font-family: FreightSans;
+  font-weight: 100;
+  font-style: italic;
+  src: url("/static/fonts/FreightSans/freight-sans-light-italic.woff2")
+      format("woff2"),
+    url("/static/fonts/FreightSans/freight-sans-light-italic.woff")
+      format("woff");
+}
+@font-face {
+  font-family: FreightSans;
+  font-weight: 400;
+  font-style: italic;
+  src: url("/static/fonts/FreightSans/freight-sans-book-italic.woff2")
+      format("woff2"),
+    url("/static/fonts/FreightSans/freight-sans-book-italic.woff")
+      format("woff");
+}
+@font-face {
+  font-family: FreightSans;
+  font-weight: 400;
+  font-style: normal;
+  src: url("/static/fonts/FreightSans/freight-sans-book.woff2") format("woff2"),
+    url("/static/fonts/FreightSans/freight-sans-book.woff") format("woff");
+}
+/***************** IBMPlexMono (monospace) *****************/
+@font-face {
+  font-family: IBMPlexMono;
+  font-weight: 600;
+  font-style: normal;
+  unicode-range: u+0020-007f;
+  src: local("IBMPlexMono-SemiBold"),
+    url("/static/fonts/IBMPlexMono/IBMPlexMono-SemiBold.woff2") format("woff2"),
+    url("/static/fonts/IBMPlexMono/IBMPlexMono-SemiBold.woff") format("woff");
+}
+@font-face {
+  font-family: IBMPlexMono;
+  font-weight: 500;
+  font-style: normal;
+  unicode-range: u+0020-007f;
+  src: local("IBMPlexMono-Medium"),
+    url("/static/fonts/IBMPlexMono/IBMPlexMono-Medium.woff2") format("woff2"),
+    url("/static/fonts/IBMPlexMono/IBMPlexMono-Medium.woff") format("woff");
+}
+@font-face {
+  font-family: IBMPlexMono;
+  font-weight: 400;
+  font-style: normal;
+  unicode-range: u+0020-007f;
+  src: local("IBMPlexMono-Regular"),
+    url("/static/fonts/IBMPlexMono/IBMPlexMono-Regular.woff2") format("woff2"),
+    url("/static/fonts/IBMPlexMono/IBMPlexMono-Regular.woff") format("woff");
+}
+@font-face {
+  font-family: IBMPlexMono;
+  font-weight: 300;
+  font-style: normal;
+  unicode-range: u+0020-007f;
+  src: local("IBMPlexMono-Light"),
+    url("/static/fonts/IBMPlexMono/IBMPlexMono-Light.woff2") format("woff2"),
+    url("/static/fonts/IBMPlexMono/IBMPlexMono-Light.woff") format("woff");
+}
