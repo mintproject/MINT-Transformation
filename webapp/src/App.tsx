@@ -1,9 +1,9 @@
 import React from "react";
-// FIXME: no such resources
-// import "./App.css";
-// import "./fonts.css";
 import { inject, observer } from "mobx-react";
-import { Route, Switch } from "react-router";
+import {
+  Route,
+  BrowserRouter,
+} from "react-router-dom";
 import { RouterStore } from "mobx-react-router";
 import { RouteConf } from "./route";
 import { IStore, AppStore } from "./store";
@@ -32,10 +32,10 @@ export default class App extends React.Component<Props> {
     }
 
     return (
-      <Switch>
+      <BrowserRouter>
         <Route {...RouteConf.home.routeDef} component={Home} />
-        <Route component={NotFound404} />
-      </Switch>
+        {/* <Route component={NotFound404} /> */}
+      </BrowserRouter>
     );
   }
 }
