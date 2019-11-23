@@ -11,7 +11,7 @@ bbox="${AREAS[$name]}"
 
 bash ./download_gpm.sh $year /data/mint/gpm
 
-output_dir=/data/mint/topoflow/$name/gpm/$year_$resolution
+output_dir=/data/mint/topoflow/$name/gpm/$year\_$resolution
 echo "Going to run and output to $output_dir"
 
 if [[ ! -d "$output_dir" ]]; then
