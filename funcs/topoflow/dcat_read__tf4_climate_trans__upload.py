@@ -1,28 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from pathlib import Path
-from netCDF4 import Dataset
-from datetime import datetime
-import numpy as np, os, time
-from typing import Union, List
-from tqdm import tqdm
-import re
 import subprocess
 
+from dcatreg.dataset_registration import register_dataset
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc
 from os import listdir
-from os.path import join
 
-import gdal, osr  ## ogr
-import glob
-from scipy.special import gamma
-
-from funcs.topoflow.rti_files import generate_rti_file
 from funcs.topoflow.write_topoflow4_climate_func import create_rts_from_nc_files
 from funcs.readers.dcat_read_func import DCatAPI
 
 DOWNLOAD_PATH = "/data/mint/dcat_gpm"
+
 
 class DcatReadTopoflow4ClimateUploadFunc(IFunc):
     id = "topoflow4_climate_write_func"
@@ -41,7 +31,6 @@ class DcatReadTopoflow4ClimateUploadFunc(IFunc):
 
     def __init__(self, dataset_id: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str,
                  DEM_ncols: str, DEM_nrows: str):
-        
         self.DEM = {
             "bounds": [float(x.strip()) for x in DEM_bounds.split(",")],
             "xres": float(DEM_xres_arcsecs) / 3600.0,
@@ -54,15 +43,15 @@ class DcatReadTopoflow4ClimateUploadFunc(IFunc):
 
         results = DCatAPI.get_instance(DCAT_URL).find_dataset_by_id(dataset_id)
         assert len(results) == 1
-        
+
         resource_ids = {"default": results[0]['resource_data_url']}
         Path(DOWNLOAD_PATH).mkdir(exist_ok=True, parents=True)
 
         for resource_id, resource_url in resource_ids.items():
-            
             resource_suffix = resource_url.split('/')[-1]
             file_full_path = f'{DOWNLOAD_PATH}/{dataset_id}.{resource_suffix}'
-            subprocess.check_call(f'wget --user datacatalog --password sVMIryVWEx3Ec2 {resource_url} -O {file_full_path}', shell=True)
+            subprocess.check_call(
+                f'wget --user datacatalog --password sVMIryVWEx3Ec2 {resource_url} -O {file_full_path}', shell=True)
 
             input_dir_full_path = f'{DOWNLOAD_PATH}/{dataset_id}'
             Path(input_dir_full_path).mkdir(exist_ok=True, parents=True)
@@ -78,7 +67,7 @@ class DcatReadTopoflow4ClimateUploadFunc(IFunc):
 
             self.output_file = self.output_dir + f'/climate_all.rts'
 
-            break # TODO: currently we assume a single resource
+            break  # TODO: currently we assume a single resource
 
     def exec(self) -> dict:
         create_rts_from_nc_files(self.input_dir, self.temp_dir, self.output_file, self.DEM)
@@ -86,12 +75,36 @@ class DcatReadTopoflow4ClimateUploadFunc(IFunc):
         # tar output files
         output_tar = self.output_dir + '.tar.gz'
         subprocess.check_call(f'tar -czf {output_tar} {self.output_dir}', shell=True)
-        
+
         # upload tar output file
-        upload_output = subprocess.check_output(f'curl -sD - --user upload:HVmyqAPWDNuk5SmkLOK2 --upload-file {output_tar} https://publisher.mint.isi.edu', shell=True)
+        upload_output = subprocess.check_output(
+            f'curl -sD - --user upload:HVmyqAPWDNuk5SmkLOK2 --upload-file {output_tar} https://publisher.mint.isi.edu',
+            shell=True)
 
         self.upload_url = f'https://{upload_output.decode("utf-8").split("https://")[-1]}'
-        self.ui_message = f' Transformed data is ready here: {self.upload_url}'
+
+        dataset, _, _ = register_dataset(
+            [
+                {
+                    "name": "Topoflow weather file - 2011",
+                    "start_time": "2011-08-18T00:00:00",
+                    "end_time": "2011-08-18T23:59:59",
+                    "url": self.upload_url,
+                    "description": "Weather data inferred from GPM for the Baro watershed in Gambella, Ethiopia prepared  for the Topoflow model. The probabilistic forecast is based on the 15th quantile of the precipitation distribution for the 2000-2017 period",
+                    "bounding_box": [34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999],
+                    "standard_variables": [
+                        {
+                            "ontology": "ScientificVariablesOntology",
+                            "name": "atmosphere_water__rainfall_volume_flux",
+                            "uri": "http://www.geoscienceontology.org/svo/svl/variable#atmosphere%40role%7Esource_rainfall%40role%7Emain_precipitation__precipitation_volume_flux"
+                        }
+                    ]
+                }
+            ]
+        )
+
+        self.ui_message = f' Transformed data is ready here: {self.upload_url}. ' \
+                          f'\nDataset is registered to Data Catalog with ID: {dataset["record_id"]}'
 
         # TODO: this is a hack to pass UI messages
         with open('/tmp/ui_messages.txt', 'w') as msg_file:
