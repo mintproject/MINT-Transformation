@@ -10,8 +10,6 @@ function exec {
     resolution=$3
     bbox="${AREAS[$name]}"
 
-    bash ./download_gpm.sh $year /data/mint/gpm
-
     output_dir=/data/mint/topoflow/$name/gpm/$year\_$resolution
     echo "Going to run and output to $output_dir"
 
@@ -30,12 +28,26 @@ function exec {
         --tf_climate.output_file=$output_dir/climate.rts \
         --tf_climate.DEM_bounds="$bbox" \
         --tf_climate.DEM_xres_arcsecs=$resolution \
-        --tf_climate.DEM_yres_arcsecs=$resolution > $output_dir/run.log
+        --tf_climate.DEM_yres_arcsecs=$resolution \
+        --tf_climate_month.grid_dir=$output_dir/cropped_region \
+        --tf_climate_month.output_file=$output_dir/climate.rts > $output_dir/run.log
+
+    pushd $output_dir
+    # compress the file so we can delete the original file, which is much bigger
+    tar -czf data.tar.gz run.log climate.rts climate.rti climate.*.rts
+    # remove the uncompressed files
+    rm climate.*
+    popd
 }
 
 year=$1
+bash ./download_gpm.sh $year /data/mint/gpm
 
 for name in "${!AREAS[@]}"; do
     exec $name $year 30
     exec $name $year 60
 done
+
+# remove the data
+rm -r /data/mint/gpm/$year
+
