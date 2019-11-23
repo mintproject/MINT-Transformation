@@ -17,5 +17,5 @@ for name in "${!AREAS[@]}"; do
     tar -czf isric_soil.tar.gz isric_soil
     popd
 
-    upload_file /data/mint/topoflow/$name/isric_soil.tar.gz topoflow/$name_isric_soil.tar.gz
+    upload_file /data/mint/topoflow/$name/isric_soil.tar.gz topoflow/$name\_isric_soil.tar.gz
 done
