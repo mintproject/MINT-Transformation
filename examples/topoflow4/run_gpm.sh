@@ -23,14 +23,14 @@ function exec {
         mkdir -p "$output_dir/cropped_region"
     fi
 
-    python -m dtran.main exec_pipeline \
-        --config ./topoflow_climate.yml \
-        --tf_climate.input_dir=/data/mint/gpm/$year \
-        --tf_climate.crop_region_dir=$output_dir/cropped_region \
-        --tf_climate.output_file=$output_dir/climate.rts \
-        --tf_climate.DEM_bounds="$bbox" \
-        --tf_climate.DEM_xres_arcsecs=$resolution \
-        --tf_climate.DEM_yres_arcsecs=$resolution > $output_dir/run.log
+#    python -m dtran.main exec_pipeline \
+#        --config ./topoflow_climate.yml \
+#        --tf_climate.input_dir=/data/mint/gpm/$year \
+#        --tf_climate.crop_region_dir=$output_dir/cropped_region \
+#        --tf_climate.output_file=$output_dir/climate.rts \
+#        --tf_climate.DEM_bounds="$bbox" \
+#        --tf_climate.DEM_xres_arcsecs=$resolution \
+#        --tf_climate.DEM_yres_arcsecs=$resolution > $output_dir/run.log
 }
 
 year=$1
