@@ -5,7 +5,7 @@ from typing import *
 from dtran.ifunc import IFunc
 from dtran.wireio import WiredIOArg
 from marshmallow import Schema, fields, ValidationError
-from networkx import DiGraph, topological_sort, NetworkXUnfeasible
+from networkx import DiGraph, lexicographical_topological_sort, NetworkXUnfeasible
 
 
 class Pipeline(object):
@@ -48,7 +48,7 @@ class Pipeline(object):
         self.idx2order = {}
         try:
             # reordering func_classes in topologically sorted order for execution
-            for i in topological_sort(graph):
+            for i in lexicographical_topological_sort(graph):
                 self.func_classes.append(func_classes[i])
                 # changing idx of functions to map to their new order
                 self.idx2order[len(self.func_classes) - 1] = idx2order[i]
