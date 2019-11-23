@@ -25,4 +25,4 @@ python -m dtran.main exec_pipeline \
     --tf_climate.output_file=$output_dir/climate.rts \
     --tf_climate.DEM_bounds="$bbox" \
     --tf_climate.DEM_xres_arcsecs=$resolution \
-    --tf_climate.DEM_yres_arcsecs=$resolution > /data/mint/topoflow/$name/gpm/$year/run.log
+    --tf_climate.DEM_yres_arcsecs=$resolution > $output_dir/run.log
