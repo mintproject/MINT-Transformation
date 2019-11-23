@@ -18,6 +18,10 @@ if [[ ! -d "$output_dir" ]]; then
     mkdir -p "$output_dir"
 fi
 
+if [[ ! -d "$output_dir/tmp" ]]; then
+    mkdir -p "$output_dir/tmp"
+fi
+
 python -m dtran.main exec_pipeline \
     --config ./topoflow_climate.yml \
     --tf_climate.input_dir=/data/mint/gpm/$year \
