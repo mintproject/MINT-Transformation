@@ -4,11 +4,9 @@ adapters:
     comment: My topoflow soil write adapter
     adapter: funcs.Topoflow4SoilWriteFunc
     inputs:
-      layer: ""
-      input_dir: "/ws/oct_eval_data/soilGrids/"
-      output_dir: "/ws/examples/scotts_transformations/tmp/soil_baro_l"
+      layer: "1"
+      input_dir: "/data/mint/soilGrids/"
+      output_dir: "/data/mint/topoflow/baro/soilGrids"
       DEM_bounds: "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999"
-      DEM_ncols: "267"
-      DEM_nrows: "257"
       DEM_xres_arcsecs: "30"
       DEM_yres_arcsecs: "30"
