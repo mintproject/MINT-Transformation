@@ -40,14 +40,20 @@ function exec {
     popd
 }
 
-year=$1
-bash ./download_gpm.sh $year /data/mint/gpm
+#year=$1
+years=(2009 2010 2011 2012 2013 2014 2015 2016 2017)
 
-for name in "${!AREAS[@]}"; do
-    exec $name $year 30
-    exec $name $year 60
+for year in $years; do
+    bash ./download_gpm.sh $year /data/mint/gpm
+
+    for name in "${!AREAS[@]}"; do
+        exec $name $year 30
+        exec $name $year 60
+    done
+
+    # remove the data
+    rm -r /data/mint/gpm/$year
+
+    # upload the data
+    bash ./upload_gpm.sh $year
 done
-
-# remove the data
-rm -r /data/mint/gpm/$year
-
