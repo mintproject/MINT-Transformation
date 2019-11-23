@@ -92,30 +92,6 @@ class Topoflow4ClimateWritePerMonthFunc(IFunc):
         return True
 
 # -------------------------------------------------------------------
-def gdal_open_nc_file(nc_file, var_name, VERBOSE=False):
-    ### ds_in = gdal.Open("NETCDF:{0}:{1}".format(nc_file, var_name), gdal.GA_ReadOnly )
-    ds_in = gdal.Open("NETCDF:{0}:{1}".format(nc_file, var_name))
-    band = ds_in.GetRasterBand(1)
-    nodata = band.GetNoDataValue()
-
-    g1 = band.ReadAsArray()
-    ## g1 = ds_in.ReadAsArray(0, 0, ds_in.RasterXSize, ds_in.RasterYSize)
-
-    if (VERBOSE):
-        print('grid1: min =', g1.min(), 'max =', g1.max())
-        print('grid1.shape =', g1.shape)
-        print('grid1.dtype =', g1.dtype)
-        print('grid1 nodata =', nodata)
-        w = np.where(g1 > nodata)
-        nw = w[0].size
-        print('grid1 # data =', nw)
-        print(' ')
-
-    return (ds_in, g1, nodata)
-
-
-# gdal_open_nc_file()
-# -------------------------------------------------------------------
 def get_raster_bounds(ds, VERBOSE=False):
     # -------------------------------------------------------------
     # Note:  The bounds depend on the map projection and are not
