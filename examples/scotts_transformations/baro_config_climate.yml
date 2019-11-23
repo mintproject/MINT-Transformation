@@ -4,9 +4,9 @@ adapters:
     comment: My topoflow climate write adapter
     adapter: funcs.Topoflow4ClimateWriteFunc
     inputs:
-      input_dir: "/data/mint/gpm"
-      temp_dir: "/data/mint/gpm_grid_baro"
-      output_file: "/data/mint/baro/climate_all.rt"
+      input_dir: "/data/mint/sample"
+      temp_dir: "/data/mint/sample_grid_baro"
+      output_file: "/data/mint/sample_baro/climate_all.rt"
       DEM_bounds: "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999"
       DEM_ncols: "267"
       DEM_nrows: "257"
