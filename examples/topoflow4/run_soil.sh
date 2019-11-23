@@ -9,7 +9,7 @@ function run_transformation {
     layers="1 2 3 4 5 6 7"
 
     if [[ ! -d "/data/mint/topoflow/$area/soilGrids" ]]; then
-        mkdir /data/mint/topoflow/$area/soilGrids
+        mkdir -p "/data/mint/topoflow/$area/soilGrids"
     fi
 
     for layer in $layers

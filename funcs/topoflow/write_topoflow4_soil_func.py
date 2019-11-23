@@ -215,6 +215,29 @@ def read_soil_grid_files(input_dir, DEM_info: dict,
     #----------------------------------------------------
     D = (D / 1000.0)
 
+    # -------------------------------------------------
+    # Replace zero values with another nodata value.
+    # Zero values cause NaN or Inf in Wosten vars.
+    # For %, 101.0 is an impossible value.
+    # For D, use 10 [g / cm^3].
+    # -------------------------------------------------
+    # Density of water          = 1.00  [g / cm^3]
+    # Density of silt           = 1.33  [g / cm^3]
+    # Density of loose sand     = 1.442 [g / cm^3]
+    # Density of dry sand       = 1.602 [g / cm^3]
+    # Density of compacted clay = 1.746 [g / cm^3]
+    # Density of most rocks     = 2.65  [g / cm^3]
+    # Density of pure iron      = 7.87  [g / cm^3]
+    # Density of pure actinium  = 10.07 [g / cm^3]
+    # Density of pure lead      = 11.34 [g / cm^3]
+    # Density of pure gold      = 19.20 [g / cm^3]
+    # -------------------------------------------------
+    nodata = get_nodata_values()
+    C[C <= 0] = nodata['C']  # [%]
+    S[S <= 0] = nodata['S']  # [%]
+    OM[OM <= 0] = nodata['OM']  # [%]
+    D[D <= 0] = nodata['D']  # [g / cm^3]
+
     #--------------------------------------
     # Check if grid values are reasonable
     #--------------------------------------
@@ -270,28 +293,6 @@ def read_soil_grid_files(input_dir, DEM_info: dict,
             ## print('   Possible nodata value.')
         print()
 
-    #-------------------------------------------------
-    # Replace zero values with another nodata value.
-    # Zero values cause NaN or Inf in Wosten vars.
-    # For %, 101.0 is an impossible value.
-    # For D, use 10 [g / cm^3].
-    #-------------------------------------------------
-    # Density of water          = 1.00  [g / cm^3]
-    # Density of silt           = 1.33  [g / cm^3]
-    # Density of loose sand     = 1.442 [g / cm^3]
-    # Density of dry sand       = 1.602 [g / cm^3]
-    # Density of compacted clay = 1.746 [g / cm^3]
-    # Density of most rocks     = 2.65  [g / cm^3]
-    # Density of pure iron      = 7.87  [g / cm^3]
-    # Density of pure actinium  = 10.07 [g / cm^3]
-    # Density of pure lead      = 11.34 [g / cm^3]
-    # Density of pure gold      = 19.20 [g / cm^3]
-    #-------------------------------------------------
-    nodata = get_nodata_values()
-    C[C <= 0] = nodata['C']  # [%]
-    S[S <= 0] = nodata['S']  # [%]
-    OM[OM <= 0] = nodata['OM']  # [%]
-    D[D <= 0] = nodata['D']  # [g / cm^3]
     #---------------------------------------
     # C[ C <= 0 ]   = 0.001  # [%]
     # S[ S <= 0 ]   = 0.001  # [%]
