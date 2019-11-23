@@ -31,19 +31,14 @@ class Topoflow4ClimateWriteFunc(IFunc):
         "DEM_bounds": ArgType.String,
         "DEM_xres_arcsecs": ArgType.String,
         "DEM_yres_arcsecs": ArgType.String,
-        "DEM_ncols": ArgType.String,
-        "DEM_nrows": ArgType.String,
     }
     outputs = {}
 
-    def __init__(self, input_dir: str, temp_dir: str, output_file: Union[str, Path], DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str,
-                 DEM_ncols: str, DEM_nrows: str):
+    def __init__(self, input_dir: str, temp_dir: str, output_file: Union[str, Path], DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str):
         self.DEM = {
             "bounds": [float(x.strip()) for x in DEM_bounds.split(",")],
             "xres": float(DEM_xres_arcsecs) / 3600.0,
             "yres": float(DEM_yres_arcsecs) / 3600.0,
-            "ncols": int(DEM_ncols),
-            "nrows": int(DEM_nrows),
         }
         self.input_dir = str(input_dir)
         self.temp_dir = str(temp_dir)
@@ -486,7 +481,7 @@ def extract_grid_data(args):
 
     grid2 = np.float32(grid2)
     grid2.tofile(os.path.join(output_dir, f"{Path(nc_file).stem}.bin"))
-    return gmax, BAD_FILE
+    return gmax, BAD_FILE, grid2.shape
 
 
 def write_grid_files_to_rts(grid_files: List[str], rts_output_file: str):
@@ -515,8 +510,6 @@ def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, rts_file, DEM_info: dict
     DEM_bounds = DEM_info["bounds"]
     DEM_xres = DEM_info["xres"]
     DEM_yres = DEM_info["yres"]
-    DEM_ncols = DEM_info["ncols"]
-    DEM_nrows = DEM_info["nrows"]
     #######################################################
 
     # ------------------------------------------------
@@ -550,6 +543,10 @@ def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, rts_file, DEM_info: dict
     # print(">>> finish geotiff files")
     # ------------------------
 
+    gmax, bad_file, shp = extract_grid_data(((temp_bin_dir, nc_file_list[0], var_name, rts_nodata, DEM_bounds, 100, 100, DEM_xres, DEM_yres, False)))
+    assert bad_file
+    DEM_nrows, DEM_ncols = shp[0], shp[1]
+
     args = [
         # output_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_nrows, DEM_ncols, DEM_xres, DEM_yres, VERBOSE
         (temp_bin_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_nrows, DEM_ncols, DEM_xres, DEM_yres, False)
@@ -557,7 +554,7 @@ def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, rts_file, DEM_info: dict
         # skip generated files
         if not os.path.exists(os.path.join(temp_bin_dir, f"{Path(nc_file).stem}.bin"))
     ]
-    for gmax, bad_file in tqdm(pool.imap_unordered(extract_grid_data, args), total=len(args)):
+    for gmax, bad_file, _ in tqdm(pool.imap_unordered(extract_grid_data, args), total=len(args)):
     # for gmax, bad_file in tqdm((extract_grid_data(a) for a in args), total=len(args)):
         count += 1
         Pmax = max(Pmax, gmax)

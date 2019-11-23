@@ -28,19 +28,14 @@ class Topoflow4SoilWriteFunc(IFunc):
         "DEM_bounds": ArgType.String,
         "DEM_xres_arcsecs": ArgType.String,
         "DEM_yres_arcsecs": ArgType.String,
-        "DEM_ncols": ArgType.String,
-        "DEM_nrows": ArgType.String,
     }
     outputs = {}
 
-    def __init__(self, input_dir: str, output_dir: Union[str, Path], layer: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str,
-                 DEM_ncols: str, DEM_nrows: str):
+    def __init__(self, input_dir: str, output_dir: Union[str, Path], layer: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str):
         self.DEM = {
             "bounds": [float(x.strip()) for x in DEM_bounds.split(",")],
             "xres": float(DEM_xres_arcsecs) / 3600.0,
             "yres": float(DEM_yres_arcsecs) / 3600.0,
-            "ncols": int(DEM_ncols),
-            "nrows": int(DEM_nrows),
         }
         self.input_dir = str(input_dir)
         self.output_dir = str(output_dir)
@@ -60,7 +55,7 @@ class Topoflow4SoilWriteFunc(IFunc):
 def save_soil_hydraulic_vars(input_dir, output_dir, DEM_info: dict, layer=1):
               
     (C, S, OM, D) = read_soil_grid_files(input_dir, DEM_info, layer=layer)
-
+    DEM_nrows, DEM_ncols = C.shape[0], C.shape[1]
     topsoil = (layer == 1)
     subsoil = not(topsoil)
     
@@ -144,9 +139,11 @@ def save_soil_hydraulic_vars(input_dir, output_dir, DEM_info: dict, layer=1):
     L.tofile( L_unit )
     L_unit.close()
 
+
+
     for fpath in [Ks_file, qs_file, pB_file, c_file, lam_file, G_file, a_file, n_file, L_file]:
-        generate_rti_file(fpath, fpath.replace(".bin", ".rti"), DEM_info["ncols"],
-                          DEM_info['nrows'], DEM_info["xres"], DEM_info['yres'], pixel_geom=0)
+        generate_rti_file(fpath, fpath.replace(".bin", ".rti"), DEM_ncols,
+                          DEM_nrows, DEM_info["xres"], DEM_info['yres'], pixel_geom=0)
 
 # -------------------------------------------------------------------
 def read_soil_grid_files(input_dir, DEM_info: dict,
@@ -648,6 +645,19 @@ def wosten_L(C, S, OM, D, topsoil):
     return L
 
 
+def get_wosten_vars(C, S, OM, D, topsoil):
+    # ----------------------------------------------------------
+    # Use the Wosten (1998) pedotransfer functions to compute
+    # theta_s, K_s, and van Genuchten parameters, then save
+    # them to files.
+    # ----------------------------------------------------------
+    theta_s = wosten_theta_s(C, S, OM, D, topsoil)
+    K_s = wosten_K_s(C, S, OM, D, topsoil)
+    alpha = wosten_alpha(C, S, OM, D, topsoil)
+    n = wosten_n(C, S, OM, D, topsoil)
+    L = wosten_L(C, S, OM, D, topsoil)
+
+    return (theta_s, K_s, alpha, n, L)
 #   wosten_L()
 # -------------------------------------------------------------------
 def capillary_length_G(c, eta, n, inv_alpha, TBC=True):
