@@ -53,13 +53,12 @@ class Topoflow4SoilWriteFunc(IFunc):
 
 # -------------------------------------------------------------------
 def save_soil_hydraulic_vars(input_dir, output_dir, DEM_info: dict, layer=1):
-              
     (C, S, OM, D) = read_soil_grid_files(input_dir, DEM_info, layer=layer)
     DEM_nrows, DEM_ncols = C.shape[0], C.shape[1]
     topsoil = (layer == 1)
     subsoil = not(topsoil)
     
-    (theta_s, K_s, alpha, n, L) = get_wosten_vars(C, S, OM, D, topsoil, subsoil)   
+    (theta_s, K_s, alpha, n, L) = get_wosten_vars(C, S, OM, D, topsoil)
     (psi_B, c, lam, eta, G ) = get_tBC_from_vG_vars(alpha, n, L)
      
     #---------------------------------   
@@ -138,8 +137,6 @@ def save_soil_hydraulic_vars(input_dir, output_dir, DEM_info: dict, layer=1):
     L = np.float32( L )
     L.tofile( L_unit )
     L_unit.close()
-
-
 
     for fpath in [Ks_file, qs_file, pB_file, c_file, lam_file, G_file, a_file, n_file, L_file]:
         generate_rti_file(fpath, fpath.replace(".bin", ".rti"), DEM_ncols,
