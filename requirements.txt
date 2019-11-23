@@ -1,7 +1,0 @@
-git+https://github.com/binh-vu/temp.git@pyrepr
-ujson
-netCDF4
-arpeggio
-rdflib
-flask
-requests
