@@ -11,7 +11,7 @@ bbox="${AREAS[$name]}"
 
 bash ./download_gpm.sh $year /data/mint/gpm
 
-output_dir=/data/mint/topoflow/$area/gpm/$year_$resolution
+output_dir=/data/mint/topoflow/$name/gpm/$year_$resolution
 echo "Going to run and output to $output_dir"
 
 if [[ ! -d "$output_dir" ]]; then
@@ -25,4 +25,4 @@ python -m dtran.main exec_pipeline \
     --tf_climate.output_file=$output_dir/climate.rts \
     --tf_climate.DEM_bounds="$bbox" \
     --tf_climate.DEM_xres_arcsecs=$resolution \
-    --tf_climate.DEM_yres_arcsecs=$resolution > /data/mint/topoflow/$area/gpm/$year/run.log
+    --tf_climate.DEM_yres_arcsecs=$resolution > /data/mint/topoflow/$name/gpm/$year/run.log
