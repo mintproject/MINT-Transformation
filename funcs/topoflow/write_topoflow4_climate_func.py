@@ -71,7 +71,7 @@ class Topoflow4ClimateWritePerMonthFunc(IFunc):
 
     def exec(self) -> dict:
         grid_files_per_month = {}
-        for grid_file in glob.glob(join(self.grid_dir, '*.bin')):
+        for grid_file in glob.glob(join(self.grid_dir, '*.npz')):
             month = self.date_regex.match(Path(grid_file).name).group('month')
             if month not in grid_files_per_month:
                 grid_files_per_month[month] = []
@@ -480,7 +480,8 @@ def extract_grid_data(args):
         os.remove(tif_file1)
 
     grid2 = np.float32(grid2)
-    grid2.tofile(os.path.join(output_dir, f"{Path(nc_file).stem}.bin"))
+    np.savez_compressed(os.path.join(output_dir, f"{Path(nc_file).stem}.npz"), grid=grid2)
+    # grid2.tofile(os.path.join(output_dir, f"{Path(nc_file).stem}.bin"))
     return gmax, BAD_FILE, grid2.shape
 
 
@@ -491,7 +492,8 @@ def write_grid_files_to_rts(grid_files: List[str], rts_output_file: str):
     rts_unit = open(rts_output_file, 'wb')
     grid_files = sorted(grid_files)
     for grid_file in tqdm(grid_files):
-        grid = np.fromfile(grid_file, dtype=np.float32)
+        # grid = np.fromfile(grid_file, dtype=np.float32)
+        grid = np.load(grid_file)['grid']
         grid.tofile(rts_unit)
     rts_unit.close()
 
@@ -552,7 +554,7 @@ def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, rts_file, DEM_info: dict
         (temp_bin_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_nrows, DEM_ncols, DEM_xres, DEM_yres, False)
         for nc_file in nc_file_list
         # skip generated files
-        if not os.path.exists(os.path.join(temp_bin_dir, f"{Path(nc_file).stem}.bin"))
+        if not os.path.exists(os.path.join(temp_bin_dir, f"{Path(nc_file).stem}.npz"))
     ]
     for gmax, bad_file, _ in tqdm(pool.imap_unordered(extract_grid_data, args), total=len(args)):
     # for gmax, bad_file in tqdm((extract_grid_data(a) for a in args), total=len(args)):
@@ -572,7 +574,7 @@ def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, rts_file, DEM_info: dict
     # Open RTS file to write
     # -------------------------
     print(">>> write to files")
-    grid_files = sorted(glob.glob(join(temp_bin_dir, '*.bin')))
+    grid_files = sorted(glob.glob(join(temp_bin_dir, '*.npz')))
     write_grid_files_to_rts(grid_files, rts_file)
 
     # Generate RTI file
