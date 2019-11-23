@@ -1,7 +1,7 @@
 version: "1"
 adapters:
   nc2tiff:
-    adapter: funcs.topoflow.nc2geotiff.NC2GeoTiff
+    adapter: funcs.NC2GeoTiff
     inputs:
       input_dir: /data/mint/gpm/2008
       output_dir: /data/mint/gpm_tiff/2008
