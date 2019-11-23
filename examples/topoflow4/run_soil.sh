@@ -15,7 +15,7 @@ function run_transformation {
     for layer in $layers
     do
         echo "Run transformation on $area and layer $layer"
-        python dtran.main exec_pipeline \
+        python -m dtran.main exec_pipeline \
             --config ./topoflow_soil.yml \
             --tf_soil.output_dir=/data/mint/topoflow/$area/soilGrids \
             --tf_soil.DEM_bounds=$bbox \
