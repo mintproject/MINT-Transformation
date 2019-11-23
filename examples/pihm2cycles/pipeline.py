@@ -36,13 +36,13 @@ if __name__ == "__main__":
             {"default": str(wdir / "pg.infil.csv"), "cycle_mapping": str(wdir / "cycles_soil.csv")}
         ),
         ReadFunc.I._3.repr_file: wdir / "pihm_soil.model.yml",
-        ReadFunc.I._3.resources: wdir / "pihm_soil.csv",
+        ReadFunc.I._3.resources: str(wdir / "pihm_soil.csv"),
         ReadFunc.I._4.repr_file: wdir / "cycles_soil.model.yml",
-        ReadFunc.I._4.resources: wdir / "cycles_soil.csv",
+        ReadFunc.I._4.resources: str(wdir / "cycles_soil.csv"),
         Pihm2CyclesFunc.I.cycles_layers: "[0.05, 0.05, 0.10, 0.2, 0.4, 0.4, 0.4, 0.4]",
         Pihm2CyclesFunc.I.patch_id: 1,
         Pihm2CyclesFunc.I.gw_depth: 30,
-        CyclesWriteFunc.I.reinit_file: wdir / "cycles.REINIT",
+        CyclesWriteFunc.I.reinit_file: wdir / "cycles.REINIT1",
         CyclesWriteFunc.I.soil_file: wdir / "cycles.soil",
     }
 

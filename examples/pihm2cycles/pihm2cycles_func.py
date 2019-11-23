@@ -61,7 +61,7 @@ class Pihm2CyclesFunc(IFunc):
                     )
                     reinit_node.data["cycle:rot_year"] = (
                         timedelta(minutes=float(pihm_node.data["schema:recordedAt"])).days // 365
-                    )
+                    ) + 1
                     reinit_node.data["cycle:doy"] = (
                         timedelta(minutes=float(pihm_node.data["schema:recordedAt"])).days % 365
                     )
@@ -77,7 +77,7 @@ class Pihm2CyclesFunc(IFunc):
                 )
                 reinit_node.data["cycle:rot_year"] = (
                     timedelta(minutes=float(pihm_node.data["schema:recordedAt"])).days // 365
-                )
+                ) + 1
                 reinit_node.data["cycle:doy"] = (
                     timedelta(minutes=float(pihm_node.data["schema:recordedAt"])).days % 365
                 )

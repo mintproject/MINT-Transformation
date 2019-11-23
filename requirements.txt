@@ -1,3 +1,7 @@
+networkx
+drepr
+pandas
+numpy
 git+https://github.com/binh-vu/temp.git@pyrepr
 ujson
 netCDF4
