@@ -5,10 +5,11 @@ from typing import List, Dict, Tuple, Callable, Any, Optional
 from datetime import datetime
 import gdal, numpy as np, osr
 from netCDF4 import Dataset
-
+from tqdm.auto import tqdm
 from dtran import IFunc, ArgType
 from funcs.topoflow.topoflow.utils import regrid
 from multiprocessing import Pool
+
 
 class NC2GeoTiff(IFunc):
     id = "nc2geotiff"
@@ -31,10 +32,15 @@ class NC2GeoTiff(IFunc):
     def exec(self) -> dict:
         nc_files = sorted(glob.glob(os.path.join(self.input_dir, "*.nc*")))
         pool = Pool()
-        # args = [
-        #     for nc_file in nc_files
-        # ]
-        # return {}
+        args = [
+            (nc_file, self.var_name, os.path.join(self.output_dir, f"{Path(nc_file).stem}.tif"))
+            for nc_file in nc_files
+        ]
+
+        count = 0
+        for _ in tqdm(pool.imap_unordered(nc2geotiff, args), total=len(args)):
+            count += 1
+        return {}
 
     def validate(self) -> bool:
         return True
@@ -144,3 +150,4 @@ def nc2geotiff(nc_file: str, var_name: str, out_file, out_nodata=0.0, verbose=Fa
     outRaster = None
     logs.append("finish write geotiff data at %s" % datetime.now().strftime("%H:%M:%S"))
     print(">>>", "|**|".join(logs))
+    return None

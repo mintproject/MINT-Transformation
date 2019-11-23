@@ -289,7 +289,7 @@ def fix_gpm_file_as_geotiff(nc_file, var_name, out_file,
     bounds = get_raster_bounds(raster)  ######
     nodata = band.GetNoDataValue()
     geotransform = raster.GetGeoTransform()
-    logs.append("finish read metadata data at %s" % datetime.now().strftime("%H:%M:%S"))
+    logs.append("finish read metadata data at %s\n" % datetime.now().strftime("%H:%M:%S"))
 
     # ----------------
     # BINH: using netcdf to read data instead of gdal
@@ -302,7 +302,7 @@ def fix_gpm_file_as_geotiff(nc_file, var_name, out_file,
     # print(">>>> MATCH!!!")
     array = new_array
     # ----------------
-    logs.append("finish read array data at %s" % datetime.now().strftime("%H:%M:%S"))
+    logs.append("finish read array data at %s\n" % datetime.now().strftime("%H:%M:%S"))
 
     ## array = raster.ReadAsArray(0, 0, ds_in.RasterXSize, ds_in.RasterYSize)
     # ----------------------------------------------
@@ -380,7 +380,7 @@ def fix_gpm_file_as_geotiff(nc_file, var_name, out_file,
     # Close the out_file
     # ---------------------
     outRaster = None
-    logs.append("finish write geotiff data at %s" % datetime.now().strftime("%H:%M:%S"))
+    logs.append("finish write geotiff data at %s\n" % datetime.now().strftime("%H:%M:%S"))
     print(">>>", "|**|".join(logs))
 
 
