@@ -23,17 +23,17 @@ class NC2GeoTiff(IFunc):
     }
     outputs = {}
 
-    def __init__(self, input_dir, output_dir, var_name, no_value: float):
+    def __init__(self, input_dir, output_dir, var_name, no_data: float):
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.var_name = var_name
-        self.no_value = float(no_value)
+        self.no_data = float(no_data)
 
     def exec(self) -> dict:
         nc_files = sorted(glob.glob(os.path.join(self.input_dir, "*.nc*")))
         pool = Pool()
         args = [
-            (nc_file, self.var_name, os.path.join(self.output_dir, f"{Path(nc_file).stem}.tif"))
+            (nc_file, self.var_name, os.path.join(self.output_dir, f"{Path(nc_file).stem}.tif"), self.no_data)
             for nc_file in nc_files
         ]
 
@@ -46,7 +46,7 @@ class NC2GeoTiff(IFunc):
         return True
 
 
-def nc2geotiff(nc_file: str, var_name: str, out_file, out_nodata=0.0, verbose=False):
+def nc2geotiff(nc_file: str, var_name: str, out_file, no_data=0.0, verbose=False):
     logs = ["convert gpm file to geotiff: %s at %s" % (Path(nc_file).stem, datetime.now().strftime("%H:%M:%S"))]
     ### raster = gdal.Open("NETCDF:{0}:{1}".format(nc_file, var_name), gdal.GA_ReadOnly )
     raster = gdal.Open("NETCDF:{0}:{1}".format(nc_file, var_name))
@@ -110,7 +110,7 @@ def nc2geotiff(nc_file: str, var_name: str, out_file, out_nodata=0.0, verbose=Fa
     # -------------------------
     # Change the nodata value
     # -------------------------
-    array2[array2 <= nodata] = out_nodata
+    array2[array2 <= nodata] = no_data
 
     # -----------------------------------------
     # Build new geotransform & projectionRef
