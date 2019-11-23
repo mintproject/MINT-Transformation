@@ -46,6 +46,11 @@ class NC2GeoTiff(IFunc):
         return True
 
 
+def wrap_nc2geotiff(args):
+    nc2geotiff(args[0], args[1], args[2], args[3])
+    return None
+
+
 def nc2geotiff(nc_file: str, var_name: str, out_file, no_data=0.0, verbose=False):
     logs = ["convert gpm file to geotiff: %s at %s" % (Path(nc_file).stem, datetime.now().strftime("%H:%M:%S"))]
     ### raster = gdal.Open("NETCDF:{0}:{1}".format(nc_file, var_name), gdal.GA_ReadOnly )
@@ -150,4 +155,3 @@ def nc2geotiff(nc_file: str, var_name: str, out_file, no_data=0.0, verbose=False
     outRaster = None
     logs.append("finish write geotiff data at %s" % datetime.now().strftime("%H:%M:%S"))
     print(">>>", "|**|".join(logs))
-    return None
