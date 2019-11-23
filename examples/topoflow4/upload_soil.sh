@@ -2,6 +2,8 @@
 
 set -e
 
+source ./locations.sh
+
 function upload_file {
     local_file=$1
     remote_file=$2
@@ -10,6 +12,8 @@ function upload_file {
 }
 
 for name in "${!AREAS[@]}"; do
+    echo "uploading $name"
+    
     pushd /data/mint/topoflow/$name
     tar -czf isric_soil.tar.gz isric_soil
     popd
