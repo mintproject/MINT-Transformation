@@ -8,6 +8,10 @@ function run_transformation {
     bbox=$2
     layers="1 2 3 4 5 6 7"
 
+    if [ ! -d "/data/mint/topoflow/$area/soilGrids" ]; then
+        mkdir /data/mint/topoflow/$area/soilGrids
+    fi
+
     for layer in $layers
     do
         echo "Run transformation on $area and layer $layer"
