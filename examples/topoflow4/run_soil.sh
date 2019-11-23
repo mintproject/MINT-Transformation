@@ -15,7 +15,7 @@ function run_transformation {
             --config ./topoflow_soil.yml \
             --tf_soil.output_dir=/data/mint/topoflow/$area/soilGrids \
             --tf_soil.DEM_bounds=$bbox \
-            --tf_soil.layer=$layer
+            --tf_soil.layer=$layer > /data/mint/topoflow/$area/soil.log
     done
 }
 
