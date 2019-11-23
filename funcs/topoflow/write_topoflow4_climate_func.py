@@ -16,6 +16,7 @@ import gdal, osr  ## ogr
 import glob
 from scipy.special import gamma
 
+from funcs.topoflow.nc2geotiff import nc2geotiff
 from funcs.topoflow.rti_files import generate_rti_file
 
 
@@ -26,26 +27,28 @@ class Topoflow4ClimateWriteFunc(IFunc):
     '''
     inputs = {
         "input_dir": ArgType.String,
-        "temp_dir": ArgType.String,
+        "crop_region_dir": ArgType.String,
         "output_file": ArgType.FilePath,
+        "var_name": ArgType.String,
         "DEM_bounds": ArgType.String,
         "DEM_xres_arcsecs": ArgType.String,
         "DEM_yres_arcsecs": ArgType.String,
     }
     outputs = {}
 
-    def __init__(self, input_dir: str, temp_dir: str, output_file: Union[str, Path], DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str):
+    def __init__(self, input_dir: str, crop_region_dir: str, output_file: Union[str, Path], var_name: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str):
         self.DEM = {
             "bounds": [float(x.strip()) for x in DEM_bounds.split(",")],
             "xres": float(DEM_xres_arcsecs) / 3600.0,
             "yres": float(DEM_yres_arcsecs) / 3600.0,
         }
+        self.var_name = var_name
         self.input_dir = str(input_dir)
-        self.temp_dir = str(temp_dir)
+        self.crop_region_dir = str(crop_region_dir)
         self.output_file = str(output_file)
 
     def exec(self) -> dict:
-        create_rts_from_nc_files(self.input_dir, self.temp_dir, self.output_file, self.DEM)
+        create_rts_from_nc_files(self.input_dir, self.crop_region_dir, self.output_file, self.DEM, self.var_name, IN_MEMORY=True)
         return {}
 
     def validate(self) -> bool:
@@ -277,111 +280,6 @@ def resave_grid_to_geotiff(ds_in, new_file, grid1, nodata):
 
 #   resave_grid_to_geotiff()
 # -------------------------------------------------------------------
-def fix_gpm_file_as_geotiff(nc_file, var_name, out_file,
-                            out_nodata=0.0, VERBOSE=False):
-    logs = ["convert gpm file to geotiff: %s at %s" % (Path(nc_file).stem, datetime.now().strftime("%H:%M:%S"))]
-    ### raster = gdal.Open("NETCDF:{0}:{1}".format(nc_file, var_name), gdal.GA_ReadOnly )
-    raster = gdal.Open("NETCDF:{0}:{1}".format(nc_file, var_name))
-    band = raster.GetRasterBand(1)
-    ncols = raster.RasterXSize
-    nrows = raster.RasterYSize
-    proj = raster.GetProjectionRef()
-    bounds = get_raster_bounds(raster)  ######
-    nodata = band.GetNoDataValue()
-    geotransform = raster.GetGeoTransform()
-    logs.append("finish read metadata data at %s\n" % datetime.now().strftime("%H:%M:%S"))
-
-    # ----------------
-    # BINH: using netcdf to read data instead of gdal
-    # array = band.ReadAsArray()
-    ds = Dataset(nc_file, "r")
-    # bottom-up on the y-axis (netcdf compare to gdal north-up 90 -> -90)
-    variable = ds.variables[var_name][0][::-1]
-    new_array = np.asarray(variable)
-    # assert np.allclose(array, new_array, atol=1e-7)
-    # print(">>>> MATCH!!!")
-    array = new_array
-    # ----------------
-    logs.append("finish read array data at %s\n" % datetime.now().strftime("%H:%M:%S"))
-
-    ## array = raster.ReadAsArray(0, 0, ds_in.RasterXSize, ds_in.RasterYSize)
-    # ----------------------------------------------
-    # Get geotransform for array in nc_file
-    # Note:  These look strange, but are CORRECT.
-    # ----------------------------------------------
-
-    ulx = geotransform[0]
-    xres = geotransform[1]
-    xrtn = geotransform[2]
-    # -----------------------
-    uly = geotransform[3]
-    yrtn = geotransform[4]  # (not yres !!)
-    yres = geotransform[5]  # (not yrtn !!)
-    raster = None  # Close the nc_file
-
-    if (VERBOSE):
-        print('array: min  =', array.min(), 'max =', array.max())
-        print('array.shape =', array.shape)
-        print('array.dtype =', array.dtype)
-        print('array nodata =', nodata)
-        w = np.where(array > nodata)
-        nw = w[0].size
-        print('array # data =', nw)
-        print(' ')
-
-    # ----------------------------------------------
-    # Rotate the array; column major to row major
-    # a           = [[7,4,1],[8,5,2],[9,6,3]]
-    # np.rot90(a) = [[1,2,3],[4,5,6],[7,8,9]]
-    # ----------------------------------------------
-    ### array2 = np.transpose( array )
-    array2 = np.rot90(array)  ### counter clockwise
-    ncols2 = nrows
-    nrows2 = ncols
-
-    # -------------------------
-    # Change the nodata value
-    # -------------------------
-    array2[array2 <= nodata] = out_nodata
-
-    # -----------------------------------------
-    # Build new geotransform & projectionRef
-    # -----------------------------------------
-    lrx = bounds[2]
-    lry = bounds[1]
-    ulx2 = lry
-    uly2 = lrx
-    xres2 = -yres
-    yres2 = -xres
-    xrtn2 = yrtn
-    yrtn2 = xrtn
-    geotransform2 = (ulx2, xres2, xrtn2, uly2, yrtn2, yres2)
-    proj2 = proj
-
-    if (VERBOSE):
-        print('geotransform  =', geotransform)
-        print('geotransform2 =', geotransform2)
-
-    logs.append("finish rotating and transforming netcdf data at %s" % datetime.now().strftime("%H:%M:%S"))
-    # ------------------------------------
-    # Write new array to a GeoTIFF file
-    # ------------------------------------
-    driver = gdal.GetDriverByName('GTiff')
-    outRaster = driver.Create(out_file, ncols2, nrows2, 1, gdal.GDT_Float32)
-    outRaster.SetGeoTransform(geotransform2)
-    outband = outRaster.GetRasterBand(1)
-    outband.WriteArray(array2)
-    outRasterSRS = osr.SpatialReference()
-    outRasterSRS.ImportFromWkt(proj2)
-    outRaster.SetProjection(outRasterSRS.ExportToWkt())
-    outband.FlushCache()
-
-    # ---------------------
-    # Close the out_file
-    # ---------------------
-    outRaster = None
-    logs.append("finish write geotiff data at %s\n" % datetime.now().strftime("%H:%M:%S"))
-    print(">>>", "|**|".join(logs))
 
 
 def get_tiff_file(temp_bin_dir, ncfile):
@@ -389,8 +287,7 @@ def get_tiff_file(temp_bin_dir, ncfile):
 
 
 def extract_grid_data(args):
-    output_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_nrows, DEM_ncols, DEM_xres, DEM_yres, VERBOSE = args
-    IN_MEMORY = False
+    output_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_nrows, DEM_ncols, DEM_xres, DEM_yres, VERBOSE, IN_MEMORY = args
     if IN_MEMORY:
         tif_file1 = f'/vsimem/{Path(nc_file).stem}.tmp.tif'
         tif_file2 = f'/vsimem/{Path(nc_file).stem}.tmp.2.tif'
@@ -398,8 +295,8 @@ def extract_grid_data(args):
         tif_file1 = f'/tmp/{Path(nc_file).stem}.tmp.tif'
         tif_file2 = f'/tmp/{Path(nc_file).stem}.tmp.2.tif'
 
-    fix_gpm_file_as_geotiff(nc_file, var_name, tif_file1,
-                                out_nodata=rts_nodata)
+    nc2geotiff(nc_file, var_name, tif_file1,
+                                no_data=rts_nodata)
 
     ds_in = gdal.Open(tif_file1)
     grid1 = ds_in.ReadAsArray()
@@ -500,6 +397,7 @@ def write_grid_files_to_rts(grid_files: List[str], rts_output_file: str):
 #   fix_gpm_file_as_geotiff()
 # -------------------------------------------------------------------
 def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, rts_file, DEM_info: dict,
+                             var_name,
                              IN_MEMORY=False, VERBOSE=False):
     # ------------------------------------------------------
     # For info on GDAL constants, see:
@@ -522,7 +420,6 @@ def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, rts_file, DEM_info: dict
         # couldn't find .NC4, look for .NC
         nc_file_list = sorted(glob.glob(join(nc_dir_path, '*.nc')))
 
-    var_name = "HQprecipitation"  # HQ = high quality;  1/2 hourly, mmph
     count = 0
     bad_count = 0
     BAD_FILE = False
@@ -545,13 +442,13 @@ def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, rts_file, DEM_info: dict
     # print(">>> finish geotiff files")
     # ------------------------
 
-    gmax, bad_file, shp = extract_grid_data(((temp_bin_dir, nc_file_list[0], var_name, rts_nodata, DEM_bounds, 100, 100, DEM_xres, DEM_yres, False)))
+    gmax, bad_file, shp = extract_grid_data(((temp_bin_dir, nc_file_list[0], var_name, rts_nodata, DEM_bounds, 100, 100, DEM_xres, DEM_yres, False, False)))
     assert not bad_file
     DEM_nrows, DEM_ncols = shp[0], shp[1]
 
     args = [
-        # output_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_nrows, DEM_ncols, DEM_xres, DEM_yres, VERBOSE
-        (temp_bin_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_nrows, DEM_ncols, DEM_xres, DEM_yres, False)
+        # output_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_nrows, DEM_ncols, DEM_xres, DEM_yres, VERBOSE, IN_MEMORY
+        (temp_bin_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_nrows, DEM_ncols, DEM_xres, DEM_yres, False, IN_MEMORY)
         for nc_file in nc_file_list
         # skip generated files
         if not os.path.exists(os.path.join(temp_bin_dir, f"{Path(nc_file).stem}.npz"))

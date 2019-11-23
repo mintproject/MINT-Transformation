@@ -35,6 +35,7 @@ class NC2GeoTiff(IFunc):
         args = [
             (nc_file, self.var_name, os.path.join(self.output_dir, f"{Path(nc_file).stem}.tif"), self.no_data)
             for nc_file in nc_files
+            if not os.path.exists(os.path.join(self.output_dir, f"{Path(nc_file).stem}.tif"))
         ]
 
         count = 0
