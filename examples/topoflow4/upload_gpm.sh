@@ -12,8 +12,8 @@ function upload_file {
 }
 
 #years=(2008)
-years=($1)
-resolutions=(30 60)
+years="$1"
+resolutions="30 60"
 
 for name in "${!AREAS[@]}"; do
     for year in $years; do
