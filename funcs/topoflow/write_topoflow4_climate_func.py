@@ -546,7 +546,7 @@ def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, rts_file, DEM_info: dict
     # ------------------------
 
     gmax, bad_file, shp = extract_grid_data(((temp_bin_dir, nc_file_list[0], var_name, rts_nodata, DEM_bounds, 100, 100, DEM_xres, DEM_yres, False)))
-    assert bad_file
+    assert not bad_file
     DEM_nrows, DEM_ncols = shp[0], shp[1]
 
     args = [
