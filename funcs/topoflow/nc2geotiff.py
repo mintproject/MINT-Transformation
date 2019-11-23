@@ -38,7 +38,7 @@ class NC2GeoTiff(IFunc):
         ]
 
         count = 0
-        for _ in tqdm(pool.imap_unordered(nc2geotiff, args), total=len(args)):
+        for _ in tqdm(pool.imap_unordered(wrap_nc2geotiff, args), total=len(args)):
             count += 1
         return {}
 
