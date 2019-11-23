@@ -28,13 +28,16 @@ function exec {
         --tf_climate.output_file=$output_dir/climate.rts \
         --tf_climate.DEM_bounds="$bbox" \
         --tf_climate.DEM_xres_arcsecs=$resolution \
-        --tf_climate.DEM_yres_arcsecs=$resolution \
+        --tf_climate.DEM_yres_arcsecs=$resolution > $output_dir/run.log
+
+    python -m dtran.main exec_pipeline \
+        --config ./topoflow_climate_per_month.yml \
         --tf_climate_month.grid_dir=$output_dir/cropped_region \
-        --tf_climate_month.output_file=$output_dir/climate.rts > $output_dir/run.log
+        --tf_climate_month.output_file=$output_dir/climate.rts > $output_dir/run_climate.log
 
     pushd $output_dir
     # compress the file so we can delete the original file, which is much bigger
-    tar -czf data.tar.gz run.log climate.rts climate.rti climate.*.rts
+    tar -czf data.tar.gz run.log run_climate.log climate.rts climate.rti climate.*.rts
     # remove the uncompressed files
     rm climate.*
     popd
