@@ -573,7 +573,7 @@ def wosten_n(C, S, OM, D, topsoil, FORCE_RANGE=True):
     ### w1 = np.logical_or( n < 1.0, n > 3.0 )
     w1 = np.logical_or(n <= 1.0, n > 3.0)  ### (Use <= vs. <)
     n1 = w1.sum()
-    if (n1 > 0):
+    if n1 > 0:
         nmin = n.min()
         nmax = n.max()
         print('ERROR in wosten_n:')
