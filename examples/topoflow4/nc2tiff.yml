@@ -1,9 +1,9 @@
 version: "1"
 adapters:
   nc2tiff:
-    adapter: funcs.NC2GeoTiff
+    adapter: funcs.topoflow.nc2geotiff.NC2GeoTiff
     inputs:
       input_dir: /data/mint/gpm/2008
       output_dir: /data/mint/gpm_tiff/2008
       var_name: HQprecipitation
-      no_value: 0
+      no_value: 0.0
