@@ -28,6 +28,7 @@ FORM_ADPTR_RMV     = 'remove_from_pipe'
 FORM_PIP_UPDT      = 'update_pipe'
 FORM_PIP_CLR       = 'clear_pipe'
 FORM_PIP_EXE       = 'exe_pipe'
+FORM_DS_REDIRECT   = 'dataset_redir_id'
 
 GRAPH_INST_W_REPR  = 'GraphInstanceWire'
 GRAPH_INST_ADD     = 'Create graph instance'
@@ -209,6 +210,7 @@ def get_next_index_in_session_pipeline(session_pipeline):
 def remove_adapter_from_session_pipeline(session_pipeline, adapter_identifier_in_pipe):
     ''' Remove an adapter from the (local) session pipeline by index. '''
 
+    index_to_access = 0
     for index_in_list, adapter_tuple in enumerate(session_pipeline):
         if adapter_identifier_in_pipe == adapter_tuple[0]:
             index_to_access = index_in_list
@@ -410,7 +412,11 @@ def pipeline():
             sesh_pip.append(new_adapter)
 
         # check if user updated any field in pipeline (or graph instance added)
+        '''
         elif FORM_PIP_UPDT in request.args or \
+            was_graph_instance_added(request.args):
+        '''
+        if FORM_PIP_UPDT in request.args or \
             was_graph_instance_added(request.args):
 
             # iterate over adapter-cards
@@ -440,7 +446,11 @@ def pipeline():
         if FORM_PIP_EXE in request.args:
             exec_sts = execute_session_pipeline(sesh_pip)
             if exec_sts:
-                pip_exe_msg = ("Pipeline execution succeeded!", 'success')
+                pip_exe_msg_additions = ''
+                with open('/tmp/ui_messages.txt', 'r') as msg_file:
+                    for line in msg_file:
+                        pip_exe_msg_additions += line
+                pip_exe_msg = (f"Pipeline execution succeeded!\n{pip_exe_msg_additions}", 'success')
             else:
                 pip_exe_msg = ("Oops! Pipeline execution failed, see log...", 'danger')
 

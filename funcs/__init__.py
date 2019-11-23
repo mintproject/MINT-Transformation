@@ -9,3 +9,4 @@ from .graph_str2str_func import GraphStr2StrFunc
 from .merge_func import MergeFunc
 from funcs.topoflow.write_topoflow4_climate_func import Topoflow4ClimateWriteFunc, Topoflow4ClimateWritePerMonthFunc
 from funcs.topoflow.write_topoflow4_soil_func import Topoflow4SoilWriteFunc
+from funcs.topoflow.dcat_read__tf4_climate_trans__upload import DcatReadTopoflow4ClimateUploadFunc
