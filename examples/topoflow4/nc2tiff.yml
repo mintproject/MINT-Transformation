@@ -6,4 +6,4 @@ adapters:
       input_dir: /data/mint/gpm/2008
       output_dir: /data/mint/gpm_tiff/2008
       var_name: HQprecipitation
-      no_value: 0.0
+      no_data: 0
