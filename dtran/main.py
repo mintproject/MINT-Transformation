@@ -8,13 +8,13 @@ def cli():
     pass
 
 
-@cli.command(name="create_pipeline", context_settings=dict(
+@cli.command(name="exec_pipeline", context_settings=dict(
     ignore_unknown_options=True,
     allow_extra_args=True,
 ))
 @click.option("--config", help="full path to config")
 @click.pass_context
-def create_pipeline(ctx, config=None):
+def exec_pipeline(ctx, config=None):
     """
     Creates a pipeline and execute it based on given config and input(optional).
     To specify the input to pipeline, use (listed in ascending priority):

@@ -1,15 +1,25 @@
-python dtran/main.py create_pipeline --config ./examples/scotts_transformations/config_soil.yml --my_topo_soil_write_func.output_dir=/data/mint/topoflow/alwero/soilGrids
+#!/usr/bin/env bash
+set -e
 
-python dtran/main.py create_pipeline --config ./examples/scotts_transformations/config_soil.yml --my_topo_soil_write_func.output_dir=/data/mint/topoflow/awash/soilGrids
+source ./locations.sh
 
-python dtran/main.py create_pipeline --config ./examples/scotts_transformations/config_soil.yml --my_topo_soil_write_func.output_dir=/data/mint/topoflow/baro/soilGrids
+function run_transformation {
+    area=$1
+    bbox=$2
+    layers="1 2 3 4 5 6 7"
 
-python dtran/main.py create_pipeline --config ./examples/scotts_transformations/config_soil.yml --my_topo_soil_write_func.output_dir=/data/mint/topoflow/beko/soilGrids
+    for layer in $layers
+    do
+        echo "Run transformation on $area and layer $layer"
+        python dtran.main exec_pipeline \
+            --config ./topoflow_soil.yml \
+            --tf_soil.output_dir=/data/mint/topoflow/$area/soilGrids \
+            --tf_soil.DEM_bounds=$bbox \
+            --tf_soil.layer=$layer
+    done
+}
 
-python dtran/main.py create_pipeline --config ./examples/scotts_transformations/config_soil.yml --my_topo_soil_write_func.output_dir=/data/mint/topoflow/ganale/soilGrids
-
-python dtran/main.py create_pipeline --config ./examples/scotts_transformations/config_soil.yml --my_topo_soil_write_func.output_dir=/data/mint/topoflow/guder/soilGrids
-
-python dtran/main.py create_pipeline --config ./examples/scotts_transformations/config_soil.yml --my_topo_soil_write_func.output_dir=/data/mint/topoflow/muger/soilGrids
-
-python dtran/main.py create_pipeline --config ./examples/scotts_transformations/config_soil.yml --my_topo_soil_write_func.output_dir=/data/mint/topoflow/shebelle/soilGrids
+for name in "${!AREAS[@]}"; do
+    bbox=${AREAS[$name]}
+    run_transformation $name "$bbox"
+done

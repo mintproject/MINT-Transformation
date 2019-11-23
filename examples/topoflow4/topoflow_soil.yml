@@ -1,11 +1,11 @@
 version: "1"
 adapters:
-  my_topo_soil_write_func:
+  tf_soil:
     comment: My topoflow soil write adapter
     adapter: funcs.Topoflow4SoilWriteFunc
     inputs:
-      layer: "1"
-      input_dir: "/data/mint/soilGrids/"
+      layer: 1
+      input_dir: /data/mint/isric_soil
       output_dir: "/data/mint/topoflow/baro/soilGrids"
       DEM_bounds: "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999"
       DEM_xres_arcsecs: "30"
