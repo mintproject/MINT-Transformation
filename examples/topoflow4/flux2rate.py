@@ -7,5 +7,5 @@ if __name__ == "__main__":
     output_path = args[1]
 
     x = np.fromfile(input_path)
-    x = x / 3600.0
+    x = x * 3600.0
     x.tofile(output_path)
