@@ -51,7 +51,7 @@ function exec {
     python flux2rate.py ${output_dir}/climate_flux.12.rts ${output_dir}/climate.12.rts
 
     pushd $output_dir
-
+    mv ./climate_flux.rti ./climate.rti
     # compress the file so we can delete the original file, which is much bigger
     tar -czf data.tar.gz run.log run_climate.log climate.rts climate.rti climate.*.rts cropped_region
     # remove the uncompressed files
