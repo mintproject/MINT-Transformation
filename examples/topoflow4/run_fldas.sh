@@ -35,22 +35,22 @@ function exec {
         --tf_climate_month.grid_dir=$output_dir/cropped_region \
         --tf_climate_month.output_file=$output_dir/climate.rts > $output_dir/run_climate.log
 
-    pushd $output_dir
-
     # unit conversion
-    python flux2rate.py ./climate_flux.rts ./climate.rts
-    python flux2rate.py ./climate_flux.01.rts ./climate.01.rts
-    python flux2rate.py ./climate_flux.02.rts ./climate.02.rts
-    python flux2rate.py ./climate_flux.03.rts ./climate.03.rts
-    python flux2rate.py ./climate_flux.04.rts ./climate.04.rts
-    python flux2rate.py ./climate_flux.05.rts ./climate.05.rts
-    python flux2rate.py ./climate_flux.06.rts ./climate.06.rts
-    python flux2rate.py ./climate_flux.07.rts ./climate.07.rts
-    python flux2rate.py ./climate_flux.08.rts ./climate.08.rts
-    python flux2rate.py ./climate_flux.09.rts ./climate.09.rts
-    python flux2rate.py ./climate_flux.10.rts ./climate.10.rts
-    python flux2rate.py ./climate_flux.11.rts ./climate.11.rts
-    python flux2rate.py ./climate_flux.12.rts ./climate.12.rts
+    python flux2rate.py ${output_dir}/climate_flux.rts ${output_dir}/climate.rts
+    python flux2rate.py ${output_dir}/climate_flux.01.rts ${output_dir}/climate.01.rts
+    python flux2rate.py ${output_dir}/climate_flux.02.rts ${output_dir}/climate.02.rts
+    python flux2rate.py ${output_dir}/climate_flux.03.rts ${output_dir}/climate.03.rts
+    python flux2rate.py ${output_dir}/climate_flux.04.rts ${output_dir}/climate.04.rts
+    python flux2rate.py ${output_dir}/climate_flux.05.rts ${output_dir}/climate.05.rts
+    python flux2rate.py ${output_dir}/climate_flux.06.rts ${output_dir}/climate.06.rts
+    python flux2rate.py ${output_dir}/climate_flux.07.rts ${output_dir}/climate.07.rts
+    python flux2rate.py ${output_dir}/climate_flux.08.rts ${output_dir}/climate.08.rts
+    python flux2rate.py ${output_dir}/climate_flux.09.rts ${output_dir}/climate.09.rts
+    python flux2rate.py ${output_dir}/climate_flux.10.rts ${output_dir}/climate.10.rts
+    python flux2rate.py ${output_dir}/climate_flux.11.rts ${output_dir}/climate.11.rts
+    python flux2rate.py ${output_dir}/climate_flux.12.rts ${output_dir}/climate.12.rts
+
+    pushd $output_dir
 
     # compress the file so we can delete the original file, which is much bigger
     tar -czf data.tar.gz run.log run_climate.log climate.rts climate.rti climate.*.rts cropped_region
