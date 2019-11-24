@@ -8,7 +8,7 @@ cd $OUTPUT_DIR
 declare -a download_files
 
 if [[ ! -d "$OUTPUT_DIR/$YEAR" ]]; then
-    echo "Download fldas files"
+    echo "Download fldas files $YEAR"
     mkdir "$YEAR"
     cd "$YEAR"
 

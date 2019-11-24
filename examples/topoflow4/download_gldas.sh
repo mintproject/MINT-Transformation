@@ -9,7 +9,7 @@ cd $OUTPUT_DIR
 declare -a download_files
 
 if [[ ! -d "$OUTPUT_DIR/$YEAR" ]]; then
-    echo "Download gldas files"
+    echo "Download gldas files $YEAR"
     mkdir "$YEAR"
     cd "$YEAR"
 
