@@ -7,6 +7,7 @@ function convert { date -d "$1-01-01 +$2 days -1 day" "+%Y%m%d"; }
 cd $OUTPUT_DIR
 if [[ ! -d "$OUTPUT_DIR/$YEAR" ]]; then
     echo "Download fldas files"
+    cd "$YEAR"
     ENDDATE="$(convert $(($YEAR+1)) 1)"
     for i in {1..366}; do
         DATE="$(convert $YEAR $i)"
