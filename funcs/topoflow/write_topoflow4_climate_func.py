@@ -81,7 +81,7 @@ class Topoflow4ClimateWritePerMonthFunc(IFunc):
             grid_files_per_month[month].append(grid_file)
 
         for month, grid_files in grid_files_per_month.items():
-            print(">>> Process month", month)
+            print(">>> Process month", month, "#files=", len(grid_files))
             output_file = Path(self.output_file).parent / f"{Path(self.output_file).stem}.{month}.rts"
             write_grid_files_to_rts(grid_files, output_file)
         return {}
