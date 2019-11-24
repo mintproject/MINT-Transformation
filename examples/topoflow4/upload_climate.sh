@@ -14,11 +14,12 @@ function upload_file {
 #years=(2008)
 years="$1"
 resolutions="30 60"
+model=$2
 
 for name in "${!AREAS[@]}"; do
     for year in $years; do
         for res in $resolutions; do
-            upload_file /data/mint/topoflow/$name/gpm/$year\_$res/data.tar.gz topoflow/$name\_gpm_$year\_$res.tar.gz
+            upload_file /data/mint/topoflow/$name/$model/$year\_$res/data.tar.gz topoflow/$name\_$model\_$year\_$res.tar.gz
         done
     done
 done

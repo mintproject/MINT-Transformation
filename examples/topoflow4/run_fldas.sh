@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 set -e
 
 source ./locations.sh
@@ -10,7 +9,7 @@ function exec {
     resolution=$3
     bbox="${AREAS[$name]}"
 
-    output_dir=/data/mint/topoflow/$name/gpm/$year\_$resolution
+    output_dir=/data/mint/topoflow/$name/fldas/$year\_$resolution
     echo "Going to run and output to $output_dir"
 
     if [[ ! -d "$output_dir" ]]; then
@@ -23,10 +22,11 @@ function exec {
 
     python -m dtran.main exec_pipeline \
         --config ./topoflow_climate.yml \
-        --tf_climate.input_dir=/data/mint/gpm/$year \
+        --tf_climate.input_dir=/data/mint/fldas/$year \
         --tf_climate.crop_region_dir=$output_dir/cropped_region \
         --tf_climate.output_file=$output_dir/climate.rts \
         --tf_climate.DEM_bounds="$bbox" \
+        --tf_climate.var_name=Rainf_f_tavg \
         --tf_climate.DEM_xres_arcsecs=$resolution \
         --tf_climate.DEM_yres_arcsecs=$resolution > $output_dir/run.log
 
@@ -37,17 +37,17 @@ function exec {
 
     pushd $output_dir
     # compress the file so we can delete the original file, which is much bigger
-    tar -czf data.tar.gz run.log run_climate.log climate.rts climate.rti climate.*.rts
+    tar -czf data.tar.gz run.log run_climate.log climate.rts climate.rti climate.*.rts cropped_region
     # remove the uncompressed files
     rm climate.*
     popd
 }
 
-#year=$1
-years="2010 2011 2012 2013 2014 2015 2016 2017 2018"
+#years="2008"
+years=($1)
 
 for year in $years; do
-    bash ./download_gpm.sh $year /data/mint/gpm
+    bash ./download_fldas.sh $year /data/mint/fldas
 
     for name in "${!AREAS[@]}"; do
         exec $name $year 30
@@ -55,8 +55,8 @@ for year in $years; do
     done
 
     # remove the data
-    rm -r /data/mint/gpm/$year
+    rm -r /data/mint/fldas/$year
 
     # upload the data
-    bash ./upload_climate.sh $year gpm
+    bash ./upload_climate.sh $year fldas
 done
