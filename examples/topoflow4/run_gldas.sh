@@ -44,8 +44,8 @@ function exec {
     popd
 }
 
-#years="2008"
-years=($1)
+years="2009 2008 2010 2011 2012 2013 2014 2015 2016 2017 2018"
+#years=($1)
 
 for year in $years; do
     bash ./download_gldas.sh $year /data/mint/gldas
