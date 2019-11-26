@@ -126,6 +126,27 @@ class DCatAPI:
 
         return deleted_ids
 
+    def delete_datasets(self, provenance_id, dataset_ids):
+        request_headers = {"Content-Type": "application/json", "X-Api-Key": self.get_api_key()}
+
+        deleted_ids = []
+        # Walking through each resource in dataset_obj
+        for resource_id in dataset_ids:
+            resource_defs = {
+                "provenance_id": provenance_id,
+                "dataset_id": resource_id,
+            }
+
+            resp = requests.post(
+                f"{DATA_CATALOG_API}/datasets/delete_dataset", headers=request_headers, json=resource_defs
+            )
+
+            parsed_response = DCatAPI.handle_api_response(resp)
+
+            print(parsed_response)
+
+        return deleted_ids
+
     def register_dataset(
         self,
         provenance_id: str,

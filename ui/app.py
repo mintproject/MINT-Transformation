@@ -27,6 +27,7 @@ FORM_ADPTR_SUBMT   = 'add_adp'
 FORM_ADPTR_RMV     = 'remove_from_pipe'
 FORM_PIP_UPDT      = 'update_pipe'
 FORM_PIP_CLR       = 'clear_pipe'
+FORM_PIP_CLRADD       = 'clear_add_pipe'
 FORM_PIP_EXE       = 'exe_pipe'
 FORM_DS_REDIRECT   = 'dataset_redir_id'
 
@@ -162,7 +163,6 @@ class AdapterDB:
 
     def initialize_adapters(self):
         ''' Initialize adapters in AdapterDB by reading the 'funcs' python module. '''
-
         for a_name, a_cls in funcs.__dict__.items():
             if isinstance(a_cls, type):
                 cls_dict    = a_cls.__dict__
@@ -411,13 +411,33 @@ def pipeline():
             new_adapter = (get_next_index_in_session_pipeline(sesh_pip), deepcopy(adp))
             sesh_pip.append(new_adapter)
 
+        elif FORM_PIP_CLRADD in request.args:
+            sesh_pip.clear()
+            sesh_g_instancs = ['', GRAPH_INST_ADD]
+            new_adapter = (get_next_index_in_session_pipeline(sesh_pip), deepcopy(adp))
+            sesh_pip.append(new_adapter)
+
+            for arg_name, arg_val in request.args.items():
+                if ('inputs' in arg_name or 'outputs' in arg_name) and arg_val != '':
+
+                    input_not_output = True
+                    if 'outputs' in arg_name:
+                        input_not_output = False
+
+                    if GRAPH_INST_ADD == arg_val:
+                        sesh_g_instancs.append(GRAPH_INST_W_REPR + str(len(sesh_g_instancs) - 1))
+                        arg_val = sesh_g_instancs[-1]
+
+                    element_id_in_pipeline = int(arg_name.split('.')[0])
+                    element_attr_in_pipeline = arg_name.split('.')[2]
+                    update_session_pipeline_fields(sesh_pip, element_id_in_pipeline, input_not_output, element_attr_in_pipeline, arg_val)
+
         # check if user updated any field in pipeline (or graph instance added)
-        '''
-        elif FORM_PIP_UPDT in request.args or \
-            was_graph_instance_added(request.args):
-        '''
-        if FORM_PIP_UPDT in request.args or \
-            was_graph_instance_added(request.args):
+
+        # elif FORM_PIP_UPDT in request.args or \
+        #     was_graph_instance_added(request.args):
+
+        elif FORM_PIP_UPDT in request.args or was_graph_instance_added(request.args):
 
             # iterate over adapter-cards
             for arg_name, arg_val in request.args.items():

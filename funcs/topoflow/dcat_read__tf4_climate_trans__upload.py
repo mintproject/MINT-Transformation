@@ -15,31 +15,29 @@ DOWNLOAD_PATH = "/data/mint/dcat_gpm"
 
 
 class DcatReadTopoflow4ClimateUploadFunc(IFunc):
-    id = "topoflow4_climate_write_func"
+    id = "dcat_topoflow4_climate_write_func"
     description = ''' An entry point in the pipeline.
     Fetches a GPM dataset and creates an RTS (and RTI) file from NetCDF (climate) files.
     '''
     inputs = {
         "dataset_id": ArgType.String,
         "DEM_bounds": ArgType.String,
+        "var_name": ArgType.String,
         "DEM_xres_arcsecs": ArgType.String,
         "DEM_yres_arcsecs": ArgType.String,
-        "DEM_ncols": ArgType.String,
-        "DEM_nrows": ArgType.String,
     }
     outputs = {}
 
-    def __init__(self, dataset_id: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str,
-                 DEM_ncols: str, DEM_nrows: str):
+    def __init__(self, dataset_id: str, var_name: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str):
         self.DEM = {
             "bounds": [float(x.strip()) for x in DEM_bounds.split(",")],
             "xres": float(DEM_xres_arcsecs) / 3600.0,
             "yres": float(DEM_yres_arcsecs) / 3600.0,
-            "ncols": int(DEM_ncols),
-            "nrows": int(DEM_nrows),
         }
 
         DCAT_URL = "https://api.mint-data-catalog.org"
+
+        self.var_name = var_name
 
         results = DCatAPI.get_instance(DCAT_URL).find_dataset_by_id(dataset_id)
         assert len(results) == 1
@@ -54,12 +52,17 @@ class DcatReadTopoflow4ClimateUploadFunc(IFunc):
                 f'wget --user datacatalog --password sVMIryVWEx3Ec2 {resource_url} -O {file_full_path}', shell=True)
 
             input_dir_full_path = f'{DOWNLOAD_PATH}/{dataset_id}'
-            Path(input_dir_full_path).mkdir(exist_ok=True, parents=True)
+            if not Path(input_dir_full_path).exists():
+                print("Not exists")
+                Path(input_dir_full_path).mkdir(parents=True)
+            else:
+                subprocess.check_output(f"rm -rf {input_dir_full_path}/*", shell=True)
             subprocess.check_call(f'tar -xvzf {file_full_path} -C {input_dir_full_path}/', shell=True)
 
             self.input_dir = f'{input_dir_full_path}/{listdir(input_dir_full_path)[0]}'
 
             self.temp_dir = f'{self.input_dir}__' + '_'.join([i.split(' ')[-1] for i in DEM_bounds.split('.')][:-1])
+            print(self.temp_dir)
             Path(self.temp_dir).mkdir(exist_ok=True, parents=True)
 
             self.output_dir = self.temp_dir + f'_output'
@@ -70,7 +73,7 @@ class DcatReadTopoflow4ClimateUploadFunc(IFunc):
             break  # TODO: currently we assume a single resource
 
     def exec(self) -> dict:
-        create_rts_from_nc_files(self.input_dir, self.temp_dir, self.output_file, self.DEM)
+        create_rts_from_nc_files(self.input_dir, self.temp_dir, self.output_file, self.DEM, self.var_name, IN_MEMORY=True)
 
         # tar output files
         output_tar = self.output_dir + '.tar.gz'
@@ -90,8 +93,8 @@ class DcatReadTopoflow4ClimateUploadFunc(IFunc):
                     "start_time": "2011-08-18T00:00:00",
                     "end_time": "2011-08-18T23:59:59",
                     "url": self.upload_url,
-                    "description": "Weather data inferred from GPM for the Baro watershed in Gambella, Ethiopia prepared  for the Topoflow model. The probabilistic forecast is based on the 15th quantile of the precipitation distribution for the 2000-2017 period",
-                    "bounding_box": [34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999],
+                    "description": f"Weather data transformed from global GPM with bounding box [{','.join([str(x) for x in self.DEM['bounds']])}]",
+                    "bounding_box": self.DEM["bounds"],
                     "standard_variables": [
                         {
                             "ontology": "ScientificVariablesOntology",
@@ -103,7 +106,7 @@ class DcatReadTopoflow4ClimateUploadFunc(IFunc):
             ]
         )
 
-        self.ui_message = f' Transformed data is ready here: {self.upload_url}. ' \
+        self.ui_message = f'\nTransformed data is ready here: {self.upload_url}. ' \
                           f'\nDataset is registered to Data Catalog with ID: {dataset["record_id"]}'
 
         # TODO: this is a hack to pass UI messages
