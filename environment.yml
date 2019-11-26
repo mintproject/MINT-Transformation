@@ -19,3 +19,8 @@ dependencies:
     - flask
     - requests
     - tqdm
+    - marshmallow
+    - xarray
+    - networkx
+    - python-dateutil
+    - click
