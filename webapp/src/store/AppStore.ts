@@ -2,10 +2,19 @@ import { observable, flow } from "mobx";
 import axios from "axios";
 import { message } from "antd";
 
+type Adapter = {
+  name: string,
+  func_name: string,
+  description: string,
+  input: { [key: string]: any; },
+  ouput: { [key: string]: any; }
+};
+
 export class AppStore {
   @observable isInited: boolean = false;
   @observable entityTypes: string[] = [];
   @observable a: number = 0;
+  @observable adpaters: Adapter[] = [];
 
   /**
    * init the app with data from server
@@ -15,7 +24,7 @@ export class AppStore {
       const resp: any = yield axios.get(`/`);
       this.entityTypes = resp.data.entity_types;
       this.isInited = true;
-      this.a = 22;
+      this.getAdapters();
     } catch (error) {
       message.error(
         `error while initializing the app: ${JSON.stringify(
@@ -33,6 +42,18 @@ export class AppStore {
           this.a = resp.data.a;
         } else {
           console.log("THERE IS NO A");
+        }
+      }
+    );
+  }
+
+  getAdapters = () => {
+    const resp: any = axios.get(`/adapters`).then(
+      (resp) => {
+        if ("data" in resp) {
+          this.adpaters = resp.data;
+        } else {
+          console.log("THERE IS SOMETHING WRONG!");
         }
       }
     );

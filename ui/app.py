@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, send_file
+from flask import Flask, render_template, request, session, send_file, jsonify
 from copy import deepcopy
 from io import BytesIO
 import funcs
@@ -467,7 +467,6 @@ def index():
     return render_template('index.html')
 
 
-# Set "homepage" to index.html
 @app.route('/test')
 def test_api():
     from flask import jsonify
@@ -476,6 +475,38 @@ def test_api():
         "a": 123,
         "b": 234
     })
+
+
+@app.route('/adapters', methods=["GET"])
+def list_adapters():
+    # TODO: this is fake endpoint
+    return jsonify(
+        [
+            {
+                "name": "Read Function",
+                "func_name": "read_func",
+                "description": "An entry point in the pipeline. Reads an input file and a yml file describing the D-REPR layout of this file. The data are representated in a Graph object.",
+                "input": {
+                    "repr_file": "[file_path] *",
+                    "resources": "[string] *"
+                },
+                "ouput": {
+                    "data": "[graph] *"
+                }
+            }, {
+                "name": "Read Function",
+                "func_name": "read_func",
+                "description": "An entry point in the pipeline. Reads an input file and a yml file describing the D-REPR layout of this file. The data are representated in a Graph object.",
+                "input": {
+                    "repr_file": "[file_path] *",
+                    "resources": "[string] *"
+                },
+                "ouput": {
+                    "data": "[graph] *"
+                }
+            },
+        ]
+    )
 
 # --- main --------------------------------------------------------------------
 
