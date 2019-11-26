@@ -16,6 +16,7 @@ xarray = "*"
 rioxarray = "*"
 gdal = "*"
 pygdal = "*"
+marshmallow = "*"
 
 [requires]
 python_version = "3.7"
