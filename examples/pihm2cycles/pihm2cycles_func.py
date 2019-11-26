@@ -46,7 +46,6 @@ class Pihm2CyclesFunc(IFunc):
     def _reinit_transform(self, cycles_layers_graph):
         reinit_nodes = []
         for pihm_node in self.pihm_data_graph.nodes:
-            print(pihm_node.data["mint:index"], self.patch_id)
             if int(pihm_node.data["mint:index"]) != self.patch_id:
                 continue
             if "mint:groundWater" in pihm_node.data:
@@ -62,7 +61,7 @@ class Pihm2CyclesFunc(IFunc):
                     )
                     reinit_node.data["cycle:rot_year"] = (
                         timedelta(minutes=float(pihm_node.data["schema:recordedAt"])).days // 365
-                    )
+                    ) + 1
                     reinit_node.data["cycle:doy"] = (
                         timedelta(minutes=float(pihm_node.data["schema:recordedAt"])).days % 365
                     )
@@ -78,7 +77,7 @@ class Pihm2CyclesFunc(IFunc):
                 )
                 reinit_node.data["cycle:rot_year"] = (
                     timedelta(minutes=float(pihm_node.data["schema:recordedAt"])).days // 365
-                )
+                ) + 1
                 reinit_node.data["cycle:doy"] = (
                     timedelta(minutes=float(pihm_node.data["schema:recordedAt"])).days % 365
                 )

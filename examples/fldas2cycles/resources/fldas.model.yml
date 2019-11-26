@@ -1,0 +1,51 @@
+version: '1'
+resources: netcdf
+attributes:
+  lat: $.lat.*
+  long: $.lon.*
+  precipitation: $.Rainf_f_tavg.*.*
+  temperature: $.Tair_f_inst.*.*
+  wind: $.Wind_f_inst.*.*
+  solar: $.SWdown_f_tavg.*.*
+  pressure: $.Psurf_f_inst.*.*
+  air: $.Qair_f_inst.*.*
+alignments:
+  - type: dimension
+    value: lat:1 <-> precipitation:1
+  - type: dimension
+    value: long:1 <-> precipitation:2
+  - type: dimension
+    value: lat:1 <-> temperature:1
+  - type: dimension
+    value: long:1 <-> temperature:2
+  - type: dimension
+    value: lat:1 <-> wind:1
+  - type: dimension
+    value: long:1 <-> wind:2
+  - type: dimension
+    value: lat:1 <-> solar:1
+  - type: dimension
+    value: long:1 <-> solar:2
+  - type: dimension
+    value: lat:1 <-> pressure:1
+  - type: dimension
+    value: long:1 <-> pressure:2
+  - type: dimension
+    value: lat:1 <-> air:1
+  - type: dimension
+    value: long:1 <-> air:2
+semantic_model:
+  data_nodes:
+    lat: qb:Observation:1--eg:latitude
+    long: qb:Observation:1--eg:longitude
+    precipitation: qb:Observation:1--eg:precipitation
+    temperature: qb:Observation:1--eg:temperature
+    wind: qb:Observation:1--eg:wind
+    solar: qb:Observation:1--eg:solar
+    pressure: qb:Observation:1--eg:pressure
+    air: qb:Observation:1--eg:air
+  relations: []
+  prefixes:
+    qb: http://purl.org/linked-data/cube#
+    smdx-measure: http://purl.org/linked-data/sdmx/2009/measure#
+    eg: http://example.org/

@@ -5,7 +5,6 @@ from typing import Union
 import numpy as np
 import rasterio
 import xarray as xr
-from osgeo import gdal, osr
 from rasterio.transform import Affine
 
 from dtran import IFunc, ArgType
@@ -52,7 +51,7 @@ class MintGeoTiffWriteFunc(IFunc):
             os.makedirs(self.output_file, exist_ok=True)
             for i, time in enumerate(self.ndarray.coords["time"].values):
                 with rasterio.open(
-                        str(self.output_file / f"{time}.tif"),
+                        str(self.output_file / f"{time.replace(':', '-')}.tif"),
                         'w',
                         driver='GTiff',
                         height=data_array.shape[2],
