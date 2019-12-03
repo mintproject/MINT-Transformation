@@ -311,9 +311,9 @@ def extract_grid_data(args):
         print('grid1.shape  =', grid1.shape)
         print('grid1.dtype  =', grid1.dtype)
         print('grid1 nodata =', nc_nodata)
-        w = np.where(grid1 > nc_nodata)
-        nw = w[0].size
-        print('grid1 # data =', nw)
+        # w = np.where(grid1 > nc_nodata)
+        # nw = w[0].size
+        # print('grid1 # data =', nw)
         print(' ')
 
     # --------------------------------------
@@ -354,6 +354,7 @@ def extract_grid_data(args):
         grid2 = gdal_regrid_to_dem_grid(ds_in, tif_file2,
                                         rts_nodata, DEM_bounds, DEM_xres, DEM_yres,
                                         RESAMPLE_ALGO='bilinear')
+        gmax = grid2.max()
         if (VERBOSE):
             print('grid2: min  =', grid2.min(), 'max =', grid2.max())
             print('grid2.shape =', grid2.shape)
@@ -370,6 +371,7 @@ def extract_grid_data(args):
             os.remove(tif_file2)
     else:
         grid2 = np.zeros((DEM_nrows, DEM_ncols), dtype='float32')
+        gmax = 0.0
         grid2 += rts_nodata
 
     if IN_MEMORY:
@@ -449,7 +451,7 @@ def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, rts_file, DEM_info: dict
 
     args = [
         # output_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_nrows, DEM_ncols, DEM_xres, DEM_yres, VERBOSE, IN_MEMORY
-        (temp_bin_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_nrows, DEM_ncols, DEM_xres, DEM_yres, False, IN_MEMORY)
+        (temp_bin_dir, nc_file, var_name, rts_nodata, DEM_bounds, DEM_nrows, DEM_ncols, DEM_xres, DEM_yres, True, False)
         for nc_file in nc_file_list
         # skip generated files
         if not os.path.exists(os.path.join(temp_bin_dir, f"{Path(nc_file).stem}.npz"))
