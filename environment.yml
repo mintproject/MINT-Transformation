@@ -24,3 +24,5 @@ dependencies:
     - networkx
     - python-dateutil
     - click
+    - fiona
+    - python-slugify
