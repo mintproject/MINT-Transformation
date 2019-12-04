@@ -9,6 +9,7 @@ from osgeo import gdal, osr, gdal_array
 from typing import Tuple, Union
 from enum import Enum, IntEnum
 from dataclasses import dataclass, astuple
+from netCDF4 import Dataset
 
 
 @dataclass
@@ -36,7 +37,7 @@ class EPSG(IntEnum):
 
 
 @dataclass
-class Bounds:
+class BoundingBox:
     # x = longitude, y = latitude
     x_min: float
     y_min: float
@@ -84,7 +85,33 @@ class Raster:
         nodata = list(nodata)[0]
         return Raster(data, GeoTransform.from_gdal(ds.GetGeoTransform()), epsg, nodata)
 
-    def crop(self, bounds: Bounds = None, vector_file: Union[Path, str] = None, use_vector_bounds: bool = True,
+    @staticmethod
+    def from_netcdf4(infile: str, varname: str):
+        ds = Dataset(infile)
+        gdal_ds = gdal.Open("NETCDF:{0}:{1}".format(infile, varname), gdal.GA_ReadOnly)
+
+        # TODO: check what [0] actually do
+        variable = ds.variables[varname][0][::-1]
+        data = np.asarray(variable)
+
+        # the coordinate is totally mess up, don't know about other datasets
+        # re-arrange the geotransform because gdal netcdf geo-transformation is wrong
+        gt = GeoTransform.from_gdal(gdal_ds.GetGeoTransform())
+        x_max = gt.x_min + gt.x_res * data.shape[1]
+        y_max = gt.y_min + gt.y_res * data.shape[0]
+        gt = GeoTransform(y_min=x_max, y_angle=gt.x_angle, y_res=-gt.x_res, x_min=y_max, x_angle=gt.y_angle, x_res=-gt.y_res)
+        data = np.rot90(data)  # counter clockwise
+
+        nodata = gdal_ds.GetRasterBand(1).GetNoDataValue()
+        if gdal_ds.GetProjection() != '':
+            proj = osr.SpatialReference(wkt=gdal_ds.GetProjection())
+            epsg = int(proj.GetAttrValue('AUTHORITY', 1))
+        else:
+            epsg = EPSG.WGS_84
+
+        return Raster(data, gt, epsg, nodata)
+
+    def crop(self, bounds: BoundingBox = None, vector_file: Union[Path, str] = None, use_vector_bounds: bool = True,
              x_res: float = None, y_res: float = None, resampling_algo: ReSample = None) -> 'Raster':
         """
         @param x_res, y_res None will use original resolution
@@ -111,58 +138,55 @@ class Raster:
 
     def to_geotiff(self, outfile: str):
         driver = gdal.GetDriverByName("GTiff")
-        bands, rows, cols = self.data.shape
-        outdata = driver.Create(outfile, cols, rows, bands, gdal.GDT_UInt16)
+        if len(self.data.shape) == 2:
+            data = self.data.reshape((1, *self.data.shape))
+        elif len(self.data.shape) == 3:
+            data = self.data
+        else:
+            raise Exception("Does not support writing non 2 or 3 dims array to geotiff file")
+
+        bands, rows, cols = data.shape
+        outdata = driver.Create(outfile, cols, rows, bands, self.dtype_np2gdal(data.dtype))
         outdata.SetGeoTransform(self.raster.GetGeoTransform())
         outdata.SetProjection(self.raster.GetProjection())
         for band in range(bands):
-            outdata.GetRasterBand(band + 1).WriteArray(self.data[band])
+            outdata.GetRasterBand(band + 1).WriteArray(data[band])
             if self.nodata is not None:
                 outdata.GetRasterBand(band + 1).SetNoDataValue(self.nodata)
         outdata.FlushCache()
 
+    def serialize(self, outfile: str):
+        np.savez_compressed(outfile,
+                            data=self.data,
+                            geotransform=self.geotransform.to_gdal(),
+                            epsg=int(self.epsg),
+                            nodata=self.nodata)
+
+    @staticmethod
+    def deserialize(infile: str):
+        result = np.load(infile)
+        data = result['data']
+        geotransform = GeoTransform.from_gdal(result['geotransform'])
+        return Raster(data, geotransform, EPSG(result['epsg']), result['nodata'])
+
+    @staticmethod
+    def dtype_np2gdal(np_dtype):
+        if np_dtype == np.float32:
+            return gdal.GDT_Float32
+        elif np_dtype == np.uint8:
+            return gdal.GDT_UInt16
+        else:
+            raise NotImplementedError(np_dtype)
+
 
 if __name__ == '__main__':
+    raster = Raster.from_netcdf4("/data/mint/gpm/3B-HHR-E.MS.MRG.3IMERG.20140101-S000000-E002959.0000.V06B.HDF5.nc4", "HQprecipitation")
     raster = Raster.from_geotiff("/data/Sample/world.tif")
-    # ethiopia = Bounds(32.75418, 3.22206, 47.98942, 15.15943)
-    # raster = raster.crop(bounds=ethiopia, resampling_algo=ReSample.BILINEAR)
-    # ethiopia = "/data/country_boundary/countries/ethiopia.shp"
-    ethiopia = "/data/woredas/Warder.shp"
-    raster = raster.crop(vector_file=ethiopia, resampling_algo=ReSample.BILINEAR)
-    raster.to_geotiff("/data/Sample/somali.tif")
+    print(raster.geotransform)
+    # ethiopia = BoundingBox(32.75418, 3.22206, 47.98942, 15.15943)
+    # # raster = raster.crop(bounds=ethiopia, resampling_algo=ReSample.BILINEAR)
+    # # ethiopia = "/data/country_boundary/countries/ethiopia.shp"
+    # ethiopia = "/data/woredas/Warder.shp"
+    # raster = raster.crop(vector_file=ethiopia, resampling_algo=ReSample.BILINEAR)
+    # raster.to_geotiff("/data/Sample/somali.tif")
 
-    # src_ds = gdal.Open("/data/Sample/world.tif")
-    # proj = osr.SpatialReference(wkt=src_ds.GetProjection())
-    # print(proj.GetAttrValue('AUTHORITY', 1))
-    # print(src_ds.GetRasterBandCount())
-    # print(src_ds.GetRasterBand(1).GetNoDataValue())
-    # geoTransform = GeoTransform.from_gdal(src_ds.GetGeoTransform())
-    # data = src_ds.ReadAsArray()
-    # print(geoTransform, data.shape)
-    # raster = Raster(data, geoTransform, EPSG.WGS_84, nodata=0)
-    # # vector_file = "/data/Sample/ne_10m_admin_0_countries.shp"
-    # # vector_file = "/data/debug/woredas/area_1.shp"
-    # # vector_file = "/data/country_boundary/countries/ethiopia.shp"
-    # vector_file = "/data/woredas/bio-jiganifado.shp"
-    # x_res = 30 / 3600
-    # y_res = 30 / 3600
-    # x_res = None
-    # y_res = None
-    # grid, geoTransform = raster.crop(vector_file=vector_file, x_res=x_res, y_res=y_res)
-    # grid = grid.astype(np.uint16)
-    # print(grid.shape)
-    # print(geoTransform)
-    # print(src_ds.GetProjection())
-    # print(raster.raster.GetProjection())
-    # print(raster.GetNoDataValue())
-    # driver = gdal.GetDriverByName("GTiff")
-    # bands, rows, cols = grid.shape
-    # print(grid[0].shape, grid.dtype)
-    # print(np.max(grid))
-    # outdata = driver.Create("/data/Sample/tmp.tif", cols, rows, bands, gdal.GDT_UInt16)
-    # outdata.SetGeoTransform(geoTransform.to_gdal())
-    # outdata.SetProjection(src_ds.GetProjection())
-    # for band in range(bands):
-    #     outdata.GetRasterBand(band+1).WriteArray(grid[band])
-    #     # outdata.GetRasterBand(band).SetNoDataValue(10000)
-    # outdata.FlushCache()
