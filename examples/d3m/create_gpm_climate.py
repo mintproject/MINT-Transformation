@@ -38,7 +38,7 @@ shp_files = sorted(glob.glob(os.path.join(shp_dir, "*.shp")))
 for month in sorted(grid_files_per_month.keys()):
     grid_files = grid_files_per_month[month]
     data = []
-    for raster_file in tqdm(grid_files, desc="concat raster"):
+    for raster_file in tqdm(grid_files, desc="concat raster " + month):
         raster = Raster.deserialize(raster_file)
         data.append(raster.data)
     data = np.stack(data, axis=0)
