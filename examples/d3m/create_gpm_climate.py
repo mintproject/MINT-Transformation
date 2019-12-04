@@ -27,7 +27,7 @@ raster_file_lst = sorted(glob.glob(os.path.join(indir, "*.npz")))
 grid_files_per_month = {}
 for grid_file in raster_file_lst:
     match = date_regex.match(Path(grid_file).name)
-    month = f"{match.group('year')}-{match.group('month')}-{match.group('day')}"
+    month = f"{match.group('year')}-{match.group('month')}"
     if month not in grid_files_per_month:
         grid_files_per_month[month] = []
     grid_files_per_month[month].append(grid_file)
@@ -53,7 +53,7 @@ for month in sorted(grid_files_per_month.keys()):
         except Exception as e:
             total_prep = 0.0
             average_prep = 0.0
-        records.append([get_woreda_name(shp_file), month, total_prep, average_prep])
+        records.append([get_woreda_name(shp_file), month + "-01", total_prep, average_prep])
 
 with open(os.path.join(outdir, "output.csv"), "w") as f:
     writer = csv.writer(f)
