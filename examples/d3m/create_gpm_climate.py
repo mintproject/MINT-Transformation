@@ -69,7 +69,7 @@ for month in sorted(grid_files_per_month.keys()):
             raster_woredas.data[np.where(raster_woredas.data < 0)] = 0.0
             # total_prep = np.sum(raster_woredas.data) / 2
             # average_prep = np.mean(raster_woredas.data) / 2
-            average_prep = np.sum(raster_woredas.data) / np.sum(raster_woredas.data[0] >= 0)
+            average_prep = np.sum(raster_woredas.data) / np.sum(raster_woredas.data[0] >= 0) / 2
             # print(np.sum(raster_woredas.data[0] >= 0))
         except Exception as e:
             total_prep = 0.0
