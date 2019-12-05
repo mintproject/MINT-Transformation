@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
-years="2008"
+years="$1"
 
 for year in $years; do
     if [[ ! -d "/data/mint/gpm_ethiopia/$year" ]]; then

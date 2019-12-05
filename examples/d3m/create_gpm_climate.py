@@ -12,7 +12,7 @@ from funcs.gdal.raster import BoundingBox, Raster, ReSample
 
 indir = sys.argv[1]
 shp_dir = sys.argv[2]
-outdir = sys.argv[3]
+outfile = sys.argv[3]
 
 # indir = "/Users/rook/workspace/MINT/MINT-Transformation/data/mint/gpm_ethiopia"
 # shp_dir = "/Users/rook/workspace/MINT/MINT-Transformation/data/woredas"
@@ -76,7 +76,7 @@ for month in sorted(grid_files_per_month.keys()):
             average_prep = 0.0
         records.append([*get_woreda_name(shp_file), month + "-01", average_prep])
 
-with open(os.path.join(outdir, "output.csv"), "w") as f:
+with open(outfile, "w") as f:
     writer = csv.writer(f)
     writer.writerow(['woredas', 'zone', 'month', 'precipitation'])
     for record in records:
