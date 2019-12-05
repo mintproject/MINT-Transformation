@@ -2,17 +2,23 @@ import csv
 import glob, numpy as np, fiona
 import os
 import re
-import sys
+import sys, gdal
 from multiprocessing.pool import Pool
 from pathlib import Path
-
+from osgeo import ogr
 from tqdm import tqdm
 
 from funcs.gdal.raster import BoundingBox, Raster, ReSample
 
-indir = sys.argv[1]
-shp_dir = sys.argv[2]
-outdir = sys.argv[3]
+# indir = sys.argv[1]
+# shp_dir = sys.argv[2]
+# outdir = sys.argv[3]
+
+indir = "/Users/rook/workspace/MINT/MINT-Transformation/data/mint/gpm"
+shp_dir = "/Users/rook/workspace/MINT/MINT-Transformation/data/woredas"
+outdir = "/Users/rook/workspace/MINT/MINT-Transformation/data/mint/gpm_ethiopia"
+
+
 date_regex = re.compile('3B-HHR-E.MS.MRG.3IMERG.(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})')
 
 
@@ -21,6 +27,16 @@ def get_woreda_name(shp_file):
         for line in f:
             return line['properties']['WOREDANAME'].strip(), line['properties']['ZONENAME'].strip()
 
+# shp_files = sorted(glob.glob(os.path.join(shp_dir, "*.shp")))
+# for shp_file in shp_files:
+#     driver = ogr.GetDriverByName("ESRI Shapefile")
+#     dataSource = driver.Open(shp_file, 1)
+#     layer = dataSource.GetLayer()
+#     for i, feature in enumerate(layer):
+#         geom = feature.GetGeometryRef()
+#         area = geom.GetArea()
+#         print(Path(shp_file).name, i, area)
+# exit(0)
 
 # concat all raster
 raster_file_lst = sorted(glob.glob(os.path.join(indir, "*.npz")))
@@ -48,18 +64,19 @@ for month in sorted(grid_files_per_month.keys()):
         try:
             raster_woredas = raster.crop(vector_file=shp_file, resampling_algo=ReSample.BILINEAR)
             raster_woredas.data[np.where(raster_woredas.data < 0)] = 0.0
-            total_prep = np.sum(raster_woredas.data) / 2
-            average_prep = np.mean(raster_woredas.data) / 2
+            # total_prep = np.sum(raster_woredas.data) / 2
+            # average_prep = np.mean(raster_woredas.data) / 2
+            average_prep = np.sum(raster_woredas.data) / np.sum(raster_woredas.data > 0)
         except Exception as e:
             total_prep = 0.0
             average_prep = 0.0
-        records.append([*get_woreda_name(shp_file), month + "-01", total_prep, average_prep])
+        records.append([*get_woreda_name(shp_file), month + "-01", average_prep])
 
 with open(os.path.join(outdir, "output.csv"), "w") as f:
     writer = csv.writer(f)
-    writer.writerow(['woredas', 'zone', 'month', 'total_precipitation', 'average_precipitation'])
+    writer.writerow(['woredas', 'zone', 'month', 'precipitation_per_month'])
     for record in records:
-        writer.writerow(record)
+        writer.writerow(record[:-1])
 
 
 
