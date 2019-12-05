@@ -1,0 +1,57 @@
+import csv
+import glob, numpy as np, fiona
+import os
+import re
+import sys
+from pathlib import Path
+from calendar import monthrange
+from tqdm import tqdm
+from multiprocessing.pool import Pool
+from funcs.gdal.raster import EPSG, Raster, GeoTransform, ReSample
+from netCDF4 import Dataset
+import gdal
+# infile = sys.argv[1]
+# shp_dir = sys.argv[2]
+# outfile = sys.argv[3]
+
+infile = "/Users/rook/workspace/MINT/MINT-Transformation/data/flood.nc"
+shp_dir = "/Users/rook/workspace/MINT/MINT-Transformation/data/woredas"
+outfile = "/Users/rook/workspace/MINT/MINT-Transformation/data/flood.csv"
+
+year = 2017
+def get_woreda_details(shp_file):
+    with fiona.open(shp_file, "r") as f:
+        for line in f:
+            return line['properties']['WOREDANAME'].strip(), line['properties']['ZONENAME'].strip()
+def process_shapefile(shp_file):
+    global raster
+    try:
+        raster_woredas = raster.crop(vector_file=shp_file)
+    except Exception as e:
+        print(">>> error", shp_file)
+        return [[*get_woreda_details(shp_file), f"{year}-{'%02d' % month}-01", 0, 0, 0] for month in range(1, 13)]
+    record_list = []
+    index = 0
+    for month in range(1, 13):
+        month_counts = [0, 0, 0, 0]
+        _, days = monthrange(year, month)
+        for day in range(index, index + days):
+            for flood_stat in np.unique(raster_woredas.data[day]):
+                month_counts[int(flood_stat)] += 1
+        index += days
+        record_list.append([*get_woreda_details(shp_file), f"{year}-{'%02d' % month}-01", *month_counts[1:]])
+    return record_list
+shp_files = sorted(glob.glob(os.path.join(shp_dir, "*.shp")))
+ds = Dataset(infile)
+gdal_ds = gdal.Open("NETCDF:{0}:{1}".format(infile, 'flood'), gdal.GA_ReadOnly)
+raster = Raster(np.nan_to_num(np.asarray(ds.variables['flood']), nan=0.0), GeoTransform.from_gdal(gdal_ds.GetGeoTransform()), EPSG.WGS_84)
+if __name__ == '__main__':
+    records = []
+    pool = Pool()
+    for record_list in tqdm(pool.imap_unordered(process_shapefile, shp_files), total=len(shp_files)):
+        records.extend(record_list)
+    with open(outfile, "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(['woredas', 'zones', 'month', '2-yr_flooding', '5-yr_flooding', '20-yr_flooding'])
+        for record in records:
+            writer.writerow(record)

@@ -8,7 +8,7 @@ from pathlib import Path
 from osgeo import gdal, osr, gdal_array
 from typing import Tuple, Union
 from enum import Enum, IntEnum
-from dataclasses import dataclass, astuple
+from dataclasses import dataclass
 from netCDF4 import Dataset
 
 
@@ -65,7 +65,7 @@ class Raster:
         self.nodata = nodata
 
         self.raster = gdal_array.OpenNumPyArray(array, True)
-        self.raster.SetGeoTransform(astuple(geotransform))
+        self.raster.SetGeoTransform(geotransform.to_gdal())
         srs = osr.SpatialReference()
         srs.ImportFromEPSG(epsg)
         self.raster.SetSpatialRef(srs)
@@ -130,6 +130,8 @@ class Raster:
         warp_options['yRes'] = y_res
         warp_options['srcNodata'] = self.nodata
         warp_options['resampleAlg'] = resampling_algo.value if resampling_algo is not None else None
+        warp_options['warpOptions'] = ['CUTLINE_ALL_TOUCHED=TRUE']
+
         tmp_ds = gdal.Warp(tmp_file, self.raster, **warp_options)
         cropped_array, cropped_geotransform = tmp_ds.ReadAsArray(), GeoTransform.from_gdal(tmp_ds.GetGeoTransform())
         gdal.Unlink(tmp_file)
