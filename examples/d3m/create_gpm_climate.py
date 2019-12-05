@@ -14,9 +14,9 @@ from funcs.gdal.raster import BoundingBox, Raster, ReSample
 # shp_dir = sys.argv[2]
 # outdir = sys.argv[3]
 
-indir = "/Users/rook/workspace/MINT/MINT-Transformation/data/mint/gpm"
+indir = "/Users/rook/workspace/MINT/MINT-Transformation/data/mint/gpm_ethiopia"
 shp_dir = "/Users/rook/workspace/MINT/MINT-Transformation/data/woredas"
-outdir = "/Users/rook/workspace/MINT/MINT-Transformation/data/mint/gpm_ethiopia"
+outdir = "/Users/rook/workspace/MINT/MINT-Transformation/data/"
 
 
 date_regex = re.compile('3B-HHR-E.MS.MRG.3IMERG.(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})')
@@ -58,15 +58,19 @@ for month in sorted(grid_files_per_month.keys()):
         raster = Raster.deserialize(raster_file)
         data.append(raster.data)
     data = np.stack(data, axis=0)
-    raster = Raster(data, raster.geotransform, raster.epsg, raster.nodata)
+    raster = Raster(data, raster.geotransform, raster.epsg, -1)
 
     for shp_file in tqdm(shp_files, desc="cropping"):
         try:
             raster_woredas = raster.crop(vector_file=shp_file, resampling_algo=ReSample.BILINEAR)
+            # print(raster_woredas.data.shape, np.sum(raster_woredas.data[0] > 0))
+            # print(raster_woredas.data[0])
+            # exit(0)
             raster_woredas.data[np.where(raster_woredas.data < 0)] = 0.0
             # total_prep = np.sum(raster_woredas.data) / 2
             # average_prep = np.mean(raster_woredas.data) / 2
-            average_prep = np.sum(raster_woredas.data) / np.sum(raster_woredas.data > 0)
+            average_prep = np.sum(raster_woredas.data) / np.sum(raster_woredas.data[0] >= 0)
+            # print(np.sum(raster_woredas.data[0] >= 0))
         except Exception as e:
             total_prep = 0.0
             average_prep = 0.0
@@ -74,9 +78,9 @@ for month in sorted(grid_files_per_month.keys()):
 
 with open(os.path.join(outdir, "output.csv"), "w") as f:
     writer = csv.writer(f)
-    writer.writerow(['woredas', 'zone', 'month', 'precipitation_per_month'])
+    writer.writerow(['woredas', 'zone', 'month', 'precipitation'])
     for record in records:
-        writer.writerow(record[:-1])
+        writer.writerow(record)
 
 
 
