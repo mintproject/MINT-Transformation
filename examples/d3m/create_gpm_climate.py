@@ -10,13 +10,13 @@ from tqdm import tqdm
 
 from funcs.gdal.raster import BoundingBox, Raster, ReSample
 
-# indir = sys.argv[1]
-# shp_dir = sys.argv[2]
-# outdir = sys.argv[3]
+indir = sys.argv[1]
+shp_dir = sys.argv[2]
+outdir = sys.argv[3]
 
-indir = "/Users/rook/workspace/MINT/MINT-Transformation/data/mint/gpm_ethiopia"
-shp_dir = "/Users/rook/workspace/MINT/MINT-Transformation/data/woredas"
-outdir = "/Users/rook/workspace/MINT/MINT-Transformation/data/"
+# indir = "/Users/rook/workspace/MINT/MINT-Transformation/data/mint/gpm_ethiopia"
+# shp_dir = "/Users/rook/workspace/MINT/MINT-Transformation/data/woredas"
+# outdir = "/Users/rook/workspace/MINT/MINT-Transformation/data/"
 
 
 date_regex = re.compile('3B-HHR-E.MS.MRG.3IMERG.(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})')
