@@ -10,6 +10,9 @@ from tqdm import tqdm
 from funcs.gdal.raster import BoundingBox, Raster, ReSample, GeoTransform
 
 
+DATA_DIR = Path(os.path.abspath(__file__)).parent.parent.parent / "data"
+
+
 def drepr2raster(drepr_file, infile):
     ndarray = NDArrayGraph.from_drepr(DRepr.parse_from_file(drepr_file), infile)
     class_id = list(ndarray.iter_class_ids("mint:Variable"))
@@ -50,15 +53,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--indir",
                         "-i",
-                        default="/Users/rook/workspace/MINT/MINT-Transformation/data/gpm_monthly_2008_2017",
+                        default=str(DATA_DIR / "gpm_monthly_2008_2017"),
                         help="input dir")
     parser.add_argument("--outdir",
                         "-o",
-                        default="/Users/rook/workspace/MINT/MINT-Transformation/data/gpm_monthly_2008_2017_ethiopia",
+                        default=str(DATA_DIR / "gpm_monthly_2008_2017_ethiopia"),
                         help="output dir")
     parser.add_argument("--model",
                         "-m",
-                        default="/Users/rook/workspace/MINT/MINT-Transformation/examples/d3m/monthly_gpm.model.yml",
+                        default=str(DATA_DIR.parent / "examples/d3m/monthly_gpm.model.yml"),
                         help="drepr model")
     parser.add_argument("--debug",
                         "-d",
@@ -67,6 +70,8 @@ if __name__ == '__main__':
                         help="enable debug")
 
     args = parser.parse_args()
+    Path(args.outdir).mkdir(exist_ok=True)
+
     nc_file_lst = sorted(glob.glob(os.path.join(args.indir, "*.nc*")))
     ethiopia = BoundingBox(32.75418, 3.22206, 47.98942, 15.15943)
     # ethiopia = BoundingBox(-100.75418, -33.22206, 100.98942, 33.15943)

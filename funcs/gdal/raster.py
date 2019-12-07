@@ -92,7 +92,7 @@ class Raster:
         return Raster.from_geotiff("NETCDF:{0}:{1}".format(infile, varname))
 
     def crop(self, bounds: BoundingBox = None, vector_file: Union[Path, str] = None, use_vector_bounds: bool = True,
-             x_res: float = None, y_res: float = None, resampling_algo: ReSample = None) -> 'Raster':
+             x_res: float = None, y_res: float = None, resampling_algo: ReSample = None, touch_cutline: bool=True) -> 'Raster':
         """
         @param x_res, y_res None will use original resolution
         """
@@ -110,7 +110,9 @@ class Raster:
         warp_options['yRes'] = y_res
         warp_options['srcNodata'] = self.nodata
         warp_options['resampleAlg'] = resampling_algo.value if resampling_algo is not None else None
-        warp_options['warpOptions'] = ['CUTLINE_ALL_TOUCHED=TRUE']
+
+        if touch_cutline:
+            warp_options['warpOptions'] = ['CUTLINE_ALL_TOUCHED=TRUE']
 
         tmp_ds = gdal.Warp(tmp_file, self.raster, **warp_options)
         cropped_array, cropped_geotransform = tmp_ds.ReadAsArray(), GeoTransform.from_gdal(tmp_ds.GetGeoTransform())
@@ -149,7 +151,7 @@ class Raster:
         result = np.load(infile)
         data = result['data']
         geotransform = GeoTransform.from_gdal(result['geotransform'])
-        return Raster(data, geotransform, EPSG(result['epsg']), result['nodata'])
+        return Raster(data, geotransform, EPSG(result['epsg'].item()), result['nodata'].item())
 
     @staticmethod
     def dtype_np2gdal(np_dtype):
