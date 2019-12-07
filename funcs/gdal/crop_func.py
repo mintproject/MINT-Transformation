@@ -1,37 +1,48 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from typing import List, Union
+
 import numpy as np
-from funcs.gdal.wrapper import Raster, GeoTransform, EPSG, Bounds, ReSample
+from drepr import NDArrayGraph
+
+from funcs.gdal.raster import Raster, GeoTransform, EPSG, BoundingBox, ReSample
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc
 
 
-class GdalCropTransFunc(IFunc):
-    id = "numpy_crop_trans_func"
-    description = ''' A transformation adapter.
-    Crops an NDimArray using GDAL based on a bounding box or vector file.
+class GdalCropFunc(IFunc):
+    id = "gdal_crop_func"
+    description = '''
+        A transformation adapter.
+        Crops an NDimArray using GDAL based on a bounding box or a vector file.
     '''
     inputs = {
-        "data": ArgType.NDimArray,
-        "bounds": ArgType.String(optional=True),
+        "data": ArgType.NDArrayGraph,
+        "variable": ArgType.String,
+        "bounds": ArgType.OrderedDict(optional=True),
         "vector_file": ArgType.FilePath(optional=True),
         "x_res": ArgType.Number(optional=True),
         "y_res": ArgType.Number(optional=True)
     }
     outputs = {
-        "data": ArgType.NDimArray
+        "data": ArgType.NDArrayGraph
     }
 
-    def __init__(self, data: np.ndarray, bounds: str = None, vector_file: str = None, x_res: float = None, y_res: float = None):
+    def __init__(self, data: Union[NDArrayGraph, List[NDArrayGraph]], variable: str, bounds: dict = None, vector_file: str = None, x_res: float = None, y_res: float = None):
         self.data = data
+        self.x_res = x_res
+        self.y_res = y_res
+        self.variable = variable
+
         self.vector_file = None
         if vector_file is not None:
             self.vector_file = str(vector_file)
+
         self.bounds = None
         if bounds is not None:
-            self.bounds = Bounds(*[float(x.strip()) for x in bounds.split(",")])
-        self.x_res = x_res
-        self.y_res = y_res
+            self.bounds = BoundingBox(**bounds)
+
+        # now construct the raster or point model depends on the graph
 
     def exec(self):
         # TODO: logic to get geotransform, epsg metadata from input array

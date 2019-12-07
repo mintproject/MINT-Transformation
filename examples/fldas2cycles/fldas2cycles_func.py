@@ -32,7 +32,7 @@ class FLDAS2CyclesFunc(IFunc):
         "latitude": ArgType.Number,
         "longitude": ArgType.Number,
         "coord_graph": ArgType.Graph,
-        "gldas_ndarray": ArgType.NDimArray,
+        "gldas_ndarray": ArgType.NDArrayGraph,
     }
 
     def __init__(self, start_date, end_date, latitude, longitude, coord_graph, gldas_array: xarray):

@@ -13,7 +13,7 @@ from dtran import IFunc, ArgType
 class MintGeoTiffWriteFunc(IFunc):
     id = "geotiff_write_func"
     inputs = {
-        "data": ArgType.NDimArray,
+        "data": ArgType.NDArrayGraph,
         "output_file": ArgType.String,
         "data_attr": ArgType.String(optional=True),
         "is_multiple_files": ArgType.Boolean(optional=True)

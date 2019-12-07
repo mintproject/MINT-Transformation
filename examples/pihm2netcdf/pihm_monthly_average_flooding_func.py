@@ -20,7 +20,7 @@ class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):
         "start_time": ArgType.DateTime,
         "end_time": ArgType.DateTime,
     }
-    outputs = {"data": ArgType.NDimArray}
+    outputs = {"data": ArgType.NDArrayGraph}
 
     def __init__(
         self, graph: Graph, mean_space: str, start_time: datetime.datetime, end_time: datetime.datetime

@@ -10,7 +10,7 @@ from dtran import IFunc, ArgType
 class MintNetCDFWriteFunc(IFunc):
     id = "netcdf_write_func"
     inputs = {
-        "data": ArgType.NDimArray,
+        "data": ArgType.NDArrayGraph,
         "output_file": ArgType.FilePath,
         "title": ArgType.String,
         "comment": ArgType.String,

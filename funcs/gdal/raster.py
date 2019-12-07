@@ -1,34 +1,35 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import datetime
 import os
+from dataclasses import dataclass
+from enum import Enum, IntEnum
+from pathlib import Path
+from typing import Tuple, Union
+from uuid import uuid4
 
 import numpy as np
-from pathlib import Path
 from osgeo import gdal, osr, gdal_array
-from typing import Tuple, Union
-from enum import Enum, IntEnum
-from dataclasses import dataclass
-from netCDF4 import Dataset
 
 
 @dataclass
 class GeoTransform:
+    # https://gdal.org/user/raster_data_model.html#affine-geotransform
     # x = longitude, y = latitude
-    # need to keep the order match with gdal: x_min,
-    x_min: float = 0.0
-    x_res: float = 1.0
-    x_angle: float = 0.0
-    y_min: float = 0.0
-    y_angle: float = 0.0
-    y_res: float = 1.0
+    # (x_min, y_max) represent the top-left pixel of the raster (not center) (north-up image!)
+    x_min: float = -180
+    y_max: float = 90.0
+
+    dx: float = 0.1
+    dy: float = -0.1  # north-up image, so the latitude is in descending order (need to be negative)
+    x_slope: float = 0.0
+    y_slope: float = 0.0
 
     @staticmethod
     def from_gdal(t):
-        return GeoTransform(x_min=t[0], x_res=t[1], x_angle=t[2], y_min=t[3], y_angle=t[4], y_res=t[5])
+        return GeoTransform(x_min=t[0], dx=t[1], x_slope=t[2], y_max=t[3], y_slope=t[4], dy=t[5])
 
     def to_gdal(self):
-        return self.x_min, self.x_res, self.x_angle, self.y_min, self.y_angle, self.y_res
+        return self.x_min, self.dx, self.x_slope, self.y_max, self.y_slope, self.dy
 
 
 class EPSG(IntEnum):
@@ -55,7 +56,7 @@ class ReSample(Enum):
 
 
 class Raster:
-    def __init__(self, array: np.ndarray, geotransform: GeoTransform, epsg: EPSG, nodata: float=None):
+    def __init__(self, array: np.ndarray, geotransform: GeoTransform, epsg: Union[int, EPSG], nodata: float = None):
         """
         @param nodata: which value should be no data
         """
@@ -78,45 +79,24 @@ class Raster:
     def from_geotiff(infile: str) -> 'Raster':
         ds = gdal.Open(infile)
         proj = osr.SpatialReference(wkt=ds.GetProjection())
-        epsg = int(proj.GetAttrValue('AUTHORITY', 1))
+        epsg = int(proj.GetAttrValue('AUTHORITY', 1) or '4326')
         data = ds.ReadAsArray()
-        nodata = set(ds.GetRasterBand(i).GetNoDataValue() for i in range(1, data.shape[0] + 1))
+        nodata = set(
+            ds.GetRasterBand(i).GetNoDataValue() for i in range(1, data.shape[0] + 1 if len(data.shape) > 2 else 2))
         assert len(nodata) == 1, "Do not support multiple no data value by now"
         nodata = list(nodata)[0]
         return Raster(data, GeoTransform.from_gdal(ds.GetGeoTransform()), epsg, nodata)
 
     @staticmethod
     def from_netcdf4(infile: str, varname: str):
-        ds = Dataset(infile)
-        gdal_ds = gdal.Open("NETCDF:{0}:{1}".format(infile, varname), gdal.GA_ReadOnly)
-
-        # TODO: check what [0] actually do
-        variable = ds.variables[varname][0][::-1]
-        data = np.asarray(variable)
-
-        # the coordinate is totally mess up, don't know about other datasets
-        # re-arrange the geotransform because gdal netcdf geo-transformation is wrong
-        gt = GeoTransform.from_gdal(gdal_ds.GetGeoTransform())
-        x_max = gt.x_min + gt.x_res * data.shape[1]
-        y_max = gt.y_min + gt.y_res * data.shape[0]
-        gt = GeoTransform(y_min=x_max, y_angle=gt.x_angle, y_res=-gt.x_res, x_min=y_max, x_angle=gt.y_angle, x_res=-gt.y_res)
-        data = np.rot90(data)  # counter clockwise
-
-        nodata = gdal_ds.GetRasterBand(1).GetNoDataValue()
-        if gdal_ds.GetProjection() != '':
-            proj = osr.SpatialReference(wkt=gdal_ds.GetProjection())
-            epsg = int(proj.GetAttrValue('AUTHORITY', 1))
-        else:
-            epsg = EPSG.WGS_84
-
-        return Raster(data, gt, epsg, nodata)
+        return Raster.from_geotiff("NETCDF:{0}:{1}".format(infile, varname))
 
     def crop(self, bounds: BoundingBox = None, vector_file: Union[Path, str] = None, use_vector_bounds: bool = True,
              x_res: float = None, y_res: float = None, resampling_algo: ReSample = None) -> 'Raster':
         """
         @param x_res, y_res None will use original resolution
         """
-        tmp_file = f"/vsimem/{datetime.datetime.now().strftime('%Y%m%d-%H%M%S.%f')}.tif"
+        tmp_file = f"/vsimem/{str(uuid4())}.tif"
         warp_options = {'format': 'GTiff'}
         if vector_file is not None:
             warp_options['cutlineDSName'] = vector_file
@@ -182,7 +162,8 @@ class Raster:
 
 
 if __name__ == '__main__':
-    raster = Raster.from_netcdf4("/data/mint/gpm/3B-HHR-E.MS.MRG.3IMERG.20140101-S000000-E002959.0000.V06B.HDF5.nc4", "HQprecipitation")
+    raster = Raster.from_netcdf4("/data/mint/gpm/3B-HHR-E.MS.MRG.3IMERG.20140101-S000000-E002959.0000.V06B.HDF5.nc4",
+                                 "HQprecipitation")
     raster = Raster.from_geotiff("/data/Sample/world.tif")
     print(raster.geotransform)
     # ethiopia = BoundingBox(32.75418, 3.22206, 47.98942, 15.15943)
@@ -191,4 +172,3 @@ if __name__ == '__main__':
     # ethiopia = "/data/woredas/Warder.shp"
     # raster = raster.crop(vector_file=ethiopia, resampling_algo=ReSample.BILINEAR)
     # raster.to_geotiff("/data/Sample/somali.tif")
-

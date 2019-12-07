@@ -10,7 +10,7 @@ class ArgType(object):
     FilePath: 'ArgType' = None
     Graph: Callable[[Any], 'ArgType'] = lambda val: ArgType("graph", val=val)
     OrderedDict: 'ArgType' = None
-    NDimArray: 'ArgType' = None
+    NDArrayGraph: 'ArgType' = None
     String: 'ArgType' = None
     Number: 'ArgType' = None
     Boolean: 'ArgType' = None
@@ -52,7 +52,7 @@ class ArgType(object):
 
 ArgType.FilePath = ArgType("file_path", validate=lambda val: Path(val).parent.exists(), from_str=lambda val: str(Path(val)))
 ArgType.OrderedDict = ArgType("ordered_dict", validate=lambda val: isinstance(val, dict))
-ArgType.NDimArray = ArgType("ndim_array")
+ArgType.NDArrayGraph = ArgType("ndim_array")
 ArgType.String = ArgType("string", validate=lambda val: isinstance(val, str))
 ArgType.Number = ArgType("number", validate=lambda val: isinstance(val, int) or isinstance(val, float),
                          from_str=lambda val: ('.' in val and float(val)) or int(val))

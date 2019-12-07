@@ -21,7 +21,7 @@ class PihmFloodingIndexFunc(IFunc):
         "start_time": ArgType.DateTime,
         "threshold": ArgType.Number,
     }
-    outputs = {"graph": ArgType.NDimArray}
+    outputs = {"graph": ArgType.NDArrayGraph}
 
     def __init__(
             self,
