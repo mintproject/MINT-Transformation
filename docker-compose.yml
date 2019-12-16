@@ -1,8 +1,8 @@
 version: '2'
 services:
   mintdt:
-    image: mintdt
+    image: mintproject/mintdt
     volumes:
       - .:/ws
       - ./data:/data
-    entrypoint: ["/bin/bash", "/entrypoint.sh"]
+    entrypoint: ["/bin/bash", "entrypoint.sh"]
