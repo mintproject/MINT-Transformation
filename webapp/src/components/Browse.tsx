@@ -31,8 +31,9 @@ export class BrowseComponent extends React.Component<
           {this.props.app.adpaters.map(ad => 
             <Card
               title={ad.name}
-              bordered={false}
+              bordered={true}
               loading={isCardLoading}
+              style={{ margin: "5px 5px" }}
             >
               <p>
                 • <b><u>Function Name</u></b>: {ad.func_name}<br/>

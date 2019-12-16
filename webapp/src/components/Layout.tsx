@@ -50,7 +50,7 @@ export default class MyLayout extends React.Component<LayoutProps> {
           </Menu.Item>
         </Menu>
         </Header>
-        <Content style={{ padding: '0 50px' }}>>
+        <Content style={{ padding: '30px 50px' }}>
         <div style={{ background: '#fff', padding: 24, minHeight: 400 }}>
           {children}
         </div>
