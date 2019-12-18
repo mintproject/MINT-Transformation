@@ -8,27 +8,42 @@ type LayoutProps = {
   children?: any,
 };
 
+type LayoutState = {
+  selectedKey: string
+}
+
 export default class MyLayout extends React.Component<LayoutProps> {
+  state: Readonly<LayoutState> = {
+    selectedKey: ""
+  }
 
   render() {
     const { children } = this.props;
 
+    // FIXME: onClick and highlight is not consistent
     return (
       <Layout className="layout">
         <Header>
         <Menu
           theme="dark"
           mode="horizontal"
-          defaultSelectedKeys={["home-page"]}
+          openKeys={[this.state.selectedKey ? this.state.selectedKey : "home-page"]}
           style={{ lineHeight: '64px' }}
+          onClick={({ item, key, keyPath, domEvent }) => this.setState({
+            selectedKey: key
+          })}
         >
           <Menu.Item key="home">
             <Link to={"/"}>
               MINT DT
             </Link>
           </Menu.Item> 
-          <Menu.Item key="home-page">
-            <Link to={"/"}>
+          <Menu.Item key="home-page" onClick={() => this.setState({
+              selectedKey: "home-page"
+            })}>
+            <Link to={"/"} onClick={() => this.setState({
+              selectedKey: "home-page"
+            })}>
               Home
             </Link>
           </Menu.Item> 
@@ -37,7 +52,7 @@ export default class MyLayout extends React.Component<LayoutProps> {
               Browse
             </Link>
           </Menu.Item> 
-          <Menu.Item key="Pipeline">
+          <Menu.Item key="pipeline">
             <Link to={"/pipeline"}>
               Pipeline
             </Link>

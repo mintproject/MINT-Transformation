@@ -36,6 +36,150 @@ GRAPH_INST_CHANGE  = '__select'
 
 # --- helpers -----------------------------------------------------------------
 
+
+# TODO: my fake vars
+FAKE_ADAPTERS = [
+            {
+                "name": "Read Function",
+                "func_name": "read_func",
+                "description": "An entry point in the pipeline. Reads an input file and a yml file describing the D-REPR layout of this file. The data are representated in a Graph object.",
+                "input": {
+                    "repr_file": "[file_path] *",
+                    "resources": "[string] *"
+                },
+                "ouput": {
+                    "data": "[graph] *"
+                }
+            }, {
+                "name": "Read Function",
+                "func_name": "read_func",
+                "description": "An entry point in the pipeline. Reads an input file and a yml file describing the D-REPR layout of this file. The data are representated in a Graph object.",
+                "input": {
+                    "repr_file": "[file_path] *",
+                    "resources": "[string] *"
+                },
+                "ouput": {
+                    "data": "[graph] *"
+                }
+            }, {
+                "name": "Read Function",
+                "func_name": "read_func",
+                "description": "An entry point in the pipeline. Reads an input file and a yml file describing the D-REPR layout of this file. The data are representated in a Graph object.",
+                "input": {
+                    "repr_file": "[file_path] *",
+                    "resources": "[string] *"
+                },
+                "ouput": {
+                    "data": "[graph] *"
+                }
+            }, {
+                "name": "Read Function",
+                "func_name": "read_func",
+                "description": "An entry point in the pipeline. Reads an input file and a yml file describing the D-REPR layout of this file. The data are representated in a Graph object.",
+                "input": {
+                    "repr_file": "[file_path] *",
+                    "resources": "[string] *"
+                },
+                "ouput": {
+                    "data": "[graph] *"
+                }
+            }, {
+                "name": "Read Function",
+                "func_name": "read_func",
+                "description": "An entry point in the pipeline. Reads an input file and a yml file describing the D-REPR layout of this file. The data are representated in a Graph object.",
+                "input": {
+                    "repr_file": "[file_path] *",
+                    "resources": "[string] *"
+                },
+                "ouput": {
+                    "data": "[graph] *"
+                }
+            }, {
+                "name": "Read Function",
+                "func_name": "read_func",
+                "description": "An entry point in the pipeline. Reads an input file and a yml file describing the D-REPR layout of this file. The data are representated in a Graph object.",
+                "input": {
+                    "repr_file": "[file_path] *",
+                    "resources": "[string] *"
+                },
+                "ouput": {
+                    "data": "[graph] *"
+                }
+            }, {
+                "name": "Read Function",
+                "func_name": "read_func",
+                "description": "An entry point in the pipeline. Reads an input file and a yml file describing the D-REPR layout of this file. The data are representated in a Graph object.",
+                "input": {
+                    "repr_file": "[file_path] *",
+                    "resources": "[string] *"
+                },
+                "ouput": {
+                    "data": "[graph] *"
+                }
+            }
+        ]
+# when return: assume pipeline is already sorted
+FAKE_PIPELINES = [
+    {
+        "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
+        "description": "blahblahblah",
+        "start_timestamp": "2019-12-17T12:05:00",
+        "status": "running",
+        "end_timestamp": "",
+        "config_file": "some yaml. decide later",
+        "id": "123451"
+    }, {
+        "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
+        "description": "blahblahblah",
+        "start_timestamp": "2019-12-16T12:05:00",
+        "status": "finished",
+        "end_timestamp": "2019-12-17T13:05:00",
+        "config_file": "some yaml. decide later",
+        "id": "123452"
+    }, {
+        "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
+        "description": "blahblahblah",
+        "start_timestamp": "2019-12-15T12:05:00",
+        "status": "running",
+        "end_timestamp": "",
+        "config_file": "some yaml. decide later",
+        "id": "123453"
+    }, {
+        "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
+        "description": "blahblahblah",
+        "start_timestamp": "2019-12-14T12:05:00",
+        "status": "failed",
+        "end_timestamp": "2019-12-14T17:05:00",
+        "config_file": "some yaml. decide later",
+        "id": "123454"
+    }, {
+        "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
+        "description": "blahblahblah",
+        "start_timestamp": "2019-12-13T12:05:00",
+        "status": "failed",
+        "end_timestamp": "2019-12-14T17:05:00",
+        "config_file": "some yaml. decide later",
+        "id": "123455"
+    }, {
+        "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
+        "description": "blahblahblah",
+        "start_timestamp": "2019-12-12T12:05:00",
+        "status": "running",
+        "end_timestamp": "",
+        "config_file": "some yaml. decide later",
+        "id": "123456"
+    }, {
+        "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
+        "description": "blahblahblah",
+        "start_timestamp": "2019-12-11T12:05:00",
+        "status": "failed",
+        "end_timestamp": "2019-12-14T17:05:00",
+        "config_file": "some yaml. decide later",
+        "id": "123457"
+    }
+]
+
+
 class CustomEncoder(JSONEncoder):
     ''' Custom encoder used serialize dictionaries and classes (i.e. AdapterElement). '''
 
@@ -480,33 +624,19 @@ def test_api():
 @app.route('/adapters', methods=["GET"])
 def list_adapters():
     # TODO: this is fake endpoint
-    return jsonify(
-        [
-            {
-                "name": "Read Function",
-                "func_name": "read_func",
-                "description": "An entry point in the pipeline. Reads an input file and a yml file describing the D-REPR layout of this file. The data are representated in a Graph object.",
-                "input": {
-                    "repr_file": "[file_path] *",
-                    "resources": "[string] *"
-                },
-                "ouput": {
-                    "data": "[graph] *"
-                }
-            }, {
-                "name": "Read Function",
-                "func_name": "read_func",
-                "description": "An entry point in the pipeline. Reads an input file and a yml file describing the D-REPR layout of this file. The data are representated in a Graph object.",
-                "input": {
-                    "repr_file": "[file_path] *",
-                    "resources": "[string] *"
-                },
-                "ouput": {
-                    "data": "[graph] *"
-                }
-            },
-        ]
-    )
+    return jsonify(FAKE_ADAPTERS)
+
+
+@app.route('/pipelines', methods=["GET"])
+def list_pipeline_all():
+    # TODO: this is fake endpoint
+    return jsonify(FAKE_PIPELINES)
+
+
+@app.route('/pipelines/<pipeline_id>', methods=["GET"])
+def list_pipeline(pipeline_id):
+    # TODO: this is fake endpoint
+    return jsonify([x for x in FAKE_PIPELINES if x["id"] == pipeline_id][0])
 
 # --- main --------------------------------------------------------------------
 

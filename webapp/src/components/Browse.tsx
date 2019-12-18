@@ -3,16 +3,18 @@ import MyLayout from "./Layout";
 import { observer, inject } from "mobx-react";
 import { IStore, AppStore } from "../store";
 import { Card, Col, Row } from 'antd';
+import { AdapterType } from "../store/AppStore";
 
 const defaultProps = {};
 interface BrowseProps extends Readonly<typeof defaultProps> {
-  app: AppStore;
+  adapters: AdapterType[],
+  getAdapters: () => any,
 }
 interface BrowseState {}
 
 @inject((stores: IStore) => ({
-  // FIXME: a is the testing variable
-  app: stores.app
+  adapters: stores.app.adapters,
+  getAdapters: stores.app.getAdapters,
 }))
 @observer
 export class BrowseComponent extends React.Component<
@@ -25,10 +27,10 @@ export class BrowseComponent extends React.Component<
   render() {
     // this component renders all existing adapters
     // FIXME: not exactly sure how to manage state and onChange and class props
-    const isCardLoading: boolean = this.props.app.adpaters.length == 0;
+    const isCardLoading: boolean = this.props.adapters.length == 0;
     return (
       <MyLayout>
-          {this.props.app.adpaters.map(ad => 
+          {this.props.adapters.map(ad => 
             <Card
               title={ad.name}
               bordered={true}
