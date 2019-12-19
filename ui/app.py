@@ -665,17 +665,16 @@ def upload_pipeline_config():
             print("THIS IS A JSON FILE")
             json_data = json.load(uploaded_file)
             # print(json.dumps(json_data, indent=4))
+            # TODO: parse the config and return the graph structure
             response = jsonify({
-                "status": "success",
-                "data": json_data
+                "data": FAKE_PIPELINES[0]
             })
         elif 'yml' in uploaded_file.filename:
             print("THIS IS A YML FILE")
             yml_data = yaml.safe_load(uploaded_file)
             # print(json.dumps(yml_data, indent=4))
             response = jsonify({
-                "status": "success",
-                "data": yml_data
+                "data": FAKE_PIPELINES[2]
             })
         else:
             response = jsonify({

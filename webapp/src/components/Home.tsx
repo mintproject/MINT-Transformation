@@ -8,14 +8,12 @@ const { Title, Paragraph, Text } = Typography;
 
 const defaultProps = {};
 interface HomeProps extends Readonly<typeof defaultProps> {
-  a: number,
   app: AppStore;
 }
 interface HomeState {}
 
 @inject((stores: IStore) => ({
   // FIXME: a is the testing variable
-  a: stores.app.a,
   app: stores.app
 }))
 @observer

@@ -3,19 +3,25 @@ import { observer, inject } from "mobx-react";
 import { IStore, AppStore } from "../store";
 import { message, Upload, Icon, Modal, Button } from "antd";
 import MyLayout from "./Layout";
-import { FormComponentProps } from 'antd/es/form';
 import "antd/dist/antd.css";
 import { UploadFile, UploadChangeParam } from "antd/lib/upload/interface";
 import _ from "lodash";
+import { RouterProps } from "react-router";
+import { PipelineType } from "../store/AppStore";
 
-interface CreatePipelineProps extends FormComponentProps {
+interface CreatePipelineProps extends RouterProps {
+  uploadedPipeline: PipelineType,
+  setUploadedPipeline: (uploadedPipeline: PipelineType | null) => any,
 }
 interface CreatePipelineState {
   currentFileList: UploadFile[],
-  currentQueryParam: object,
+  visible: boolean,
+  // currentQueryParam: object,
 }
 
 @inject((stores: IStore) => ({
+  uploadedPipeline: stores.app.uploadedPipeline,
+  setUploadedPipeline: stores.app.setUploadedPipeline
 }))
 @observer
 export class CreatePipelineComponent extends React.Component<
@@ -24,85 +30,45 @@ CreatePipelineState
 > {
   public state: CreatePipelineState = {
     currentFileList: [],
-    currentQueryParam: {},
+    visible: false,
+    // currentQueryParam: {},
   };
 
-  componentDidMount() {
-    // @ts-ignore
-    // const queryParams = queryString.parse(this.props.location.search)
-    if (!_.isEmpty(this.props.location.search)) {
-      try {
-        // @ts-ignore
-        const parsedUri = decodeURIComponent(this.props.location.search.substring(1));
-        const queryParams = JSON.parse(parsedUri);
-        if (!_.isEmpty(queryParams)) {
-          // bring up the modal
-          this.setState({
-            currentQueryParam: queryParams
-          })
-        }
-      } catch (ex) {
-        console.log("ERROR DECODING URI: " + ex.message);
-        // @ts-ignore
-        this.props.history.push(`/pipeline/create`);
-        this.setState({ currentQueryParam: {} });
-      }
-    }
-  }
-
   componentDidUpdate(prevProps: CreatePipelineProps, prevState: CreatePipelineState) {
-    if (
-      this.state.currentFileList !== prevState.currentFileList
-      && !_.isEmpty(this.state.currentFileList)
-      && this.state.currentFileList[0].response
-    ) {
-      const file = this.state.currentFileList[0]
-      if (file.response && file.response.error) {
-        message.info(`${file.response.error}`);
-      } else if (file.response && file.response.status) {
-        // FIXME: this only works when data is a first-level object
-        const { data } = file.response;
-        console.log("INSIDE UPDATE!")
-        // @ts-ignore
-        this.props.history.push(`/pipeline/create?${encodeURIComponent(JSON.stringify(data))}`);
-        this.setState({
-          currentQueryParam: data
-        })
-      }
-    } else if (
-      this.state.currentFileList !== prevState.currentFileList
-      && _.isEmpty(this.state.currentFileList)
-    ) {
-      // @ts-ignore
-      this.props.history.push(`/pipeline/create`);
+    if (prevProps.uploadedPipeline !== this.props.uploadedPipeline) {
       this.setState({
-        currentQueryParam: {}
+        visible: this.props.uploadedPipeline !== null
       })
     }
   }
 
   handleFileChange = (info: UploadChangeParam<UploadFile>) => {
-    let fileList = [...info.fileList];
-    fileList = fileList.slice(-1);
-    this.setState({ currentFileList: fileList });
+    const fileList = [...info.fileList];
+    const file = fileList.slice(-1)[0];
+    if (file.response && file.response.error) {
+      message.info(`${file.response.error}`);
+    } else if (file.response && file.response.data) {
+      const { data } = file.response;
+      // set the store var: uploadedPipeline
+      this.props.setUploadedPipeline(data)
+    }
+    this.setState({ currentFileList: [file] });
   }
 
   handleSubmit = () => {
-    // FIXME: TYPE ISSUE
-    // @ts-ignore
     this.props.history.push('/pipelines');
   }
 
   handleCancel = () => {
-    // this.setState({ currentQueryParam: {} });
-    this.setState({ currentFileList: [] });
-
-    // @ts-ignore
-    // this.props.history.push(`/pipeline/create`);
+    this.props.setUploadedPipeline(null);
+    this.setState({
+      currentFileList: []
+    });
   }
 
   render() {
-    const { currentQueryParam } = this.state;
+    const { uploadedPipeline } = this.props;
+    console.log(uploadedPipeline);
     return (
       <MyLayout>
         {/* FIXME: upload url should not be hardcoded */}
@@ -121,20 +87,22 @@ CreatePipelineState
           <p className="ant-upload-hint">Support for single upload.</p>
         </Upload.Dragger>
         {
-          _.isEmpty(currentQueryParam) ? null : <Modal
+          !this.state.visible ? null :
+          <Modal
             title="Config File Summary"
-            visible={!_.isEmpty(this.state.currentQueryParam)}
+            visible={this.state.visible}
+            onCancel={this.handleCancel}
             footer={[
               <Button key="discard" onClick={this.handleCancel}>
                 Discard
-            </Button>,
+              </Button>,
               <Button key="submit" type="primary" onClick={this.handleSubmit}>
                 Submit
-            </Button>,
+              </Button>,
             ]}
             centered
           >
-            <div><pre>{JSON.stringify(currentQueryParam, null, 2)}</pre></div>
+            <div><pre>{JSON.stringify(uploadedPipeline, null, 2)}</pre></div>
           </Modal>
         }
       </MyLayout>
