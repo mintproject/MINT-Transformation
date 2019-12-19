@@ -16,9 +16,12 @@ DOWNLOAD_PATH = "/data/mint/dcat_gpm"
 
 class DcatReadTopoflow4ClimateUploadFunc(IFunc):
     id = "dcat_topoflow4_climate_write_func"
-    description = ''' An entry point in the pipeline.
-    Fetches a GPM dataset and creates an RTS (and RTI) file from NetCDF (climate) files.
-    '''
+    description = ''' A reader-transformation-writer multi-adapter.
+    Fetches a GPM dataset (NetCDF climate files) from data-catalog,
+    extracts cropped grid data according to given bounds,
+    regrids to DEM using bilinear resampling,
+    creates an RTS file format of the grid (and a matching RTI header file)
+    and finally upload the resulting dataset files and registers it back to data-catalog.'''
     inputs = {
         "dataset_id": ArgType.String,
         "DEM_bounds": ArgType.String,
@@ -93,7 +96,7 @@ class DcatReadTopoflow4ClimateUploadFunc(IFunc):
                     "start_time": "2011-08-18T00:00:00",
                     "end_time": "2011-08-18T23:59:59",
                     "url": self.upload_url,
-                    "description": f"Weather data transformed from global GPM with bounding box [{','.join([str(x) for x in self.DEM['bounds']])}]",
+                    "description": f"Weather data transformed from global GPM with bounding box [{', '.join([str(x) for x in self.DEM['bounds']])}]",
                     "bounding_box": self.DEM["bounds"],
                     "standard_variables": [
                         {
