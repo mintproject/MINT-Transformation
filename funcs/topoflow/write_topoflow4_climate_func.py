@@ -23,8 +23,10 @@ from funcs.topoflow.rti_files import generate_rti_file
 class Topoflow4ClimateWriteFunc(IFunc):
     id = "topoflow4_climate_write_func"
     description = ''' A reader-transformation-writer multi-adapter.
-    Creates an RTS (and RTI) file from NetCDF (climate) files.
-    '''
+    Fetches a GPM dataset (NetCDF climate files) from data-catalog,
+    extracts cropped grid data according to given bounds,
+    regrids to DEM using bilinear resampling,
+    and finally creates an RTS file format of the grid - annual - (and a matching RTI header file). '''
     inputs = {
         "input_dir": ArgType.String,
         "crop_region_dir": ArgType.String,
@@ -64,8 +66,10 @@ class Topoflow4ClimateWriteFunc(IFunc):
 class Topoflow4ClimateWritePerMonthFunc(IFunc):
     id = "topoflow4_climate_write_per_month_func"
     description = ''' A reader-transformation-writer multi-adapter.
-    Creates RTS (and RTI) files per month from NetCDF (climate) files.
-    '''
+    Fetches a GPM dataset (NetCDF climate files) from data-catalog,
+    extracts cropped grid data according to given bounds,
+    regrids to DEM using bilinear resampling,
+    and finally creates an RTS file format of the grid - monthly - (and a matching RTI header file). '''
     inputs = {
         "grid_dir": ArgType.String,
         "date_regex": ArgType.String,
