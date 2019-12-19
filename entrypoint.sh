@@ -1,5 +1,3 @@
 #!/bin/bash
-set -e
 
-source /root/.bashrc
-exec "$@"
+cd ws && python ui/app.py

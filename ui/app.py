@@ -164,6 +164,7 @@ class AdapterDB:
     def initialize_adapters(self):
         ''' Initialize adapters in AdapterDB by reading the 'funcs' python module. '''
         for a_name, a_cls in funcs.__dict__.items():
+            print(a_name)
             if isinstance(a_cls, type):
                 cls_dict    = a_cls.__dict__
                 module_type = cls_dict[KEY_MODL].split('.')[-1]

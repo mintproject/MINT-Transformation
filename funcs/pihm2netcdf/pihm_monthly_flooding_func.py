@@ -5,6 +5,7 @@ import datetime
 import numpy as np
 import xarray as xr
 from drepr import Graph
+from scipy import stats
 
 from dtran import ArgType
 from .pihm_flooding_index_func import PihmFloodingIndexFunc
@@ -12,6 +13,12 @@ from .pihm_flooding_index_func import PihmFloodingIndexFunc
 
 class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):
     id = "pihm_monthly_flooding_func"
+
+    description = '''
+    A transformation adapter. Calculates monthly flooding indices of regions.
+    '''
+
+
     inputs = {
         "graph": ArgType.Graph(None),
         "mean_space": ArgType.String,
