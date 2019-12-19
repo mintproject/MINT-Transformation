@@ -8,10 +8,14 @@ from json import dumps, JSONEncoder, JSONDecoder
 from os.path import join, splitext
 from pathlib import Path
 from datetime import datetime
+from flask_cors import CORS
+import json
+import yaml
 
 UPLOAD_FOLDER = '/tmp/mint_dt/'
 
 app = Flask(__name__)
+CORS(app)
 app.secret_key = 'MFwwDQYJKoZIhvcNAQEBBQAD'
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -637,6 +641,51 @@ def list_pipeline_all():
 def list_pipeline(pipeline_id):
     # TODO: this is fake endpoint
     return jsonify([x for x in FAKE_PIPELINES if x["id"] == pipeline_id][0])
+
+
+@app.route('/pipeline/create', methods=["POST"])
+def create_pipeline():
+    # TODO: this is fake endpoint
+    return jsonify({
+        "result": "success"
+    })
+
+
+@app.route('/pipeline/upload_config', methods=["POST"])
+def upload_pipeline_config():
+    # TODO: this is fake endpoint
+    print(request.files)
+    if 'files' not in request.files:
+        print("NOTHING IS UPLOADED!")
+    else:
+        # See documentation about file storage: https://werkzeug.palletsprojects.com/en/0.16.x/datastructures/#werkzeug.datastructures.FileStorage
+        uploaded_file = request.files['files']
+        print(uploaded_file)
+        if 'json' in uploaded_file.filename:
+            print("THIS IS A JSON FILE")
+            json_data = json.load(uploaded_file)
+            # print(json.dumps(json_data, indent=4))
+            response = jsonify({
+                "status": "success",
+                "data": json_data
+            })
+        elif 'yml' in uploaded_file.filename:
+            print("THIS IS A YML FILE")
+            yml_data = yaml.safe_load(uploaded_file)
+            # print(json.dumps(yml_data, indent=4))
+            response = jsonify({
+                "status": "success",
+                "data": yml_data
+            })
+        else:
+            response = jsonify({
+                "error": "Please upload json/yml config file!"
+            })
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    # TODO: should handle error messages here!
+    # return parsed config to display in front end: validate/invalid reasons
+    # dcat jump url: look at the existing example :)
+    return response
 
 # --- main --------------------------------------------------------------------
 

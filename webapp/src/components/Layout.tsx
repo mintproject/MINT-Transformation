@@ -52,8 +52,8 @@ export default class MyLayout extends React.Component<LayoutProps> {
               Browse
             </Link>
           </Menu.Item> 
-          <Menu.Item key="pipeline">
-            <Link to={"/pipeline"}>
+          <Menu.Item key="pipelines">
+            <Link to={"/pipelines"}>
               Pipeline
             </Link>
           </Menu.Item>

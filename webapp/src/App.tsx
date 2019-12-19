@@ -13,6 +13,7 @@ import Browse from "./components/Browse";
 import LoadingComponent from "./components/Loading";
 import PipelineTimeline from "./components/PipelineTimeline";
 import PipelineDetail from "./components/PipelineDetail";
+import CreatePipeline from "./components/CreatePipeline";
 
 interface Props {
   routing?: RouterStore;
@@ -39,8 +40,9 @@ export default class App extends React.Component<Props> {
         <Switch>
           <Route exact path="/" component={Home} />
           <Route exact path="/browse" component={Browse} />
-          <Route exact path="/pipeline" component={PipelineTimeline} />
+          <Route exact path="/pipelines" component={PipelineTimeline} />
           <Route path='/pipelines/:pipelineId' component={PipelineDetail}/>
+          <Route exact path="/pipeline/create" component={CreatePipeline} />
           <Route component={NotFound404} />
         </Switch>
       </BrowserRouter>
