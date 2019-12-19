@@ -39,7 +39,7 @@ class DcatReadTopoflow4ClimateUploadFunc(IFunc):
 
         self.var_name = var_name
 
-        results = DCatAPI.get_instance(DCAT_URL).find_dataset_by_id(dataset_id)
+        results = DCatAPI.get_instance(DCAT_URL).find_resources_by_dataset_id(dataset_id)
         assert len(results) == 1
 
         resource_ids = {"default": results[0]['resource_data_url']}
@@ -49,7 +49,7 @@ class DcatReadTopoflow4ClimateUploadFunc(IFunc):
             resource_suffix = resource_url.split('/')[-1]
             file_full_path = f'{DOWNLOAD_PATH}/{dataset_id}.{resource_suffix}'
             subprocess.check_call(
-                f'wget --user datacatalog --password sVMIryVWEx3Ec2 {resource_url} -O {file_full_path}', shell=True)
+                f'wget --user datacatalog --password sVMIryVWEx3Ec2 {resource_url} -O {file_full_path} --no-check-certificate', shell=True)
 
             input_dir_full_path = f'{DOWNLOAD_PATH}/{dataset_id}'
             if not Path(input_dir_full_path).exists():

@@ -255,6 +255,16 @@ class DCatAPI:
         assert resp["result"] == "success", resp["result"]
         return resp["resources"]
 
+    def find_resources_by_dataset_id(self, dataset_id: str):
+        request_headers = {"Content-Type": "application/json", "X-Api-Key": self.get_api_key()}
+        resp = requests.post(
+            f"{DATA_CATALOG_API}/datasets/dataset_resources",
+            headers=request_headers,
+            json={"dataset_id": dataset_id},
+        ).json()
+        assert resp["result"] == "success", resp["result"]
+        return resp["resources"]
+
     def update_layout(self, dataset_id: str, layout: dict):
         request_headers = {"Content-Type": "application/json", "X-Api-Key": self.get_api_key()}
         resp = requests.post(

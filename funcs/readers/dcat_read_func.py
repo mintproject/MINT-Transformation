@@ -73,6 +73,17 @@ class DCatAPI:
         assert resp['result'] == "success", resp['result']
         return resp['resources']
 
+    def find_resources_by_dataset_id(self, dataset_id: str):
+        request_headers = {"Content-Type": "application/json", "X-Api-Key": self.get_api_key()}
+        resp = requests.post(
+            f"{self.dcat_url}/datasets/dataset_resources",
+            headers=request_headers,
+            json={"dataset_id": dataset_id},
+        ).json()
+        print(resp)
+        assert resp["result"] == "success", resp["result"]
+        return resp["dataset"]["resources"]
+
     def get_api_key(self):
         """
         :return:
