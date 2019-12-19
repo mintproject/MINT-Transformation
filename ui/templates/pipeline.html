@@ -33,8 +33,10 @@
         <div class="card-body">
         {{adapter_inst.module_type}}</br>
           <b>{{adapter_inst.identifier}}</b></br>
+          {% autoescape false %}
           <small>{{adapter_inst.description}}</small>
-        <!-- div class="card-body tooltip">Show Description<span class="tooltiptext">{{adapter_inst.description}}</span></div -->
+          {% endautoescape %}
+          <!-- div class="card-body tooltip">Show Description<span class="tooltiptext">{{adapter_inst.description}}</span></div -->
         <!-- Inputs -->
         <h5 class="card-title" style="color:#9932CC"><u>inputs</u></h5>
         <p class="card-text" style="color:#000000">

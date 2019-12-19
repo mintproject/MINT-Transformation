@@ -16,12 +16,12 @@ DOWNLOAD_PATH = "/data/mint/dcat_gpm"
 
 class DcatReadTopoflow4ClimateUploadFunc(IFunc):
     id = "dcat_topoflow4_climate_write_func"
-    description = ''' A reader-transformation-writer multi-adapter.
-    1) Fetches a GPM dataset (NetCDF climate files) from data-catalog --- 
-    2) Extracts cropped grid data according to given bounds --- 
-    3) Regrids to DEM using bilinear resampling --- 
-    4) Creates an RTS file format of the grid (and a matching RTI header file) --- 
-    5) Upload the resulting dataset files and registers it back to data-catalog.'''
+    description = ''' A reader-transformation-writer multi-adapter
+    <br/> 1) Fetches a GPM dataset (NetCDF climate files) from data-catalog
+    <br/> 2) Extracts cropped grid data according to given bounds 
+    <br/> 3) Regrids to DEM using bilinear resampling 
+    <br/> 4) Creates an RTS file format of the grid (and a matching RTI file)
+    <br/> 5) Upload the resulting dataset files and registers it back to data-catalog.'''
     inputs = {
         "dataset_id": ArgType.String,
         "DEM_bounds": ArgType.String,
