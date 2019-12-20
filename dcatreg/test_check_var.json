@@ -1,0 +1,229 @@
+{
+    "result": "success",
+    "dataset": {
+        "dataset_id": "85332731-622f-4c36-8194-7f4b44be2b03",
+        "dataset_name": "FLDAS_NOAH01_A_EA_D.001 Jan 2001 - Apr 2019",
+        "variables": [
+            {
+                "variable_id": "0097d40f-f59e-4fa9-b059-521f4147446f",
+                "variable_name": "SoilMoi40_100cm_t",
+                "variable_metadata": {
+                    "units": "m^3 m-3",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Soil moisture(40-100cm underground)"
+                }
+            },
+            {
+                "variable_id": "189af155-c89b-4e87-8f5d-542509c3e548",
+                "variable_name": "Wind_f_tavg",
+                "variable_metadata": {
+                    "units": "m s-1",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Near surface wind speed"
+                }
+            },
+            {
+                "variable_id": "3dd2710c-e8a8-4575-9b15-c0891a22d0cc",
+                "variable_name": "Qsb_tavg",
+                "variable_metadata": {
+                    "units": "kg m-2 s-1",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Baseflow-groundwater runoff"
+                }
+            },
+            {
+                "variable_id": "6c206b46-4e60-457a-9d7b-901a0be90343",
+                "variable_name": "RadT_tavg",
+                "variable_metadata": {
+                    "units": "K",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Surface radiative temperature"
+                }
+            },
+            {
+                "variable_id": "72113d32-91d9-4b3a-b2ed-f75ed06330b4",
+                "variable_name": "SoilMoi100_200cm_",
+                "variable_metadata": {
+                    "units": "m^3 m-3",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Soil moisture (100-200 cm undergound)"
+                }
+            },
+            {
+                "variable_id": "7840ca50-eb3a-4906-9d81-3f9f72564d10",
+                "variable_name": "SoilTemp00_10cm_t",
+                "variable_metadata": {
+                    "units": "K",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Soil temperature (0-10cm underground)"
+                }
+            },
+            {
+                "variable_id": "8600e571-be01-4677-a6ef-d3ce0b38a345",
+                "variable_name": "Qh_tavg",
+                "variable_metadata": {
+                    "units": "W m-2",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Sensible heat net flux"
+                }
+            },
+            {
+                "variable_id": "86e2837f-8eaa-4ad7-86f6-ecdd408affdb",
+                "variable_name": "SWdown_f_tavg",
+                "variable_metadata": {
+                    "units": "W m-2",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Surface downward shortwave radiation"
+                }
+            },
+            {
+                "variable_id": "8e3fc358-d1d9-4b0d-b69f-a7dad89ff967",
+                "variable_name": "SoilMoi10_40cm_ta",
+                "variable_metadata": {
+                    "units": "m^3 m-3",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Soil moisture (10-40cm underground)"
+                }
+            },
+            {
+                "variable_id": "926176a9-ba07-4b33-9619-ad1dae6eb0f2",
+                "variable_name": "Evap_tavg",
+                "variable_metadata": {
+                    "units": "kg m-2 s-1",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Evapotranspiration"
+                }
+            },
+            {
+                "variable_id": "955e6aa7-f586-4628-8ea2-dc43879de66b",
+                "variable_name": "Qs_tavg",
+                "variable_metadata": {
+                    "units": "kg m-2 s-1",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Storm surface runoff"
+                }
+            },
+            {
+                "variable_id": "9672ffd5-6d35-4823-83fb-5404e7eab07c",
+                "variable_name": "Rainf_f_tavg",
+                "variable_metadata": {
+                    "units": "kg m-2 s-1",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Total precipitation rate"
+                }
+            },
+            {
+                "variable_id": "b1a2c621-5df0-4a88-afe2-b0e496b04b39",
+                "variable_name": "Qle_tavg",
+                "variable_metadata": {
+                    "units": "W m-2",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Latent heat net flux"
+                }
+            },
+            {
+                "variable_id": "c4f04ea2-7f9d-4b92-aed4-74632033359d",
+                "variable_name": "LWdown_f_tavg",
+                "variable_metadata": {
+                    "units": "W m-2",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Downward long-wave radiation flux"
+                }
+            },
+            {
+                "variable_id": "c9781b5c-edc6-4d46-bb4b-6b7df33f797c",
+                "variable_name": "Qair_f_tavg",
+                "variable_metadata": {
+                    "units": "kg kg-1",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Specific humidity"
+                }
+            },
+            {
+                "variable_id": "ca8bccd4-0062-4fd8-9c32-7993c4e69add",
+                "variable_name": "SM01_Percentile",
+                "variable_metadata": {
+                    "units": "%",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Soil moisture percentiles"
+                }
+            },
+            {
+                "variable_id": "d36fe9ad-16f5-4f01-bcff-f06a30ae1eba",
+                "variable_name": "Swnet_tavg",
+                "variable_metadata": {
+                    "units": "W m-2",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Net short wave radiation flux"
+                }
+            },
+            {
+                "variable_id": "e0bbb293-41cf-4895-88d9-a702fd550480",
+                "variable_name": "SoilTemp10_40cm_t",
+                "variable_metadata": {
+                    "units": "K",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Soil temperature (0-10cm underground)"
+                }
+            },
+            {
+                "variable_id": "ea6bdb07-e455-4458-b4be-d9d9fdbb4287",
+                "variable_name": "Qg_tavg",
+                "variable_metadata": {
+                    "units": "W m-2",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Heat flux"
+                }
+            },
+            {
+                "variable_id": "ef2c3ed2-895f-4901-8021-c98f5e1fbd76",
+                "variable_name": "Psurf_f_tavg",
+                "variable_metadata": {
+                    "units": "Pa",
+                    "accuracy": "N/A",
+                    "precision": "N/A",
+                    "uncertainty": "N/A",
+                    "variable_longname": "Surface pressure"
+                }
+            }
+        ]
+    }
+}

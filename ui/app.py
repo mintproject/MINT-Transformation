@@ -131,7 +131,8 @@ FAKE_PIPELINES = [
         "status": "running",
         "end_timestamp": "",
         "config_file": "some yaml. decide later",
-        "id": "123451"
+        "id": "123451",
+        "adapters": FAKE_ADAPTERS
     }, {
         "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
         "description": "blahblahblah",
@@ -139,7 +140,8 @@ FAKE_PIPELINES = [
         "status": "finished",
         "end_timestamp": "2019-12-17T13:05:00",
         "config_file": "some yaml. decide later",
-        "id": "123452"
+        "id": "123452",
+        "adapters": FAKE_ADAPTERS
     }, {
         "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
         "description": "blahblahblah",
@@ -147,7 +149,8 @@ FAKE_PIPELINES = [
         "status": "running",
         "end_timestamp": "",
         "config_file": "some yaml. decide later",
-        "id": "123453"
+        "id": "123453",
+        "adapters": FAKE_ADAPTERS
     }, {
         "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
         "description": "blahblahblah",
@@ -155,7 +158,8 @@ FAKE_PIPELINES = [
         "status": "failed",
         "end_timestamp": "2019-12-14T17:05:00",
         "config_file": "some yaml. decide later",
-        "id": "123454"
+        "id": "123454",
+        "adapters": FAKE_ADAPTERS
     }, {
         "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
         "description": "blahblahblah",
@@ -163,7 +167,8 @@ FAKE_PIPELINES = [
         "status": "failed",
         "end_timestamp": "2019-12-14T17:05:00",
         "config_file": "some yaml. decide later",
-        "id": "123455"
+        "id": "123455",
+        "adapters": FAKE_ADAPTERS
     }, {
         "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
         "description": "blahblahblah",
@@ -171,7 +176,8 @@ FAKE_PIPELINES = [
         "status": "running",
         "end_timestamp": "",
         "config_file": "some yaml. decide later",
-        "id": "123456"
+        "id": "123456",
+        "adapters": FAKE_ADAPTERS
     }, {
         "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
         "description": "blahblahblah",
@@ -179,7 +185,8 @@ FAKE_PIPELINES = [
         "status": "failed",
         "end_timestamp": "2019-12-14T17:05:00",
         "config_file": "some yaml. decide later",
-        "id": "123457"
+        "id": "123457",
+        "adapters": FAKE_ADAPTERS
     }
 ]
 
@@ -624,6 +631,7 @@ def test_api():
         "b": 234
     })
 
+# -------MY WORK --------
 
 @app.route('/adapters', methods=["GET"])
 def list_adapters():
@@ -685,6 +693,13 @@ def upload_pipeline_config():
     # return parsed config to display in front end: validate/invalid reasons
     # dcat jump url: look at the existing example :)
     return response
+
+
+@app.route('/pipeline/dcat/<dcat_id>', methods=["GET"])
+def get_dcat_config(dcat_id):
+    print(f"Fetching dcat dataset with id {dcat_id}")
+    return jsonify(FAKE_PIPELINES[3])
+
 
 # --- main --------------------------------------------------------------------
 

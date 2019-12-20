@@ -9,7 +9,7 @@ import { RouterStore } from "mobx-react-router";
 import { IStore, AppStore } from "./store";
 import NotFound404 from "./components/NotFound404";
 import Home from "./components/Home";
-import Browse from "./components/Browse";
+import Adapters from "./components/Adapters";
 import LoadingComponent from "./components/Loading";
 import PipelineTimeline from "./components/PipelineTimeline";
 import PipelineDetail from "./components/PipelineDetail";
@@ -39,10 +39,10 @@ export default class App extends React.Component<Props> {
       <BrowserRouter>
         <Switch>
           <Route exact path="/" component={Home} />
-          <Route exact path="/browse" component={Browse} />
+          <Route exact path="/adapters" component={Adapters} />
           <Route exact path="/pipelines" component={PipelineTimeline} />
           <Route path='/pipelines/:pipelineId' component={PipelineDetail}/>
-          <Route exact path="/pipeline/create" component={CreatePipeline} />
+          <Route path="/pipeline/create" component={CreatePipeline} />
           <Route component={NotFound404} />
         </Switch>
       </BrowserRouter>

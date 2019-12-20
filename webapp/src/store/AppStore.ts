@@ -10,6 +10,8 @@ export type AdapterType = {
   ouput: { [key: string]: any; }
 };
 
+// FIXME: settle down on the final format of pipeline object:
+// metadata + list of adapters?
 export type PipelineType = {
   name: string,
   description: string,
@@ -49,7 +51,7 @@ export class AppStore {
     }
   });
 
-  @action getAdapters = () => {
+  @action.bound getAdapters = () => {
     axios.get(`/adapters`).then(
       (resp) => {
         if ("data" in resp) {
@@ -61,7 +63,7 @@ export class AppStore {
     );
   }
 
-  @action getPipelines = () => {
+  @action.bound getPipelines = () => {
     axios.get(`/pipelines`).then(
       (resp) => {
         if ("data" in resp) {
@@ -73,7 +75,7 @@ export class AppStore {
     );
   }
 
-  @action getPipeline = (pipelineId: string) => {
+  @action.bound getPipeline = (pipelineId: string) => {
     axios.get(`/pipelines/${pipelineId}`).then(
       (resp) => {
         if ("data" in resp) {
@@ -85,7 +87,20 @@ export class AppStore {
     );
   }
 
-  @action setUploadedPipeline = (uploadedPipeline: PipelineType | null) => {
-    this.uploadedPipeline = uploadedPipeline;
+  @action.bound setUploadedPipeline = (uploadedPipeline?: PipelineType | null, dcatId?: string) => {
+    if (dcatId !== undefined) {
+      axios.get(`/pipeline/dcat/${dcatId}`).then(
+        (resp) => {
+          if ("data" in resp) {
+            console.log(resp.data);
+            this.uploadedPipeline = resp.data;
+          } else {
+            console.log("THERE IS SOMETHING WRONG!");
+          }
+        }
+      );
+    } else if (uploadedPipeline !== undefined) {
+      this.uploadedPipeline = uploadedPipeline;
+    }
   }
 }

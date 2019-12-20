@@ -29,7 +29,7 @@ export default class MyLayout extends React.Component<LayoutProps> {
           mode="horizontal"
           openKeys={[this.state.selectedKey ? this.state.selectedKey : "home-page"]}
           style={{ lineHeight: '64px' }}
-          onClick={({ item, key, keyPath, domEvent }) => this.setState({
+          onClick={({ key }) => this.setState({
             selectedKey: key
           })}
         >
@@ -47,14 +47,19 @@ export default class MyLayout extends React.Component<LayoutProps> {
               Home
             </Link>
           </Menu.Item> 
-          <Menu.Item key="browse">
-            <Link to={"/browse"}>
-              Browse
+          <Menu.Item key="adapters">
+            <Link to={"/adapters"}>
+              Adapters
             </Link>
           </Menu.Item> 
           <Menu.Item key="pipelines">
             <Link to={"/pipelines"}>
               Pipeline
+            </Link>
+          </Menu.Item>
+          <Menu.Item key="create-pipeline">
+            <Link to={"/pipeline/create"}>
+              Create Pipeline
             </Link>
           </Menu.Item>
           <Menu.Item style={{ float: "right" }}>
