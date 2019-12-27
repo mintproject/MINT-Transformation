@@ -26,3 +26,7 @@ body {
   font-family: FreightSans, -apple-system, BlinkMacSystemFont, Helvetica Neue,
     Helvetica, Arial, sans-serif;
 }
+
+#root {
+  height: 100%;
+}

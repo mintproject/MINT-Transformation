@@ -1,20 +1,17 @@
 import React from "react";
 import { observer, inject } from "mobx-react";
-import { IStore, AppStore } from "../store";
+import { IStore } from "../store";
 import MyLayout from "./Layout";
 import dtFlow from '../images/dt_flow.jpg';
-import { Button, Typography, Row, Col } from 'antd';
-const { Title, Paragraph, Text } = Typography;
+import { Typography, Row, Col } from 'antd';
+const { Title, Paragraph, } = Typography;
 
 const defaultProps = {};
 interface HomeProps extends Readonly<typeof defaultProps> {
-  app: AppStore;
 }
 interface HomeState {}
 
 @inject((stores: IStore) => ({
-  // FIXME: a is the testing variable
-  app: stores.app
 }))
 @observer
 export class HomeComponent extends React.Component<
@@ -49,7 +46,7 @@ export class HomeComponent extends React.Component<
               </Paragraph>
             </Col>
             <Col span={4}>
-              <img src={dtFlow} />
+              <img src={dtFlow} alt=""/>
             </Col>
           </Row>
         </Typography>

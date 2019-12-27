@@ -1,65 +1,60 @@
 import React from "react";
 import { observer, inject } from "mobx-react";
-import { IStore, AppStore } from "../store";
-import { message, Upload, Icon, Modal, Button, Tabs } from "antd";
+import { IStore } from "../store";
+import { message, Upload, Icon, Row, Button, Tabs } from "antd";
 import MyLayout from "./Layout";
 import "antd/dist/antd.css";
 import { UploadFile, UploadChangeParam } from "antd/lib/upload/interface";
 import _ from "lodash";
 import { RouterProps } from "react-router";
-import { PipelineType, AdapterType } from "../store/AppStore";
+import { PipelineType } from "../store/PipelineStore";
+import { AdapterType, flaskUrl } from "../store/AdapterStore";
 import queryString from 'query-string'
 const { TabPane } = Tabs;
 
 interface CreatePipelineProps extends RouterProps {
   uploadedPipeline: PipelineType,
   setUploadedPipeline: (uploadedPipeline?: PipelineType | null, dcatId?: string) => any,
+  location: Location,
 }
 interface CreatePipelineState {
   currentFileList: UploadFile[],
-  visible: boolean,
   // currentQueryParam: object,
 }
 
 @inject((stores: IStore) => ({
-  uploadedPipeline: stores.app.uploadedPipeline,
-  setUploadedPipeline: stores.app.setUploadedPipeline
+  uploadedPipeline: stores.pipelineStore.uploadedPipeline,
+  setUploadedPipeline: stores.pipelineStore.setUploadedPipeline,
+  location: stores.routing.location
 }))
 @observer
 export class CreatePipelineComponent extends React.Component<
-CreatePipelineProps,
-CreatePipelineState
+  CreatePipelineProps,
+  CreatePipelineState
 > {
   public state: CreatePipelineState = {
     currentFileList: [],
-    visible: false,
     // currentQueryParam: {},
   };
 
   componentDidMount() {
-    // @ts-ignore
     if (this.props.location.search) {
-    // @ts-ignore
       const params = queryString.parse(this.props.location.search)
-      if (params && params.dcatId) {
-        if (Array.isArray(params.dcatId)) {
-          this.props.setUploadedPipeline(null, params.dcatId[0])
-        } else {
-          this.props.setUploadedPipeline(null, params.dcatId)
-        }
-      } else {
-        // redirect to create page to upload
-        this.props.history.push('/pipeline/create');
+      if (params && params.dcatId && typeof params.dcatId === "string") {
+        this.props.setUploadedPipeline(null, params.dcatId)
       }
+    } else {
+      // redirect to create page to upload
+      this.props.history.push('/pipeline/create');
     }
   }
 
   componentDidUpdate(prevProps: CreatePipelineProps, prevState: CreatePipelineState) {
-    if (prevProps.uploadedPipeline !== this.props.uploadedPipeline) {
-      this.setState({
-        visible: this.props.uploadedPipeline !== null
-      })
-    }
+    // if (prevProps.uploadedPipeline !== this.props.uploadedPipeline) {
+    //   this.setState({
+    //     visible: this.props.uploadedPipeline !== null
+    //   })
+    // }
   }
 
   handleFileChange = (info: UploadChangeParam<UploadFile>) => {
@@ -86,6 +81,24 @@ CreatePipelineState
     });
     this.props.history.push('/pipeline/create');
   }
+  
+  cancleSubmitButtons = (
+    <Row>
+      <Button
+        key="discard" onClick={this.handleCancel}
+        style={{ margin: "10px", float: "right" }}
+      >
+        Discard
+      </Button>
+      <Button
+        key="submit" type="primary"
+        onClick={this.handleSubmit}
+        style={{ margin: "10px", float: "right" }}
+      >
+        Submit
+      </Button>
+    </Row>
+  )
 
   render() {
     const { uploadedPipeline } = this.props;
@@ -104,46 +117,37 @@ CreatePipelineState
     return (
       <MyLayout>
         {/* FIXME: upload url should not be hardcoded */}
-        <Upload.Dragger
-          name="files"
-          action="http://localhost:5000/pipeline/upload_config"
-          accept=".json,.yml"
-          onChange={this.handleFileChange}
-          multiple={false}
-          fileList={this.state.currentFileList}
-        >
-          <p className="ant-upload-drag-icon">
-            <Icon type="inbox" />
-          </p>
-          <p className="ant-upload-text">Click or drag file to this area to upload</p>
-          <p className="ant-upload-hint">Support for single upload.</p>
-        </Upload.Dragger>
         {
-          !this.state.visible ? null :
-          <Modal
-            title="Config File Summary"
-            visible={this.state.visible}
-            onCancel={this.handleCancel}
-            footer={[
-              <Button key="discard" onClick={this.handleCancel}>
-                Discard
-              </Button>,
-              <Button key="submit" type="primary" onClick={this.handleSubmit}>
-                Submit
-              </Button>,
-            ]}
-            centered
+          this.props.uploadedPipeline === null ? 
+          <Upload.Dragger
+            name="files"
+            action={`${flaskUrl}/pipeline/upload_config`}
+            accept=".json,.yml"
+            onChange={this.handleFileChange}
+            multiple={false}
+            fileList={this.state.currentFileList}
+            style={{ height: "100%" }}
           >
-            {/* <div><pre>{JSON.stringify(uploadedPipeline, null, 2)}</pre></div> */}
-            <Tabs defaultActiveKey="metadata">
-              <TabPane tab="Metadata" key="metadata">
+            <p className="ant-upload-drag-icon">
+              <Icon type="inbox" />
+            </p>
+            <p className="ant-upload-text">Click or drag file to this area to upload</p>
+            <p className="ant-upload-hint">Support for single upload.</p>
+          </Upload.Dragger> : 
+          <Tabs defaultActiveKey="metadata" tabPosition="left" style={{ overflowY: "auto" }}>
+            <TabPane tab="Metadata" key="metadata">
+              {this.cancleSubmitButtons}
+              <Row>
                 <pre>{JSON.stringify(pipelineMeta, null, 2)}</pre>
-              </TabPane>
-              <TabPane tab="Adapters" key="adapters">
+              </Row>
+            </TabPane>
+            <TabPane tab="Adapters" key="adapters">
+              {this.cancleSubmitButtons}
+              <Row>
                 <pre>{JSON.stringify(pipelineAdapters, null, 2)}</pre>
-              </TabPane>
-            </Tabs>
-          </Modal>
+              </Row>
+            </TabPane>
+          </Tabs>
         }
       </MyLayout>
     );

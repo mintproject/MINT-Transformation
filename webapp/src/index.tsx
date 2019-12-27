@@ -7,10 +7,11 @@ import { stores, history } from "./store";
 import * as serviceWorker from "./serviceWorker";
 import App from "./App";
 
+// FIXME: react context, provider and app type error
 ReactDOM.render(
-  <Provider {...stores}>
+  <Provider {...stores} >
     <Router history={history}>
-      <App />
+      <App/>
     </Router>
   </Provider>,
   document.getElementById("root")

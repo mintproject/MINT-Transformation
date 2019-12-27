@@ -1,11 +1,11 @@
 import React from "react";
 import { observer, inject } from "mobx-react";
-import { IStore, AppStore } from "../store";
-import { PipelineType } from "../store/AppStore";
+import { IStore } from "../store";
+import { PipelineType } from "../store/PipelineStore";
 import { RouteComponentProps } from "react-router";
 import MyLayout from "./Layout";
 import { Card } from "antd";
-import _ from "lodash";
+// import _ from "lodash";
 
 
 type PipelineProps = {
@@ -15,8 +15,8 @@ type PipelineProps = {
 interface PipelineState {}
 
 @inject((stores: IStore) => ({
-  currentPipeline: stores.app.currentPipeline,
-  getPipeline: stores.app.getPipeline
+  currentPipeline: stores.pipelineStore.currentPipeline,
+  getPipeline: stores.pipelineStore.getPipeline
 }))
 @observer
 export class PipelineComponent extends React.Component<
@@ -42,11 +42,14 @@ export class PipelineComponent extends React.Component<
           bordered={true}
           style={{ margin: "5px 5px" }}
         >
-          {Object.keys(currentPipeline).map((k, index) => (
+          {/* {Object.keys(currentPipeline).map((k, index) => (
             <p key={`row-${index}`}>
               • <b><u>{k}</u></b>: {_.get(currentPipeline, k)}<br/>
             </p>
-          ))}
+          ))} */}
+          <pre>
+            {JSON.stringify(currentPipeline, undefined, 2)}
+          </pre>
         </Card>
       </MyLayout>
     );

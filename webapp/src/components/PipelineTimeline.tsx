@@ -1,33 +1,35 @@
 import React from "react";
 import { observer, inject } from "mobx-react";
-import { IStore, AppStore } from "../store";
+import { IStore } from "../store";
 import { Link } from "react-router-dom";
 import MyLayout from "./Layout";
 import { Row, Col, Input, Menu, Button, Popover, Dropdown, Typography } from 'antd';
-import { PipelineType } from "../store/AppStore";
+import { PipelineType } from "../store/PipelineStore";
 import _ from "lodash";
 const { Title } = Typography;
 
 const { Search } = Input;
 
-const defaultProps = {};
-interface PipelineTimelineProps extends Readonly<typeof defaultProps> {
+interface PipelineTimelineProps {
   pipelines: PipelineType[],
   getPipelines: () => any,
 }
 interface PipelineTimelineState {}
 
 @inject((stores: IStore) => ({
-  pipelines: stores.app.pipelines,
-  getPipelines: stores.app.getPipelines
+  pipelines: stores.pipelineStore.pipelines,
+  getPipelines: stores.pipelineStore.getPipelines
 }))
 @observer
 export class PipelineTimelineComponent extends React.Component<
   PipelineTimelineProps,
   PipelineTimelineState
 > {
-  public static defaultProps = defaultProps;
   public state: PipelineTimelineState = {};
+
+  componentDidMount() {
+    this.props.getPipelines();
+  }
 
   readonly timestampDropdownMenu = (
     <Menu>
@@ -49,7 +51,7 @@ export class PipelineTimelineComponent extends React.Component<
   render() {
     return (
       <MyLayout>
-        <Row type="flex" align="middle">
+        <Row type="flex" align="middle" style={{ margin: "20px 0"}}>
           <Col span={12}>
             <Search
               placeholder="input search text"
@@ -57,7 +59,18 @@ export class PipelineTimelineComponent extends React.Component<
               style={{ textAlign: "left" }}
             />
           </Col>
-          <Col span={12}>
+          <Col span={8}/>
+          <Col span={2}>
+            <Dropdown
+              overlay={this.timestampDropdownMenu}
+            >
+              <Button
+                type="link" icon="down"
+                style={{ float: "right", color: "black" }}
+              >Sort</Button>
+            </Dropdown>
+          </Col>
+          <Col span={2}>
             <Popover content="Create a new pipeline!">
               <Link to={"/pipeline/create"}>
                 <Button
@@ -65,39 +78,11 @@ export class PipelineTimelineComponent extends React.Component<
                   shape="circle"
                   icon="plus"
                   // onClick={() => console.log("DOES NOTHING NOW!")}
-                  style={{ float: "right" }}
+                  style={{ float: "right", margin: "0 25px" }}
                   size="large"
                 />
               </Link>
             </Popover>
-          </Col>
-        </Row>
-        <Row style={{
-          margin: "10px 0 10px 0",
-          // border: "1px solid #f0f0f0",
-          // borderRadius: "5px"
-        }}>
-          <Col span={18}></Col>
-          <Col span={2}>
-            <Dropdown
-              overlay={this.timestampDropdownMenu}
-            >
-              <Button type="link" icon="down" style={{ float: "left", color: "black" }}>Sort</Button>
-            </Dropdown>
-          </Col>
-          <Col span={2}>
-            <Dropdown
-              overlay={this.timestampDropdownMenu}
-            >
-              <Button type="link" icon="down" style={{ float: "left", color: "black" }}>Sort</Button>
-            </Dropdown>
-          </Col>
-          <Col span={2}>
-            <Dropdown
-              overlay={this.timestampDropdownMenu}
-            >
-              <Button type="link" icon="down" style={{ float: "left", color: "black" }}>Sort</Button>
-            </Dropdown>
           </Col>
         </Row>
         {this.props.pipelines.map((pl, index) => <Row
@@ -134,6 +119,7 @@ export class PipelineTimelineComponent extends React.Component<
               type="danger"
               onClick={() => console.log("Doesn't do anything!")}
               disabled={pl.status !== "running"}
+              style={{ marginRight: "10px"}}
             >STOP</Button>
           </Col>
         </Row>)}

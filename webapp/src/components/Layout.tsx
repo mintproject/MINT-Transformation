@@ -22,7 +22,7 @@ export default class MyLayout extends React.Component<LayoutProps> {
 
     // FIXME: onClick and highlight is not consistent
     return (
-      <Layout className="layout">
+      <Layout className="layout" style={{ height: "100%" }}>
         <Header>
         <Menu
           theme="dark"
@@ -71,7 +71,7 @@ export default class MyLayout extends React.Component<LayoutProps> {
         </Menu>
         </Header>
         <Content style={{ padding: '30px 50px' }}>
-        <div style={{ background: '#fff', padding: 24, minHeight: 400 }}>
+        <div style={{ background: '#fff', padding: 24, minHeight: 400, height: "100%", overflow: "auto" }}>
           {children}
         </div>
         </Content>
