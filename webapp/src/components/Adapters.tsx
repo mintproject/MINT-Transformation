@@ -46,12 +46,12 @@ export class AdapterComponent extends React.Component<
                 key={`card-${index}`}
                 hoverable
               >
-                <p>
+                <pre>
                   • <b><u>Function Name</u></b>: {ad.func_name}<br/>
                   • <b><u>Description</u></b>: {ad.description}<br/>
-                  • <b><u>Inputs</u></b>: {JSON.stringify(ad.input)}<br/>
-                  • <b><u>Outputs</u></b>: {JSON.stringify(ad.ouput)}<br/>
-                </p>
+                  • <b><u>Inputs</u></b>: {JSON.stringify(ad.input, null, 2)}<br/>
+                  • <b><u>Outputs</u></b>: {JSON.stringify(ad.ouput, null, 2)}<br/>
+                </pre>
               </Card>
           )}
       </MyLayout>

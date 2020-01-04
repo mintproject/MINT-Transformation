@@ -151,6 +151,7 @@ FAKE_PIPELINES = [
 
 pipelines_blueprint = Blueprint("pipelines", "pipelines", url_prefix="/api")
 
+
 @pipelines_blueprint.route('/pipelines', methods=["GET"])
 def list_pipelines():
     # TODO: add search parameters, list all entries from 'docker ps -a'
