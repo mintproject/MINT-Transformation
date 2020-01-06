@@ -1,6 +1,7 @@
 import { observable, action } from "mobx";
 import axios from "axios";
 import { AdapterType, flaskUrl } from "./AdapterStore";
+import { message } from "antd";
 
 // FIXME: settle down on the final format of pipeline object:
 // metadata + list of adapters?
@@ -24,10 +25,10 @@ export class PipelineStore {
   @action.bound getPipelines = () => {
     axios.get(`${flaskUrl}/pipelines`).then(
       (resp) => {
-        if ("data" in resp) {
-          this.pipelines = resp.data;
+        if (resp.data.error) {
+          message.info(`An error has occurred: ${resp.data.error}`)
         } else {
-          console.log("THERE IS SOMETHING WRONG!");
+          this.pipelines = resp.data;
         }
       }
     );
@@ -36,10 +37,10 @@ export class PipelineStore {
   @action.bound getPipeline = (pipelineId: string) => {
     axios.get(`${flaskUrl}/pipelines/${pipelineId}`).then(
       (resp) => {
-        if ("data" in resp) {
-          this.currentPipeline = resp.data;
+        if (resp.data.error) {
+          message.info(`An error has occurred: ${resp.data.error}`);
         } else {
-          console.log("THERE IS SOMETHING WRONG!");
+          this.currentPipeline = resp.data;
         }
       }
     );
@@ -49,27 +50,24 @@ export class PipelineStore {
     if (dcatId !== undefined) {
       axios.get(`${flaskUrl}/pipeline/dcat/${dcatId}`).then(
         (resp) => {
-          if ("data" in resp) {
-            this.uploadedPipeline = resp.data;
+          if (resp.data.error) {
+            message.info(`An error has occurred: ${resp.data.error}`); 
           } else {
-            console.log("THERE IS SOMETHING WRONG!");
+            this.uploadedPipeline = resp.data;
           }
         }
       );
     } else if (uploadedPipeline !== undefined) {
-      console.log("IM HERE IN set upload");
       this.uploadedPipeline = uploadedPipeline;
     }
   }
 
   @action.bound setUploadedPipelineConfig = (uploadedPipelineConfig: object | null) => {
-    console.log("setting uploaded config");
     console.log(uploadedPipelineConfig)
     this.uploadedPipelineConfig = uploadedPipelineConfig;
   }
 
   @action.bound createPipeline = (pipelineName: string, pipelineDescription: string, pipelineConfig: object) => {
-    console.log("IM HERE INSIDE CREATE");
     console.log(pipelineConfig)
     axios.post(`${flaskUrl}/pipeline/create`, {
       name: pipelineName,
@@ -77,8 +75,8 @@ export class PipelineStore {
       config: pipelineConfig
     }).then(
       (resp) => {
-        if ("result" in resp) {
-          console.log("HAHAHA");
+        if (resp.data.error) {
+          message.info(`An error has occurred: ${resp.data.error}`); 
         }
       }
     );

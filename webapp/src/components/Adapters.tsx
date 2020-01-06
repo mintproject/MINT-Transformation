@@ -33,6 +33,7 @@ export class AdapterComponent extends React.Component<
 
   render() {
     // this component renders all existing adapters
+    // TODO: similar UI between adapters and pipeline?
     // FIXME: not exactly sure how to manage state and onChange and class props
     const isCardLoading: boolean = this.props.adapters.length === 0;
     return (

@@ -75,7 +75,9 @@ export class CreatePipelineComponent extends React.Component<
     if (uploadedPipelineConfig === null) {
       return;
     }
-    this.props.createPipeline(pipelineName, pipelineDescription, uploadedPipelineConfig)
+    this.props.createPipeline(pipelineName, pipelineDescription, uploadedPipelineConfig);
+    this.props.setUploadedPipelineConfig(null);
+    this.props.setUploadedPipelineConfig(null);
     this.props.history.push('/pipelines');
   }
 

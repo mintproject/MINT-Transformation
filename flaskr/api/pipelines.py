@@ -176,29 +176,38 @@ pipelines_blueprint = Blueprint("pipelines", "pipelines", url_prefix="/api")
 @pipelines_blueprint.route('/pipelines', methods=["GET"])
 def list_pipelines():
     # TODO: add search parameters, list all entries from 'docker ps -a'
-    return jsonify(list_pipelines_detail())
+    try:
+        pipelines = list_pipelines_detail()
+        return jsonify(pipelines)
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 
 @pipelines_blueprint.route('/pipelines/<pipeline_id>', methods=["GET"])
 def list_pipeline(pipeline_id):
-    return jsonify(list_pipeline_detail(pipeline_id))
+    try:
+        pipeline = list_pipeline_detail(pipeline_id)
+        return jsonify(pipeline)
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 
 @pipelines_blueprint.route('/pipeline/create', methods=["POST"])
 def create_pipeline():
-    # TODO: add docker run command
     pipeline_name = request.json.get("name", "")
     pipeline_description = request.json.get("description", "")
     pipeline_config = request.json.get("config", "")
-    run_pipeline(pipeline_name, pipeline_description, pipeline_config)
-    return jsonify({
-        "result": "success"
-    })
+    try:
+        run_pipeline(pipeline_name, pipeline_description, pipeline_config)
+        return jsonify({
+            "result": "success"
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 
 @pipelines_blueprint.route('/pipeline/upload_config', methods=["POST"])
 def upload_pipeline_config():
-    # TODO: sub with real config yml
     if 'files' not in request.files:
         print("NOTHING IS UPLOADED!")
     else:
@@ -213,27 +222,33 @@ def upload_pipeline_config():
                 "error": "Please upload json/yml config file!"
             })
     # TODO: should handle error messages here!
-    parser = ConfigParser({})
-    parsed_pipeline, parsed_inputs = parser.parse(conf_obj=config)
-    display_data = {
-        "funcs": [{
-            "id": func.id,
-            "description": func.description,
-            "inputs": None,
-            "outputs": None
-        } for func in parsed_pipeline.func_classes],
-        "inputs": parsed_inputs
-    }
-    return jsonify({"data": display_data, "config": config})
+    try:
+        parser = ConfigParser({})
+        parsed_pipeline, parsed_inputs = parser.parse(conf_obj=config)
+        display_data = {
+            "funcs": [{
+                "id": func.id,
+                "description": func.description,
+                "inputs": None,
+                "outputs": None
+            } for func in parsed_pipeline.func_classes],
+            "inputs": parsed_inputs
+        }
+        return jsonify({"data": display_data, "config": config})
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 
 @pipelines_blueprint.route('/pipeline/dcat/<dcat_id>', methods=["GET"])
 def get_dcat_config(dcat_id):
     # TODO: connect with data catalog
-    print(f"Fetching dcat dataset with id {dcat_id}")
-    return jsonify({
-        "error": "WIP"
-    })
+    try:
+        print(f"Fetching dcat dataset with id {dcat_id}")
+        return jsonify({
+            "error": "WIP"
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 # ------ fake pipeline -------
 
@@ -281,12 +296,9 @@ def run_pipeline(name: str, description: str, config: object, id=""):
 def list_pipeline_detail(id: str):
     if not is_valid_id(id):
         return jsonify({
-            "error": "invalid pipeline id"
+            "error": "invalid pipeline id to display"
         })
 
-    # docker has a nice function that allows us to copy file from containers to the host as long as the container hasn't removed yet
-    # use that function to copy to the current host
-    # use uuid4 to make sure we have unique file in host (for concurrent requests)
     sess_id = str(uuid4())
     host_conf_file = f"/tmp/config.{sess_id}.yml"
     host_start_log_file = f"/tmp/run.start.{sess_id}.log"
@@ -321,11 +333,14 @@ def list_pipeline_detail(id: str):
 
 
 def list_pipelines_detail():
-    # using check_output to get the output from stdout, it will throw exception if the command exit code != 0
-    # adding --format json will output the command in json
-    output = subprocess.check_output("docker ps -a --format='{{json .ID}}'", shell=True)
-    pipeline_ids_quoted = str.splitlines(output.decode("utf-8"))
     # TODO: parse the JSON output and return a list of pipelines, some information that is expensive to obtain such as
     #  output, configuration file can be omitted. Use pagination to save query
-    pipeline_ids = [pid.replace('"', '') for pid in pipeline_ids_quoted]
+    # TODO: THIS IS WAY TOO SLOW
+    pipeline_ids = list_all_pipelines_docker()
     return [list_pipeline_detail(pid) for pid in pipeline_ids]
+
+
+def list_all_pipelines_docker():
+    output = subprocess.check_output("docker ps -a --format='{{json .ID}}'", shell=True)
+    pipeline_ids_quoted = str.splitlines(output.decode("utf-8"))
+    return [pid.replace('"', '') for pid in pipeline_ids_quoted]
