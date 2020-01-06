@@ -115,13 +115,19 @@ class ConfigParser:
     def __init__(self, cli_inputs: Dict = None):
         self.schema = PipelineSchema(cli_inputs or {})
 
-    def parse(self, path: Union[Path, str]) -> Tuple[Pipeline, Dict]:
-        path = str(path)
-        if path.endswith('.json'):
-            return self._parse_from_json(path)
-        elif path.endswith('.yml') or path.endswith('.yaml'):
-            return self._parse_from_yaml(path)
-        raise Exception(f"Unsupported file format for{path}. Only supports json or yaml file")
+    def parse(self, path: Union[Path, str] = None, conf_obj: Dict = None) -> Tuple[Pipeline, Dict]:
+        if path is not None:
+            path = str(path)
+            if path.endswith('.json'):
+                return self._parse_from_json(path)
+            elif path.endswith('.yml') or path.endswith('.yaml'):
+                return self._parse_from_yaml(path)
+            raise Exception(f"Unsupported file format for{path}. Only supports json or yaml file")
+        else:
+            if conf_obj is not None:
+                return self.schema.load(conf_obj)
+            else:
+                raise ValueError("Config parser should take in at least one valid param!")
 
     def _parse_from_yaml(self, path: Union[Path, str]) -> Tuple[Pipeline, Dict]:
         yaml = YAML()
