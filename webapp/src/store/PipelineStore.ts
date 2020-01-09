@@ -16,10 +16,28 @@ export type PipelineType = {
   adapters?: AdapterType[]
 };
 
+export type UploadedPipelineDataType = {
+  nodes: NodeType[],
+  edges: EdgeType[]
+}
+
+export type NodeType = {
+  id: number,
+  adapter?: AdapterType
+  title: string,
+  type: string
+}
+
+export type EdgeType = {
+  source: number,
+  target: number,
+  type: string
+}
+
 export class PipelineStore {
   @observable pipelines: PipelineType[] = [];
   @observable currentPipeline: PipelineType | null = null;
-  @observable uploadedPipeline: object | null = null;
+  @observable uploadedPipelineData: UploadedPipelineDataType | null = null;
   @observable uploadedPipelineConfig: object | null = null;
 
   @action.bound getPipelines = () => {
@@ -46,24 +64,24 @@ export class PipelineStore {
     );
   }
 
-  @action.bound setUploadedPipeline = (uploadedPipeline?: object | null, dcatId?: string) => {
-    if (dcatId !== undefined) {
-      axios.get(`${flaskUrl}/pipeline/dcat/${dcatId}`).then(
-        (resp) => {
-          if (resp.data.error) {
-            message.info(`An error has occurred: ${resp.data.error}`); 
-          } else {
-            this.uploadedPipeline = resp.data;
-          }
+  @action.bound setUploadedPipelineData = (uploadedPipelineData: UploadedPipelineDataType | null) => {
+    this.uploadedPipelineData = uploadedPipelineData;
+  }
+
+  @action.bound setUploadedPipelineFromDcat = (dcatId: string) => {
+    axios.get(`${flaskUrl}/pipeline/dcat/${dcatId}`).then(
+      (resp) => {
+        if (resp.data.error) {
+          message.info(`An error has occurred: ${resp.data.error}`); 
+        } else {
+          this.uploadedPipelineData = resp.data.data;
+          this.uploadedPipelineConfig = resp.data.config;
         }
-      );
-    } else if (uploadedPipeline !== undefined) {
-      this.uploadedPipeline = uploadedPipeline;
-    }
+      }
+    );
   }
 
   @action.bound setUploadedPipelineConfig = (uploadedPipelineConfig: object | null) => {
-    console.log(uploadedPipelineConfig)
     this.uploadedPipelineConfig = uploadedPipelineConfig;
   }
 

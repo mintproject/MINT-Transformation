@@ -5,8 +5,8 @@ export type AdapterType = {
   name: string,
   func_name: string,
   description: string,
-  input: { [key: string]: any; },
-  ouput: { [key: string]: any; }
+  inputs: { [key: string]: any; },
+  ouputs: { [key: string]: any; }
 };
 
 // FIXME: should pass in backend url via env var

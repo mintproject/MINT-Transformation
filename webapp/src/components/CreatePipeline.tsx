@@ -3,18 +3,58 @@ import { observer, inject } from "mobx-react";
 import { IStore } from "../store";
 import { message, Upload, Icon, Row, Button, Tabs, Input, Col } from "antd";
 import MyLayout from "./Layout";
+import { UploadedPipelineDataType } from "../store/PipelineStore"
 import "antd/dist/antd.css";
 import { UploadFile, UploadChangeParam } from "antd/lib/upload/interface";
 import { RouterProps } from "react-router";
 import { flaskUrl } from "../store/AdapterStore";
-import queryString from 'query-string'
+import queryString from 'query-string';
+import {
+  GraphView,
+} from "react-digraph";
+
 const { TabPane } = Tabs;
 
+const GraphConfig =  {
+  NodeTypes: {
+    empty: { // required to show empty nodes
+      typeText: "None",
+      shapeId: "#empty", // relates to the type property of a node
+      shape: (
+        <symbol viewBox="0 0 100 100" id="empty" key="0">
+          <circle cx="50" cy="50" r="45"></circle>
+        </symbol>
+      )
+    },
+    custom: { // required to show empty nodes
+      typeText: "Custom",
+      shapeId: "#custom", // relates to the type property of a node
+      shape: (
+        <symbol viewBox="0 0 50 25" id="custom" key="0">
+          <ellipse cx="50" cy="25" rx="50" ry="25"></ellipse>
+        </symbol>
+      )
+    }
+  },
+  NodeSubtypes: {},
+  EdgeTypes: {
+    emptyEdge: {  // required to show empty edges
+      shapeId: "#emptyEdge",
+      shape: (
+        <symbol viewBox="0 0 50 50" id="emptyEdge" key="0">
+          <circle cx="25" cy="25" r="8" fill="currentColor"> </circle>
+        </symbol>
+      )
+    }
+  }
+}
+
 interface CreatePipelineProps extends RouterProps {
-  uploadedPipeline: object | null,
+  uploadedPipelineData: UploadedPipelineDataType | null,
   uploadedPipelineConfig: object | null,
-  setUploadedPipeline: (uploadedPipeline?: object | null, dcatId?: string) => any,
+  setUploadedPipelineData: (uploadedPipeline: UploadedPipelineDataType | null) => any,
   setUploadedPipelineConfig: (uploadedPipelineConfig: object | null) => any,
+  setUploadedPipelineFromDcat: (dcatId: string) => any,
   location: Location,
   createPipeline: (pipelineName: string, pipelineDescription: string, pipelineConfig: object) => any,
 }
@@ -25,12 +65,13 @@ interface CreatePipelineState {
 }
 
 @inject((stores: IStore) => ({
-  uploadedPipeline: stores.pipelineStore.uploadedPipeline,
+  uploadedPipelineData: stores.pipelineStore.uploadedPipelineData,
   uploadedPipelineConfig: stores.pipelineStore.uploadedPipelineConfig,
-  setUploadedPipeline: stores.pipelineStore.setUploadedPipeline,
   location: stores.routing.location,
   createPipeline: stores.pipelineStore.createPipeline,
   setUploadedPipelineConfig: stores.pipelineStore.setUploadedPipelineConfig,
+  setUploadedPipelineData: stores.pipelineStore.setUploadedPipelineData,
+  setUploadedPipelineFromDcat: stores.pipelineStore.setUploadedPipelineFromDcat,
 }))
 @observer
 export class CreatePipelineComponent extends React.Component<
@@ -47,7 +88,7 @@ export class CreatePipelineComponent extends React.Component<
     if (this.props.location.search) {
       const params = queryString.parse(this.props.location.search)
       if (params && params.dcatId && typeof params.dcatId === "string") {
-        this.props.setUploadedPipeline(null, params.dcatId)
+        this.props.setUploadedPipelineFromDcat(params.dcatId)
       }
     } else {
       // redirect to create page to upload
@@ -62,8 +103,7 @@ export class CreatePipelineComponent extends React.Component<
       message.info(`${file.response.error}`);
     } else if (file.response && file.response.data) {
       const { data, config } = file.response;
-      // set the store var: uploadedPipeline
-      this.props.setUploadedPipeline(data);
+      this.props.setUploadedPipelineData(data);
       this.props.setUploadedPipelineConfig(config);
     }
     this.setState({ currentFileList: [file] });
@@ -76,13 +116,14 @@ export class CreatePipelineComponent extends React.Component<
       return;
     }
     this.props.createPipeline(pipelineName, pipelineDescription, uploadedPipelineConfig);
-    this.props.setUploadedPipelineConfig(null);
+    this.props.setUploadedPipelineData(null);
     this.props.setUploadedPipelineConfig(null);
     this.props.history.push('/pipelines');
   }
 
   handleCancel = () => {
-    this.props.setUploadedPipeline(null);
+    this.props.setUploadedPipelineData(null);
+    this.props.setUploadedPipelineConfig(null);
     this.setState({
       currentFileList: []
     });
@@ -90,12 +131,14 @@ export class CreatePipelineComponent extends React.Component<
   }
 
   render() {
-    const { uploadedPipeline } = this.props;
+    const { uploadedPipelineData, uploadedPipelineConfig } = this.props;
+    console.log("inside create");
+    console.log(uploadedPipelineData === null ? null : uploadedPipelineData.nodes)
     return (
       <MyLayout>
         {/* FIXME: upload url should not be hardcoded */}
         {
-          this.props.uploadedPipeline === null ? 
+          uploadedPipelineData === null ? 
           <Upload.Dragger
             name="files"
             action={`${flaskUrl}/pipeline/upload_config`}
@@ -111,7 +154,36 @@ export class CreatePipelineComponent extends React.Component<
             <p className="ant-upload-text">Click or drag file to this area to upload</p>
             <p className="ant-upload-hint">Support for single upload.</p>
           </Upload.Dragger> : 
-          <Tabs defaultActiveKey="metadata" tabPosition="left" style={{ overflowY: "auto" }}>
+          <Tabs defaultActiveKey="adapters" tabPosition="left" style={{ overflowY: "auto", height: "100%" }}>
+            <TabPane tab="Adapters" key="adapters">
+              <GraphView
+                ref='GraphView'
+                nodeKey="id"
+                nodes={uploadedPipelineData.nodes}
+                edges={uploadedPipelineData.edges}
+                selected={null}
+                nodeTypes={GraphConfig.NodeTypes}
+                nodeSubtypes={GraphConfig.NodeSubtypes}
+                edgeTypes={GraphConfig.EdgeTypes}
+                // onSelectNode={this.onSelectNode}
+                // onCreateNode={this.onCreateNode}
+                // onUpdateNode={this.onUpdateNode}
+                // onDeleteNode={this.onDeleteNode}
+                // onSelectEdge={this.onSelectEdge}
+                // onCreateEdge={this.onCreateEdge}
+                // onSwapEdge={this.onSwapEdge}
+                // onDeleteEdge={this.onDelet() => console.log("does nothing")
+                onSelectNode={() => console.log("does nothing")}
+                onCreateNode={() => console.log("does nothing")}
+                onUpdateNode={() => console.log("does nothing")}
+                onDeleteNode={() => console.log("does nothing")}
+                onSelectEdge={() => console.log("does nothing")}
+                onCreateEdge={() => console.log("does nothing")}
+                onSwapEdge={() => console.log("does nothing")}
+                onDeleteEdge={() => console.log("does nothing")}
+              />
+              <pre>{JSON.stringify(uploadedPipelineData, null, 2)}</pre>
+            </TabPane>
             <TabPane tab="Metadata" key="metadata">
               <Row style={{ margin: "20px 0px"}}>
                 <Col span={16}>
@@ -146,7 +218,7 @@ export class CreatePipelineComponent extends React.Component<
                 />
               </Row>
               <Row style={{ margin: "20px 10px"}}>
-                <pre>{JSON.stringify(uploadedPipeline, null, 2)}</pre>
+                <pre>{JSON.stringify(uploadedPipelineConfig, null, 2)}</pre>
               </Row>
             </TabPane>
           </Tabs>

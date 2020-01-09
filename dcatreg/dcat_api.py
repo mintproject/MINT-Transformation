@@ -309,9 +309,9 @@ class DCatAPI:
             f"{DATA_CATALOG_API}/datasets/find",
             headers=request_headers,
             json={"dataset_ids__in": [dataset_id]},
-        ).json()
-        assert resp["result"] == "success", resp["result"]
-        return resp["resources"]
+        )
+        parsed_response = DCatAPI.handle_api_response(resp)
+        return parsed_response["datasets"][0]
 
     def update_layout(self, dataset_id: str, layout: dict):
         request_headers = {"Content-Type": "application/json", "X-Api-Key": self.get_api_key()}

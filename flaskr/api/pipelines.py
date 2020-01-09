@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 import json
 import yaml
 from dtran.config_parser import ConfigParser
+from dcatreg.dcat_api import DCatAPI
 
 from typing import *
 from uuid import uuid4
@@ -22,155 +23,27 @@ class Pipeline:
     config: Any
     output: str
     status: str
-# FAKE_ADAPTERS = [
-#     {
-#         "name": "Read Function",
-#         "func_name": "read_func",
-#         "description": "An entry point in the pipeline. Reads an input file and a yml file describing the D-REPR layout of this file. The data are representated in a Graph object.",
-#         "input": {
-#             "repr_file": "[file_path] *",
-#             "resources": "[string] *"
-#         },
-#         "ouput": {
-#             "data": "[graph] *"
-#         }
-#     }, {
-#         "name": "Read Function",
-#         "func_name": "read_func",
-#         "description": "An entry point in the pipeline. Reads an input file and a yml file describing the D-REPR layout of this file. The data are representated in a Graph object.",
-#         "input": {
-#             "repr_file": "[file_path] *",
-#             "resources": "[string] *"
-#         },
-#         "ouput": {
-#             "data": "[graph] *"
-#         }
-#     }, {
-#         "name": "Read Function",
-#         "func_name": "read_func",
-#         "description": "An entry point in the pipeline. Reads an input file and a yml file describing the D-REPR layout of this file. The data are representated in a Graph object.",
-#         "input": {
-#             "repr_file": "[file_path] *",
-#             "resources": "[string] *"
-#         },
-#         "ouput": {
-#             "data": "[graph] *"
-#         }
-#     }, {
-#         "name": "Read Function",
-#         "func_name": "read_func",
-#         "description": "An entry point in the pipeline. Reads an input file and a yml file describing the D-REPR layout of this file. The data are representated in a Graph object.",
-#         "input": {
-#             "repr_file": "[file_path] *",
-#             "resources": "[string] *"
-#         },
-#         "ouput": {
-#             "data": "[graph] *"
-#         }
-#     }, {
-#         "name": "Read Function",
-#         "func_name": "read_func",
-#         "description": "An entry point in the pipeline. Reads an input file and a yml file describing the D-REPR layout of this file. The data are representated in a Graph object.",
-#         "input": {
-#             "repr_file": "[file_path] *",
-#             "resources": "[string] *"
-#         },
-#         "ouput": {
-#             "data": "[graph] *"
-#         }
-#     }, {
-#         "name": "Read Function",
-#         "func_name": "read_func",
-#         "description": "An entry point in the pipeline. Reads an input file and a yml file describing the D-REPR layout of this file. The data are representated in a Graph object.",
-#         "input": {
-#             "repr_file": "[file_path] *",
-#             "resources": "[string] *"
-#         },
-#         "ouput": {
-#             "data": "[graph] *"
-#         }
-#     }, {
-#         "name": "Read Function",
-#         "func_name": "read_func",
-#         "description": "An entry point in the pipeline. Reads an input file and a yml file describing the D-REPR layout of this file. The data are representated in a Graph object.",
-#         "input": {
-#             "repr_file": "[file_path] *",
-#             "resources": "[string] *"
-#         },
-#         "ouput": {
-#             "data": "[graph] *"
-#         }
-#     }
-# ]
-# FAKE_PIPELINES = [
-#     {
-#         "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
-#         "description": "blahblahblah",
-#         "start_timestamp": "2019-12-17T12:05:00",
-#         "status": "running",
-#         "end_timestamp": "",
-#         "config_file": "some yaml. decide later",
-#         "id": "123451",
-#         "adapters": FAKE_ADAPTERS
-#     }, {
-#         "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
-#         "description": "blahblahblah",
-#         "start_timestamp": "2019-12-16T12:05:00",
-#         "status": "finished",
-#         "end_timestamp": "2019-12-17T13:05:00",
-#         "config_file": "some yaml. decide later",
-#         "id": "123452",
-#         "adapters": FAKE_ADAPTERS
-#     }, {
-#         "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
-#         "description": "blahblahblah",
-#         "start_timestamp": "2019-12-15T12:05:00",
-#         "status": "running",
-#         "end_timestamp": "",
-#         "config_file": "some yaml. decide later",
-#         "id": "123453",
-#         "adapters": FAKE_ADAPTERS
-#     }, {
-#         "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
-#         "description": "blahblahblah",
-#         "start_timestamp": "2019-12-14T12:05:00",
-#         "status": "failed",
-#         "end_timestamp": "2019-12-14T17:05:00",
-#         "config_file": "some yaml. decide later",
-#         "id": "123454",
-#         "adapters": FAKE_ADAPTERS
-#     }, {
-#         "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
-#         "description": "blahblahblah",
-#         "start_timestamp": "2019-12-13T12:05:00",
-#         "status": "failed",
-#         "end_timestamp": "2019-12-14T17:05:00",
-#         "config_file": "some yaml. decide later",
-#         "id": "123455",
-#         "adapters": FAKE_ADAPTERS
-#     }, {
-#         "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
-#         "description": "blahblahblah",
-#         "start_timestamp": "2019-12-12T12:05:00",
-#         "status": "running",
-#         "end_timestamp": "",
-#         "config_file": "some yaml. decide later",
-#         "id": "123456",
-#         "adapters": FAKE_ADAPTERS
-#     }, {
-#         "name": "Some pipeline running on ALWERO GLDAS data 2008 - 2018",
-#         "description": "blahblahblah",
-#         "start_timestamp": "2019-12-11T12:05:00",
-#         "status": "failed",
-#         "end_timestamp": "2019-12-14T17:05:00",
-#         "config_file": "some yaml. decide later",
-#         "id": "123457",
-#         "adapters": FAKE_ADAPTERS
-#     }
-# ]
+
+
+DCATAPI_INSTANCE = DCatAPI()
 
 
 pipelines_blueprint = Blueprint("pipelines", "pipelines", url_prefix="/api")
+
+
+@pipelines_blueprint.route('/test', methods=["GET"])
+def test_func():
+    # Get adapter in dict format
+    # from funcs import ReadFunc
+    # data = ReadFunc("./wfp_food_prices_south-sudan.repr.yml", "./wfp_food_prices_south-sudan.csv")
+    # data_str = data.to_dict()
+    # # data_str = data.adapter2dict()
+    # print(data_str)
+    test_parser = ConfigParser({})
+    parsed_pipeline, parsed_inputs = test_parser.parse(path="./test_long.yml")
+    # import pdb; pdb.set_trace()
+    data_str = parsed_pipeline.graph_inputs_to_json(parsed_inputs)
+    return jsonify({ "res": data_str })
 
 
 @pipelines_blueprint.route('/pipelines', methods=["GET"])
@@ -225,28 +98,27 @@ def upload_pipeline_config():
     try:
         parser = ConfigParser({})
         parsed_pipeline, parsed_inputs = parser.parse(conf_obj=config)
-        display_data = {
-            "funcs": [{
-                "id": func.id,
-                "description": func.description,
-                "inputs": None,
-                "outputs": None
-            } for func in parsed_pipeline.func_classes],
-            "inputs": parsed_inputs
-        }
+        display_data = parsed_pipeline.graph_inputs_to_json(parsed_inputs)
         return jsonify({"data": display_data, "config": config})
     except Exception as e:
         return jsonify({"error": str(e)})
 
 
 @pipelines_blueprint.route('/pipeline/dcat/<dcat_id>', methods=["GET"])
-def get_dcat_config(dcat_id):
+def get_dcat_config(dcat_id: str):
     # TODO: connect with data catalog
     try:
-        print(f"Fetching dcat dataset with id {dcat_id}")
-        return jsonify({
-            "error": "WIP"
-        })
+        dataset = DCATAPI_INSTANCE.find_dataset_by_id(dcat_id)
+        dataset_config = dataset["dataset_metadata"].get("config", None)
+        if dataset_config is None:
+            return jsonify({
+                "error": "This dataset has no config associated!"
+            })
+        else:
+            parser = ConfigParser({})
+            parsed_pipeline, parsed_inputs = parser.parse(conf_obj=dataset_config)
+            display_data = parsed_pipeline.graph_inputs_to_json(parsed_inputs)
+            return jsonify({"data": display_data, "config": dataset_config})
     except Exception as e:
         return jsonify({"error": str(e)})
 
@@ -313,7 +185,7 @@ def list_pipeline_detail(id: str):
     # TODO: deserialize the configuration file and the log file to get the pipeline and return it.
     with open(host_start_log_file, "r") as f1, open(host_end_log_file, "r") as f2, open(host_conf_file, "r") as f3:
         start_log = json.load(f1)
-        end_log = f2.readline()
+        end_log = f2.read().splitlines()[0]
         config = yaml.safe_load(f3)
         if end_log:
             status = "finished"

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import abc
-from typing import Dict, Optional
+from typing import Dict, Any
 from dtran.argtype import ArgType
 from dtran.wireio import WiredIO
 
@@ -24,6 +24,16 @@ class IFunc(metaclass=IFuncIO):
     description = None
     inputs: Dict[str, ArgType] = {}
     outputs: Dict[str, ArgType] = {}
+
+    # TODO: hierarchical serialization
+    @classmethod
+    def to_dict(cls) -> Dict[str, Any]:
+        return {
+            "id": cls.id,
+            "description": cls.description,
+            "inputs": {i: cls.inputs[i].to_dict() for i in cls.inputs},
+            "outputs": {o: cls.outputs[o].to_dict() for o in cls.outputs},
+        }
 
     @abc.abstractmethod
     def validate(self) -> bool:

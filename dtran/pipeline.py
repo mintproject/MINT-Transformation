@@ -68,17 +68,7 @@ class Pipeline(object):
         self.schema = Schema.from_dict(self.schema)
 
     def exec(self, inputs: dict) -> dict:
-        inputs_copy = {}
-        for arg in inputs:
-            if isinstance(arg, WiredIOArg):
-                if arg.func_idx is None:
-                    func_idx = self.get_func_order(arg.func_id)
-                else:
-                    func_idx = arg.func_idx
-                inputs_copy[WiredIOArg.get_arg_name(arg.func_id, func_idx, arg.name)] = inputs[arg]
-            else:
-                inputs_copy[arg] = inputs[arg]
-        inputs = inputs_copy
+        inputs = self.inputs_to_func_order(inputs)
         self.validate(inputs)
 
         output = {}
@@ -137,3 +127,53 @@ class Pipeline(object):
     @staticmethod
     def load(load_path: Union[str, Path]):
         pass
+
+    def inputs_to_func_order(self, inputs: dict) -> dict:
+        inputs_copy = {}
+        for arg in inputs:
+            if isinstance(arg, WiredIOArg):
+                if arg.func_idx is None:
+                    func_idx = self.get_func_order(arg.func_id)
+                else:
+                    func_idx = arg.func_idx
+                inputs_copy[WiredIOArg.get_arg_name(arg.func_id, func_idx, arg.name)] = inputs[arg]
+            else:
+                inputs_copy[arg] = inputs[arg]
+        return inputs_copy
+
+    def graph_inputs_to_json(self, inputs: dict) -> dict:
+        inputs = self.inputs_to_func_order(inputs)
+        self.validate(inputs)
+
+        nodes, edges = [], []
+        for i, func_cls in enumerate(self.func_classes):
+            node_class = func_cls.to_dict()
+            for argname in func_cls.inputs.keys():
+                gname = WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)
+                if gname in self.wired and i > 0:
+                    edges.append({
+                        "source": i - 1,
+                        "target": i,
+                        "type": "emptyEdge"
+                    })
+                try:
+                    node_class["inputs"][argname]["val"] = inputs[gname]
+                except KeyError as e:
+                    if argname == "graph" or func_cls.inputs[argname].optional:
+                        continue
+                    raise e
+            nodes.append({
+                "id": i,
+                "adapter": node_class,
+                "title": func_cls.id,
+                "type": "empty"
+            })
+
+        return {
+            "nodes": nodes,
+            "edges": edges
+        }
+
+
+
+
