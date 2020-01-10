@@ -40,7 +40,7 @@ export class AdapterComponent extends React.Component<
       <MyLayout>
           {this.props.adapters.map((ad, index) => 
               <Card
-                title={ad.name}
+                title={ad.id}
                 bordered={true}
                 loading={isCardLoading}
                 style={{ margin: "10px 10px" }}
@@ -48,7 +48,7 @@ export class AdapterComponent extends React.Component<
                 hoverable
               >
                 <pre>
-                  • <b><u>Function Name</u></b>: {ad.func_name}<br/>
+                  • <b><u>Function Name</u></b>: {ad.id}<br/>
                   • <b><u>Description</u></b>: {ad.description}<br/>
                   • <b><u>Inputs</u></b>: {JSON.stringify(ad.inputs, null, 2)}<br/>
                   • <b><u>Outputs</u></b>: {JSON.stringify(ad.ouputs, null, 2)}<br/>

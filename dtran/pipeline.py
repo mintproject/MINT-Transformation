@@ -154,7 +154,6 @@ class Pipeline(object):
                     edges.append({
                         "source": i - 1,
                         "target": i,
-                        "type": "emptyEdge"
                     })
                 try:
                     node_class["inputs"][argname]["val"] = inputs[gname]
@@ -165,8 +164,6 @@ class Pipeline(object):
             nodes.append({
                 "id": i,
                 "adapter": node_class,
-                "title": func_cls.id,
-                "type": "empty"
             })
 
         return {

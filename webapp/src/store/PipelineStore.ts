@@ -23,15 +23,12 @@ export type UploadedPipelineDataType = {
 
 export type NodeType = {
   id: number,
-  adapter?: AdapterType
-  title: string,
-  type: string
+  adapter: AdapterType
 }
 
 export type EdgeType = {
   source: number,
-  target: number,
-  type: string
+  target: number
 }
 
 export class PipelineStore {

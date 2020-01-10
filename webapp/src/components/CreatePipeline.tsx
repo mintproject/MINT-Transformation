@@ -3,7 +3,7 @@ import { observer, inject } from "mobx-react";
 import { IStore } from "../store";
 import { message, Upload, Icon, Row, Button, Tabs, Input, Col } from "antd";
 import MyLayout from "./Layout";
-import { UploadedPipelineDataType } from "../store/PipelineStore"
+import { UploadedPipelineDataType, NodeType, EdgeType } from "../store/PipelineStore"
 import "antd/dist/antd.css";
 import { UploadFile, UploadChangeParam } from "antd/lib/upload/interface";
 import { RouterProps } from "react-router";
@@ -18,7 +18,6 @@ const { TabPane } = Tabs;
 const GraphConfig =  {
   NodeTypes: {
     empty: { // required to show empty nodes
-      typeText: "None",
       shapeId: "#empty", // relates to the type property of a node
       shape: (
         <symbol viewBox="0 0 100 100" id="empty" key="0">
@@ -130,16 +129,29 @@ export class CreatePipelineComponent extends React.Component<
     this.props.history.push('/pipeline/create');
   }
 
+  createGraphNodes = (nodes: NodeType[]) => {
+    return nodes.map((n, idx) => ({
+      id: `${n.id}`,
+      title: n.adapter.id,
+      type: "empty",
+      x: 100 + 200*idx,
+      y: 100 + 200*idx,
+    }))
+  }
+
+  createGraphEdges = (edges: EdgeType[]) => {
+    return edges.map((e, idx) => ({
+      target: `${e.target}`,
+      source: `${e.source}`,
+      type: "emptyEdge"
+    }))
+  }
+
   render() {
     const { uploadedPipelineData, uploadedPipelineConfig } = this.props;
-    console.log("inside create");
-    console.log(uploadedPipelineData === null ? null : uploadedPipelineData.nodes)
-    return (
-      <MyLayout>
-        {/* FIXME: upload url should not be hardcoded */}
-        {
-          uploadedPipelineData === null ? 
-          <Upload.Dragger
+    if (uploadedPipelineData === null) {
+      return <MyLayout>
+        <Upload.Dragger
             name="files"
             action={`${flaskUrl}/pipeline/upload_config`}
             accept=".json,.yml"
@@ -153,15 +165,23 @@ export class CreatePipelineComponent extends React.Component<
             </p>
             <p className="ant-upload-text">Click or drag file to this area to upload</p>
             <p className="ant-upload-hint">Support for single upload.</p>
-          </Upload.Dragger> : 
-          <Tabs defaultActiveKey="adapters" tabPosition="left" style={{ overflowY: "auto", height: "100%" }}>
-            <TabPane tab="Adapters" key="adapters">
+          </Upload.Dragger>
+      </MyLayout>
+    } else {
+      return (
+        <MyLayout> 
+          <Tabs
+            defaultActiveKey="adapters"
+            tabPosition="left"
+            style={{ overflowY: "auto", height: "100%" }}
+          >
+            <TabPane tab="Adapters" key="adapters" style={{ height: "600px" }}>
               <GraphView
                 ref='GraphView'
                 nodeKey="id"
-                nodes={uploadedPipelineData.nodes}
-                edges={uploadedPipelineData.edges}
-                selected={null}
+                nodes={this.createGraphNodes(uploadedPipelineData.nodes)}
+                edges={this.createGraphEdges(uploadedPipelineData.edges)}
+                selected={{}}
                 nodeTypes={GraphConfig.NodeTypes}
                 nodeSubtypes={GraphConfig.NodeSubtypes}
                 edgeTypes={GraphConfig.EdgeTypes}
@@ -182,7 +202,7 @@ export class CreatePipelineComponent extends React.Component<
                 onSwapEdge={() => console.log("does nothing")}
                 onDeleteEdge={() => console.log("does nothing")}
               />
-              <pre>{JSON.stringify(uploadedPipelineData, null, 2)}</pre>
+              {/* <pre>{JSON.stringify(uploadedPipelineData, null, 2)}</pre> */}
             </TabPane>
             <TabPane tab="Metadata" key="metadata">
               <Row style={{ margin: "20px 0px"}}>
@@ -211,7 +231,7 @@ export class CreatePipelineComponent extends React.Component<
                 </Col>
               </Row>
               <Row style={{ margin: "20px 10px"}}>
-               <Input
+                <Input
                   value={this.state.pipelineDescription}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => this.setState({ pipelineDescription: event.target.value})}
                   placeholder="Enter Pipeline Description"
@@ -222,9 +242,9 @@ export class CreatePipelineComponent extends React.Component<
               </Row>
             </TabPane>
           </Tabs>
-        }
-      </MyLayout>
-    );
+        </MyLayout>
+      );
+    }
   }
 }
 

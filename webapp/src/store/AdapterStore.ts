@@ -2,8 +2,7 @@ import { observable, action } from "mobx";
 import axios from "axios";
 
 export type AdapterType = {
-  name: string,
-  func_name: string,
+  id: string,
   description: string,
   inputs: { [key: string]: any; },
   ouputs: { [key: string]: any; }
