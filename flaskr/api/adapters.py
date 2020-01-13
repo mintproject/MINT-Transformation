@@ -16,4 +16,12 @@ def list_adapters():
     # TODO: put adapters in db?
     with open("./adapters.json", "r") as f:
         adapters = json.load(f)
-    return jsonify(adapters)
+        parsed_adapters = [{
+            "id": ad["name"],
+            "description": ad["description"],
+            "inputs": ad["input"],
+            "outputs": ad["output"]
+        } for ad in adapters]
+    print("I'm returning")
+    print(parsed_adapters[0])
+    return jsonify(parsed_adapters)

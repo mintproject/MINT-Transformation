@@ -82,12 +82,15 @@ export class PipelineStore {
     this.uploadedPipelineConfig = uploadedPipelineConfig;
   }
 
-  @action.bound createPipeline = (pipelineName: string, pipelineDescription: string, pipelineConfig: object) => {
-    console.log(pipelineConfig)
+  @action.bound createPipeline = (
+    pipelineName: string, pipelineDescription: string,
+    graphNodes: NodeType[], graphEdges: EdgeType[]
+  ) => {
     axios.post(`${flaskUrl}/pipeline/create`, {
       name: pipelineName,
       description: pipelineDescription,
-      config: pipelineConfig
+      nodes: graphNodes,
+      edges: graphEdges
     }).then(
       (resp) => {
         if (resp.data.error) {

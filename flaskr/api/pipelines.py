@@ -69,9 +69,13 @@ def list_pipeline(pipeline_id):
 def create_pipeline():
     pipeline_name = request.json.get("name", "")
     pipeline_description = request.json.get("description", "")
-    pipeline_config = request.json.get("config", "")
+    pipeline_nodes = request.json.get("nodes", "")
+    pipeline_edges = request.json.get("edges", "")
     try:
-        run_pipeline(pipeline_name, pipeline_description, pipeline_config)
+        # TODO: de-serialize the pipeline here
+        # run_pipeline(pipeline_name, pipeline_description, pipeline_config)
+        print(json.dumps(pipeline_nodes, indent=2))
+        print(json.dumps(pipeline_edges, indent=2))
         return jsonify({
             "result": "success"
         })

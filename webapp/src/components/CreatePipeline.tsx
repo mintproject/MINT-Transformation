@@ -1,13 +1,13 @@
 import React from "react";
 import { observer, inject } from "mobx-react";
 import { IStore } from "../store";
-import { message, Upload, Icon, Row, Button, Tabs, Input, Col } from "antd";
+import { message, Upload, Icon, Row, Button, Tabs, Input, Col, Dropdown, Menu } from "antd";
 import MyLayout from "./Layout";
 import { UploadedPipelineDataType, NodeType, EdgeType } from "../store/PipelineStore"
 import "antd/dist/antd.css";
 import { UploadFile, UploadChangeParam } from "antd/lib/upload/interface";
 import { RouterProps } from "react-router";
-import { flaskUrl } from "../store/AdapterStore";
+import { flaskUrl, AdapterType } from "../store/AdapterStore";
 import queryString from 'query-string';
 import {
   GraphView, INode, IEdge,
@@ -49,7 +49,9 @@ interface CreatePipelineProps extends RouterProps {
   setUploadedPipelineConfig: (uploadedPipelineConfig: object | null) => any,
   setUploadedPipelineFromDcat: (dcatId: string) => any,
   location: Location,
-  createPipeline: (pipelineName: string, pipelineDescription: string, pipelineConfig: object) => any,
+  createPipeline: (pipelineName: string, pipelineDescription: string, graphNodes: NodeType[], graphEdges: EdgeType[]) => any,
+  adapters: AdapterType[],
+  getAdapters: () => any,
 }
 interface CreatePipelineState {
   currentFileList: UploadFile[],
@@ -59,6 +61,9 @@ interface CreatePipelineState {
   graphNodes: INode[],
   graphEdges: IEdge[],
   currentInput: string,
+  currentAction: string,
+  currentAdapter: string,
+  currentToNode: string,
 }
 
 @inject((stores: IStore) => ({
@@ -69,6 +74,8 @@ interface CreatePipelineState {
   setUploadedPipelineConfig: stores.pipelineStore.setUploadedPipelineConfig,
   setUploadedPipelineData: stores.pipelineStore.setUploadedPipelineData,
   setUploadedPipelineFromDcat: stores.pipelineStore.setUploadedPipelineFromDcat,
+  adapters: stores.adapterStore.adapters,
+  getAdapters: stores.adapterStore.getAdapters,
 }))
 @observer
 export class CreatePipelineComponent extends React.Component<
@@ -82,7 +89,10 @@ export class CreatePipelineComponent extends React.Component<
     selected: null,
     graphNodes: [],
     graphEdges: [],
-    currentInput: ""
+    currentInput: "",
+    currentAction: "",
+    currentAdapter: "",
+    currentToNode: ""
   };
 
   componentDidMount() {
@@ -95,6 +105,7 @@ export class CreatePipelineComponent extends React.Component<
       // redirect to create page to upload
       this.props.history.push('/pipeline/create');
     }
+    this.props.getAdapters();
   }
 
   handleFileChange = (info: UploadChangeParam<UploadFile>) => {
@@ -115,12 +126,11 @@ export class CreatePipelineComponent extends React.Component<
   }
 
   handleSubmit = () => {
-    const { pipelineName, pipelineDescription } = this.state;
-    const { uploadedPipelineConfig } = this.props;
-    if (uploadedPipelineConfig === null) {
-      return;
-    }
-    this.props.createPipeline(pipelineName, pipelineDescription, uploadedPipelineConfig);
+    const { pipelineName, pipelineDescription, graphEdges, graphNodes } = this.state;
+    this.props.createPipeline(
+      pipelineName, pipelineDescription,
+      this.createNodes(graphNodes), this.createEdges(graphEdges)
+    );
     this.props.setUploadedPipelineData(null);
     this.props.setUploadedPipelineConfig(null);
     this.props.history.push('/pipelines');
@@ -136,7 +146,9 @@ export class CreatePipelineComponent extends React.Component<
       selected: null,
       graphNodes: [],
       graphEdges: [],
-      currentInput: ""
+      currentInput: "",
+      currentAction: "",
+      currentAdapter: ""
     });
     this.props.history.push('/pipeline/create');
   }
@@ -152,11 +164,53 @@ export class CreatePipelineComponent extends React.Component<
     }))
   }
 
+  createNodes = (nodes: INode[]) => {
+    return nodes.map(n => ({
+      id: parseInt(n.id),
+      adapter: n.adapter
+    }))
+  }
+
+  findBoundingBoxGraphNodes = () => {
+    const { graphNodes } = this.state;
+    var maxX = Number.NEGATIVE_INFINITY, maxY = Number.NEGATIVE_INFINITY;
+    var minX = Number.POSITIVE_INFINITY, minY = Number.POSITIVE_INFINITY;
+    var maxId = 0;
+    for (var i = 0; i < graphNodes.length; i++) {
+      const nodeId = parseInt(graphNodes[i].id);
+      const nodeX = Number(graphNodes[i].x);
+      const nodeY = Number(graphNodes[i].y);
+      if (nodeId > maxId) {
+        maxId = nodeId;
+      }
+      if (nodeX > maxX) {
+        maxX = nodeX;
+      }
+      if (nodeX < minX) {
+        minX = nodeX;
+      }
+      if (nodeY > maxY) {
+        maxY = nodeY;
+      }
+      if (nodeY < minY) {
+        minY = nodeY;
+      }
+    }
+    return { maxX, maxY, minX, minY, maxId }
+  }
+
   createGraphEdges = (edges: EdgeType[]) => {
     return edges.map((e, idx) => ({
       target: `${e.target}`,
       source: `${e.source}`,
       type: "emptyEdge"
+    }))
+  }
+
+  createEdges = (edges: IEdge[]) => {
+    return edges.map(e => ({
+      source: parseInt(e.source),
+      target: parseInt(e.target)
     }))
   }
 
@@ -168,6 +222,56 @@ export class CreatePipelineComponent extends React.Component<
       currentInput: JSON.stringify(_.get(selectedAdapter, "inputs"), null, 2)
     });
   };
+
+  createAdapterMenu = () => {
+    return (<Menu onClick={({ item }) => {
+      this.setState({ currentAdapter: item.props.children });
+      }}>
+      {this.props.adapters.map((ad, idx) => {
+        return (<Menu.Item key={`ad-${idx}`}>
+          {ad.id}
+        </Menu.Item>);
+      })}
+    </Menu>);
+  };
+
+  createNodeMenu = () => {
+    return (<Menu onClick={({ item }) => {
+      this.setState({ currentToNode: item.props.children });
+      }}>
+      {this.state.graphNodes.filter(n => n.id !== this.state.selected).map((node, idx) => {
+        return (<Menu.Item key={`node-${idx}`}>
+          {node.id}
+        </Menu.Item>);
+      })}
+    </Menu>);
+  };
+
+  createNodeEdgeMenu = () => {
+    const outgoingEdges = this.state.graphEdges.filter(e => e.source === this.state.selected);
+    const targetNodeIds = outgoingEdges.map(e => e.target);
+    const targetNodes: INode[] = this.state.graphNodes.filter(n => targetNodeIds.includes(n.id));
+    return (<Menu onClick={({ item }) => {
+      this.setState({ currentToNode: item.props.children });
+      }}>
+      {
+      targetNodes.map((node, idx) => {
+        return (<Menu.Item key={`node-${idx}`}>
+          {node.id}
+        </Menu.Item>);
+      })}
+    </Menu>);
+  };
+
+  onClear = () => {
+    this.setState({
+      selected: null,
+      currentInput: "",
+      currentAction: "",
+      currentAdapter: "",
+      currentToNode: ""
+    });
+  }
 
   render() {
     const { uploadedPipelineData, uploadedPipelineConfig } = this.props;
@@ -211,7 +315,162 @@ export class CreatePipelineComponent extends React.Component<
             <TabPane tab="Adapters" key="adapters" style={{ height: "600px" }}>
               <Row style={{ margin: "20px 0px"}}>
                 <Col span={16}>
-                  <p>* Click on adapter component to edit.</p>
+                  { _.isEmpty(this.state.selected) ? <b>* Click on adapter component to edit.</b> : null}
+                  { this.state.selected && _.isEmpty(this.state.currentAction) ? <span>
+                    <p>Select an action: </p>
+                    <Button
+                      style={{ margin: "5px" }}
+                      onClick={() => this.setState({ currentAction: "add-a-new-node"})}
+                    >Add A New Node</Button>
+                    <Button
+                      style={{ margin: "5px" }}
+                      onClick={() => this.setState({ currentAction: "add-a-new-edge"})}
+                    >Add A New Edge</Button>
+                    <Button
+                      style={{ margin: "5px" }}
+                      onClick={() => this.setState({ currentAction: "delete-this-node"})}
+                    >Delete This Node</Button>
+                    <Button
+                      style={{ margin: "5px" }}
+                      onClick={() => this.setState({ currentAction: "delete-its-edge"})}
+                    >Delete Its Edge</Button>
+                  </span> : null}
+                  { this.state.selected && this.state.currentAction === "add-a-new-node"
+                    ? <span>
+                      <p>Add A New Node: </p>
+                      <Dropdown overlay={this.createAdapterMenu()}>
+                        { this.state.currentAdapter
+                        ? <b>{`Selected Adapter: ${this.state.currentAdapter}`}</b>
+                        : <Button><b>Select An Adapter</b></Button>}
+                      </Dropdown>
+                      <Button
+                        style={{ float: "right", margin: "5px" }}
+                        disabled={_.isEmpty(this.state.currentAdapter)}
+                        onClick={() => {
+                          console.log("adding a new node to the graph");
+                          const { maxX, maxY, minX, minY, maxId } = this.findBoundingBoxGraphNodes();
+                          const newNode: INode = {
+                            id: `${maxId + 1}`,
+                            title: `${this.state.currentAdapter}`,
+                            // type: "empty",
+                            x: 200 + (maxX + minX)/2,
+                            y: (maxY + minY)/2,
+                            adapter: this.props.adapters.filter(ad => ad.id === this.state.currentAdapter)[0]
+                          };
+                          const newNodes = this.state.graphNodes;
+                          newNodes.push(newNode);
+                          this.setState({
+                            graphNodes: newNodes,
+                            selected: null,
+                            currentAction: "",
+                            currentAdapter: "",
+                            currentInput: ""
+                          });
+                        }}
+                        type="primary"
+                      >OK</Button>
+                      <Button
+                        style={{ float: "right", margin: "5px" }}
+                        onClick={this.onClear}
+                      >Clear</Button>
+                    </span> : null
+                  }
+                  { this.state.selected && this.state.currentAction === "add-a-new-edge"
+                    ? <span>
+                      <p>{`Add A New Edge From Node-${this.state.selected} To:`} </p>
+                      <Dropdown overlay={this.createNodeMenu()}>
+                        { this.state.currentToNode
+                        ? <b>{`Adding A New Edge From Node-${this.state.selected} To Node-${this.state.currentToNode}`}</b>
+                        : <Button><b>Select Node Index</b></Button>}
+                      </Dropdown>
+                      <Button
+                        style={{ float: "right", margin: "5px" }}
+                        disabled={_.isEmpty(this.state.currentToNode)}
+                        onClick={() => {
+                          console.log("adding a new edge to the graph");
+                          const newEdges = this.state.graphEdges;
+                          newEdges.push({
+                            target: this.state.currentToNode,
+                            source: this.state.selected || "",
+                            type: "empty"
+                          });
+                          this.setState({
+                            graphEdges: newEdges,
+                            selected: null,
+                            currentAction: "",
+                            currentAdapter: "",
+                            currentInput: "",
+                            currentToNode: ""
+                          });
+                        }}
+                        type="primary"
+                      >OK</Button>
+                      <Button
+                        style={{ float: "right", margin: "5px" }}
+                        onClick={this.onClear}
+                      >Clear</Button>
+                    </span> : null
+                  }
+                  { this.state.selected && this.state.currentAction === "delete-this-node"
+                    ? <span>
+                      <p>Are you sure you want to delete this node? All inputs/edges of this node will be lost.</p>
+                      <Button
+                        style={{ float: "right", margin: "5px" }}
+                        type="danger"
+                        onClick={() => {
+                          console.log("deleting this node in the graph");
+                          const { selected } = this.state;
+                          const newNodes = this.state.graphNodes.filter(n => n.id !== selected);
+                          const newEdges = this.state.graphEdges.filter(e => e.target !== selected && e.source !== selected );
+                          this.setState({
+                            graphEdges: newEdges,
+                            graphNodes: newNodes,
+                            selected: null,
+                            currentInput: "",
+                            currentAction: "",
+                            currentAdapter: ""
+                          })
+                        }}
+                      >Yes</Button>
+                      <Button
+                        style={{ float: "right", margin: "5px" }}
+                        onClick={this.onClear}
+                        type="primary"
+                      >No</Button>
+                    </span> : null
+                  }
+                  { this.state.selected && this.state.currentAction === "delete-its-edge"
+                    ? <span>
+                      <p>{`Select An Edge From Node-${this.state.selected}:`} </p>
+                      <Dropdown overlay={this.createNodeEdgeMenu()}>
+                        { this.state.currentToNode
+                        ? <b>{`Deleting The Edge From Node-${this.state.selected} To Node-${this.state.currentToNode}`}</b>
+                        : <Button><b>Select Node Index</b></Button>}
+                      </Dropdown>
+                      <Button
+                        style={{ float: "right", margin: "5px" }}
+                        type="danger"
+                        onClick={() => {
+                          console.log("deleting this node in the graph");
+                          const { selected, currentToNode } = this.state;
+                          const newEdges = this.state.graphEdges.filter(e => e.target !== currentToNode && e.source !== selected );
+                          this.setState({
+                            graphEdges: newEdges,
+                            selected: null,
+                            currentInput: "",
+                            currentAction: "",
+                            currentAdapter: "",
+                            currentToNode: ""
+                          })
+                        }}
+                      >Yes</Button>
+                      <Button
+                        style={{ float: "right", margin: "5px" }}
+                        onClick={this.onClear}
+                        type="primary"
+                      >No</Button>
+                    </span> : null
+                  }
                 </Col>
                 <Col span={8}>
                   <Button
@@ -230,7 +489,7 @@ export class CreatePipelineComponent extends React.Component<
                 </Col>
               </Row>
               <Row>
-                <Col span={16} style={{ height: "60vh" }}>
+                <Col span={16} style={{ height: "50vh" }}>
                   <GraphView
                     ref='GraphView'
                     nodeKey="id"
@@ -261,13 +520,14 @@ export class CreatePipelineComponent extends React.Component<
                       const lineOffset = 18;
                       // console.log(data)
                       return (
-                        <text textAnchor="middle" x={0} y={0}>
+                        <text textAnchor="middle" x={0} y={0} fontSize="smaller">
                           {!!title && <tspan x={0} dy={-lineOffset} opacity="1">{title}</tspan>}
+                          {!!id && <tspan x={0} dy={2 * lineOffset} opacity="1">{id}</tspan>}
                         </text>
                       );
                     }}
-                    renderNode={({ data }) => {
-                      // console.log("hello")
+                    renderNode={({ selected }) => {
+                      // console.log(selected);
                       return (
                         <g className="shape" height={100} width={100}>
                           <rect
@@ -275,19 +535,23 @@ export class CreatePipelineComponent extends React.Component<
                             y={-50}
                             width={100}
                             height={100}
-                            fill="#044B94"
+                            fill="#D9EE87"
                             fillOpacity="1"
                           />
                         </g>
                       );
                     }}
+                    maxZoom={1}
                   />
                 </Col>
                 <Col span={7}>
+                  { selectedAdapter !== null && selectedAdapter !== undefined ? <p style={{ margin: "20px 20px"}}>
+                    • <b><u>Function Name</u></b>: {selectedAdapter.id}<br/>
+                    • <b><u>Description</u></b>: {selectedAdapter.description}<br/>
+                  </p> : null}
                   <TextArea
                     style={{ margin: "20px 20px"}}
-                    rows={20}
-                    defaultValue="Details of adapter..."
+                    rows={15}
                     value={this.state.currentInput}
                     onChange={({ target }) => {
                       this.setState({ currentInput: target.value })
@@ -335,15 +599,16 @@ export class CreatePipelineComponent extends React.Component<
                 </Col>
               </Row>
               <Row style={{ margin: "20px 10px"}}>
-                <Input
+                <TextArea
+                  rows={16}
                   value={this.state.pipelineDescription}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => this.setState({ pipelineDescription: event.target.value})}
+                  onChange={({ target }) => this.setState({ pipelineDescription: target.value})}
                   placeholder="Enter Pipeline Description"
                 />
               </Row>
-              <Row style={{ margin: "20px 10px"}}>
+              {/* <Row style={{ margin: "20px 10px"}}>
                 <pre>{JSON.stringify(uploadedPipelineConfig, null, 2)}</pre>
-              </Row>
+              </Row> */}
             </TabPane>
           </Tabs>
         </MyLayout>

@@ -15,7 +15,7 @@
         "optional": false
       }
     },
-    "ouput": {
+    "output": {
       "data": {
         "id": "graph",
         "val": null,
@@ -34,7 +34,7 @@
         "optional": false
       }
     },
-    "ouput": {
+    "output": {
       "data": {
         "id": "graph",
         "val": null,
@@ -73,7 +73,7 @@
         "optional": true
       }
     },
-    "ouput": {
+    "output": {
       "graph": {
         "id": "graph",
         "val": null,
@@ -112,7 +112,7 @@
         "optional": true
       }
     },
-    "ouput": {
+    "output": {
       "data": {
         "id": "string",
         "val": null,
@@ -151,7 +151,7 @@
         "optional": true
       }
     },
-    "ouput": {
+    "output": {
       "data": {
         "id": "string",
         "val": null,
@@ -180,7 +180,7 @@
         "optional": false
       }
     },
-    "ouput": {}
+    "output": {}
   },
   {
     "name": "MergeFunc",
@@ -198,7 +198,7 @@
         "optional": false
       }
     },
-    "ouput": {
+    "output": {
       "data": {
         "id": "graph",
         "val": null,
@@ -247,7 +247,7 @@
         "optional": false
       }
     },
-    "ouput": {}
+    "output": {}
   },
   {
     "name": "Topoflow4ClimateWritePerMonthFunc",
@@ -270,7 +270,7 @@
         "optional": false
       }
     },
-    "ouput": {}
+    "output": {}
   },
   {
     "name": "Topoflow4SoilWriteFunc",
@@ -308,7 +308,7 @@
         "optional": false
       }
     },
-    "ouput": {}
+    "output": {}
   },
   {
     "name": "NC2GeoTiff",
@@ -336,6 +336,6 @@
         "optional": false
       }
     },
-    "ouput": {}
+    "output": {}
   }
 ]
