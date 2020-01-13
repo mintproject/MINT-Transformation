@@ -10,30 +10,24 @@ import { RouterProps } from "react-router";
 import { flaskUrl } from "../store/AdapterStore";
 import queryString from 'query-string';
 import {
-  GraphView,
+  GraphView, INode, IEdge,
 } from "react-digraph";
-
+import _ from "lodash";
+const { TextArea } = Input;
 const { TabPane } = Tabs;
 
 const GraphConfig =  {
   NodeTypes: {
     empty: { // required to show empty nodes
+      typeText: "wat",
       shapeId: "#empty", // relates to the type property of a node
       shape: (
-        <symbol viewBox="0 0 100 100" id="empty" key="0">
-          <circle cx="50" cy="50" r="45"></circle>
+        <symbol viewBox="0 0 50 50" id="empty" key="0">
+          {/* <circle cx="50" cy="50" r="50"></circle> */}
+          <rect x="0" y="0" height="50" width="50"/>
         </symbol>
       )
     },
-    custom: { // required to show empty nodes
-      typeText: "Custom",
-      shapeId: "#custom", // relates to the type property of a node
-      shape: (
-        <symbol viewBox="0 0 50 25" id="custom" key="0">
-          <ellipse cx="50" cy="25" rx="50" ry="25"></ellipse>
-        </symbol>
-      )
-    }
   },
   NodeSubtypes: {},
   EdgeTypes: {
@@ -61,6 +55,10 @@ interface CreatePipelineState {
   currentFileList: UploadFile[],
   pipelineName: string,
   pipelineDescription: string,
+  selected: string | null,
+  graphNodes: INode[],
+  graphEdges: IEdge[],
+  currentInput: string,
 }
 
 @inject((stores: IStore) => ({
@@ -81,6 +79,10 @@ export class CreatePipelineComponent extends React.Component<
     currentFileList: [],
     pipelineName: "",
     pipelineDescription: "",
+    selected: null,
+    graphNodes: [],
+    graphEdges: [],
+    currentInput: ""
   };
 
   componentDidMount() {
@@ -104,6 +106,10 @@ export class CreatePipelineComponent extends React.Component<
       const { data, config } = file.response;
       this.props.setUploadedPipelineData(data);
       this.props.setUploadedPipelineConfig(config);
+      this.setState({
+        graphEdges: this.createGraphEdges(data.edges),
+        graphNodes: this.createGraphNodes(data.nodes),
+      })
     }
     this.setState({ currentFileList: [file] });
   }
@@ -124,7 +130,13 @@ export class CreatePipelineComponent extends React.Component<
     this.props.setUploadedPipelineData(null);
     this.props.setUploadedPipelineConfig(null);
     this.setState({
-      currentFileList: []
+      currentFileList: [],
+      pipelineName: "",
+      pipelineDescription: "",
+      selected: null,
+      graphNodes: [],
+      graphEdges: [],
+      currentInput: ""
     });
     this.props.history.push('/pipeline/create');
   }
@@ -133,9 +145,10 @@ export class CreatePipelineComponent extends React.Component<
     return nodes.map((n, idx) => ({
       id: `${n.id}`,
       title: n.adapter.id,
-      type: "empty",
+      // type: "empty",
       x: 100 + 200*idx,
-      y: 100 + 200*idx,
+      y: 100,
+      adapter: n.adapter
     }))
   }
 
@@ -147,61 +160,152 @@ export class CreatePipelineComponent extends React.Component<
     }))
   }
 
+  onUpdateNode = (node: INode) => {
+    const selectedAdapter =  this.state.graphNodes.filter(n => n.id === node.id)[0].adapter;
+    this.setState({
+      selected: node.id,
+      graphNodes: this.state.graphNodes.map(v => v.id === node.id ? node : v),
+      currentInput: JSON.stringify(_.get(selectedAdapter, "inputs"), null, 2)
+    });
+  };
+
   render() {
     const { uploadedPipelineData, uploadedPipelineConfig } = this.props;
+    const selectedNode = this.state.graphNodes.filter(n => n.id === this.state.selected);
+    const selectedAdapter = _.get(
+      selectedNode[0], "adapter"
+    );
+    var saveDisabled = false;
+    try {
+      JSON.parse(this.state.currentInput);
+    } catch (e) {
+      saveDisabled = true;
+    }
+
     if (uploadedPipelineData === null) {
       return <MyLayout>
         <Upload.Dragger
-            name="files"
-            action={`${flaskUrl}/pipeline/upload_config`}
-            accept=".json,.yml"
-            onChange={this.handleFileChange}
-            multiple={false}
-            fileList={this.state.currentFileList}
-            style={{ height: "100%" }}
-          >
-            <p className="ant-upload-drag-icon">
-              <Icon type="inbox" />
-            </p>
-            <p className="ant-upload-text">Click or drag file to this area to upload</p>
-            <p className="ant-upload-hint">Support for single upload.</p>
-          </Upload.Dragger>
+          name="files"
+          action={`${flaskUrl}/pipeline/upload_config`}
+          accept=".json,.yml"
+          onChange={this.handleFileChange}
+          multiple={false}
+          fileList={this.state.currentFileList}
+          style={{ height: "100%" }}
+        >
+          <p className="ant-upload-drag-icon">
+            <Icon type="inbox" />
+          </p>
+          <p className="ant-upload-text">Click or drag file to this area to upload</p>
+          <p className="ant-upload-hint">Support for single upload.</p>
+        </Upload.Dragger>
       </MyLayout>
     } else {
       return (
         <MyLayout> 
           <Tabs
             defaultActiveKey="adapters"
-            tabPosition="left"
+            // tabPosition="left"
             style={{ overflowY: "auto", height: "100%" }}
           >
             <TabPane tab="Adapters" key="adapters" style={{ height: "600px" }}>
-              <GraphView
-                ref='GraphView'
-                nodeKey="id"
-                nodes={this.createGraphNodes(uploadedPipelineData.nodes)}
-                edges={this.createGraphEdges(uploadedPipelineData.edges)}
-                selected={{}}
-                nodeTypes={GraphConfig.NodeTypes}
-                nodeSubtypes={GraphConfig.NodeSubtypes}
-                edgeTypes={GraphConfig.EdgeTypes}
-                // onSelectNode={this.onSelectNode}
-                // onCreateNode={this.onCreateNode}
-                // onUpdateNode={this.onUpdateNode}
-                // onDeleteNode={this.onDeleteNode}
-                // onSelectEdge={this.onSelectEdge}
-                // onCreateEdge={this.onCreateEdge}
-                // onSwapEdge={this.onSwapEdge}
-                // onDeleteEdge={this.onDelet() => console.log("does nothing")
-                onSelectNode={() => console.log("does nothing")}
-                onCreateNode={() => console.log("does nothing")}
-                onUpdateNode={() => console.log("does nothing")}
-                onDeleteNode={() => console.log("does nothing")}
-                onSelectEdge={() => console.log("does nothing")}
-                onCreateEdge={() => console.log("does nothing")}
-                onSwapEdge={() => console.log("does nothing")}
-                onDeleteEdge={() => console.log("does nothing")}
-              />
+              <Row style={{ margin: "20px 0px"}}>
+                <Col span={16}>
+                  <p>* Click on adapter component to edit.</p>
+                </Col>
+                <Col span={8}>
+                  <Button
+                    key="discard" onClick={this.handleCancel}
+                    style={{ margin: "10px", float: "right" }}
+                  >
+                    Discard
+                  </Button>
+                  <Button
+                    key="submit" type="primary"
+                    onClick={this.handleSubmit}
+                    style={{ margin: "10px", float: "right" }}
+                  >
+                    Submit
+                  </Button>
+                </Col>
+              </Row>
+              <Row>
+                <Col span={16} style={{ height: "60vh" }}>
+                  <GraphView
+                    ref='GraphView'
+                    nodeKey="id"
+                    nodes={this.state.graphNodes}
+                    edges={this.state.graphEdges}
+                    selected={{}}
+                    nodeTypes={GraphConfig.NodeTypes}
+                    nodeSubtypes={GraphConfig.NodeSubtypes}
+                    edgeTypes={GraphConfig.EdgeTypes}
+                    // onSelectNode={this.onSelectNode}
+                    // onCreateNode={this.onCreateNode}
+                    onUpdateNode={this.onUpdateNode}
+                    // onDeleteNode={this.onDeleteNode}
+                    // onSelectEdge={this.onSelectEdge}
+                    // onCreateEdge={this.onCreateEdge}
+                    // onSwapEdge={this.onSwapEdge}
+                    // onDeleteEdge={this.onDelet() => console.log("does nothing")
+                    onSelectNode={() => console.log("does nothing")}
+                    onCreateNode={() => console.log("does nothing")}
+                    // onUpdateNode={() => console.log("does nothing")}
+                    onDeleteNode={() => console.log("does nothing")}
+                    onSelectEdge={() => console.log("does nothing")}
+                    onCreateEdge={() => console.log("does nothing")}
+                    onSwapEdge={() => console.log("does nothing")}
+                    onDeleteEdge={() => console.log("does nothing")}
+                    renderNodeText={(data: any, id: string | number, isSelected: boolean) => {
+                      const { title } = data;
+                      const lineOffset = 18;
+                      // console.log(data)
+                      return (
+                        <text textAnchor="middle" x={0} y={0}>
+                          {!!title && <tspan x={0} dy={-lineOffset} opacity="1">{title}</tspan>}
+                        </text>
+                      );
+                    }}
+                    renderNode={({ data }) => {
+                      // console.log("hello")
+                      return (
+                        <g className="shape" height={100} width={100}>
+                          <rect
+                            x={-50}
+                            y={-50}
+                            width={100}
+                            height={100}
+                            fill="#044B94"
+                            fillOpacity="1"
+                          />
+                        </g>
+                      );
+                    }}
+                  />
+                </Col>
+                <Col span={7}>
+                  <TextArea
+                    style={{ margin: "20px 20px"}}
+                    rows={20}
+                    defaultValue="Details of adapter..."
+                    value={this.state.currentInput}
+                    onChange={({ target }) => {
+                      this.setState({ currentInput: target.value })
+                    }}
+                  />
+                  <Button
+                    disabled={selectedAdapter === null || saveDisabled}
+                    onClick={() => {
+                      const newAdapter = Object.assign(selectedNode[0].adapter, { inputs: JSON.parse(this.state.currentInput)});
+                      const newNode = Object.assign(selectedNode[0], { adapter: newAdapter });
+                      this.setState({
+                        graphNodes: this.state.graphNodes.map(v => v.id === this.state.selected ? newNode : v)
+                      });
+                    }}
+                    style={{ float: "right" }}
+                  > Save </Button>
+                </Col>
+              </Row>
               {/* <pre>{JSON.stringify(uploadedPipelineData, null, 2)}</pre> */}
             </TabPane>
             <TabPane tab="Metadata" key="metadata">
