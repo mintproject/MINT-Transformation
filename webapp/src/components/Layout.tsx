@@ -75,7 +75,7 @@ export default class MyLayout extends React.Component<LayoutProps> {
           {children}
         </div>
         </Content>
-        <Footer style={{ textAlign: 'center', verticalAlign: "bottom" }}>Ant Design ©2018 Created by Ant UED</Footer>
+        <Footer style={{ textAlign: 'center', verticalAlign: "bottom" }}>MINT ©2020 Created by USC ISI</Footer>
       </Layout>
     );
   }

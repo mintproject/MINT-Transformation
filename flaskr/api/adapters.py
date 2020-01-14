@@ -22,6 +22,4 @@ def list_adapters():
             "inputs": ad["input"],
             "outputs": ad["output"]
         } for ad in adapters]
-    print("I'm returning")
-    print(parsed_adapters[0])
     return jsonify(parsed_adapters)

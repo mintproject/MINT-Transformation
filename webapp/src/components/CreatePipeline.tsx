@@ -44,9 +44,9 @@ const GraphConfig =  {
 
 interface CreatePipelineProps extends RouterProps {
   uploadedPipelineData: UploadedPipelineDataType | null,
-  uploadedPipelineConfig: object | null,
+  graphCreated: boolean,
   setUploadedPipelineData: (uploadedPipeline: UploadedPipelineDataType | null) => any,
-  setUploadedPipelineConfig: (uploadedPipelineConfig: object | null) => any,
+  setGraphCreated: (graphCreated: boolean) => any,
   setUploadedPipelineFromDcat: (dcatId: string) => any,
   location: Location,
   createPipeline: (pipelineName: string, pipelineDescription: string, graphNodes: NodeType[], graphEdges: EdgeType[]) => any,
@@ -68,10 +68,10 @@ interface CreatePipelineState {
 
 @inject((stores: IStore) => ({
   uploadedPipelineData: stores.pipelineStore.uploadedPipelineData,
-  uploadedPipelineConfig: stores.pipelineStore.uploadedPipelineConfig,
+  graphCreated: stores.pipelineStore.graphCreated,
   location: stores.routing.location,
   createPipeline: stores.pipelineStore.createPipeline,
-  setUploadedPipelineConfig: stores.pipelineStore.setUploadedPipelineConfig,
+  setGraphCreated: stores.pipelineStore.setGraphCreated,
   setUploadedPipelineData: stores.pipelineStore.setUploadedPipelineData,
   setUploadedPipelineFromDcat: stores.pipelineStore.setUploadedPipelineFromDcat,
   adapters: stores.adapterStore.adapters,
@@ -108,15 +108,27 @@ export class CreatePipelineComponent extends React.Component<
     this.props.getAdapters();
   }
 
+  componentDidUpdate(prevProps: CreatePipelineProps) {
+    if (
+      prevProps.uploadedPipelineData !== this.props.uploadedPipelineData
+      && this.props.uploadedPipelineData !== null
+    ) {
+      this.setState({
+        graphNodes: this.createGraphNodes(this.props.uploadedPipelineData.nodes),
+        graphEdges: this.createGraphEdges(this.props.uploadedPipelineData.edges),
+      });
+    }
+  }
+
   handleFileChange = (info: UploadChangeParam<UploadFile>) => {
     const fileList = [...info.fileList];
     const file = fileList.slice(-1)[0];
     if (file.response && file.response.error) {
       message.info(`${file.response.error}`);
     } else if (file.response && file.response.data) {
-      const { data, config } = file.response;
+      const { data } = file.response;
       this.props.setUploadedPipelineData(data);
-      this.props.setUploadedPipelineConfig(config);
+      this.props.setGraphCreated(true);
       this.setState({
         graphEdges: this.createGraphEdges(data.edges),
         graphNodes: this.createGraphNodes(data.nodes),
@@ -132,13 +144,13 @@ export class CreatePipelineComponent extends React.Component<
       this.createNodes(graphNodes), this.createEdges(graphEdges)
     );
     this.props.setUploadedPipelineData(null);
-    this.props.setUploadedPipelineConfig(null);
+    this.props.setGraphCreated(false);
     this.props.history.push('/pipelines');
   }
 
   handleCancel = () => {
     this.props.setUploadedPipelineData(null);
-    this.props.setUploadedPipelineConfig(null);
+    this.props.setGraphCreated(false);
     this.setState({
       currentFileList: [],
       pipelineName: "",
@@ -175,7 +187,7 @@ export class CreatePipelineComponent extends React.Component<
     const { graphNodes } = this.state;
     var maxX = Number.NEGATIVE_INFINITY, maxY = Number.NEGATIVE_INFINITY;
     var minX = Number.POSITIVE_INFINITY, minY = Number.POSITIVE_INFINITY;
-    var maxId = 0;
+    var maxId = -1;
     for (var i = 0; i < graphNodes.length; i++) {
       const nodeId = parseInt(graphNodes[i].id);
       const nodeX = Number(graphNodes[i].x);
@@ -195,6 +207,12 @@ export class CreatePipelineComponent extends React.Component<
       if (nodeY < minY) {
         minY = nodeY;
       }
+    }
+    if (graphNodes.length < 1) {
+      maxX = 300;
+      maxY = 300;
+      minX = 300;
+      minY = 300;
     }
     return { maxX, maxY, minX, minY, maxId }
   }
@@ -274,7 +292,7 @@ export class CreatePipelineComponent extends React.Component<
   }
 
   render() {
-    const { uploadedPipelineData, uploadedPipelineConfig } = this.props;
+    const { graphCreated } = this.props;
     const selectedNode = this.state.graphNodes.filter(n => n.id === this.state.selected);
     const selectedAdapter = _.get(
       selectedNode[0], "adapter"
@@ -286,23 +304,31 @@ export class CreatePipelineComponent extends React.Component<
       saveDisabled = true;
     }
 
-    if (uploadedPipelineData === null) {
+    if (!graphCreated) {
       return <MyLayout>
-        <Upload.Dragger
-          name="files"
-          action={`${flaskUrl}/pipeline/upload_config`}
-          accept=".json,.yml"
-          onChange={this.handleFileChange}
-          multiple={false}
-          fileList={this.state.currentFileList}
-          style={{ height: "100%" }}
-        >
-          <p className="ant-upload-drag-icon">
-            <Icon type="inbox" />
-          </p>
-          <p className="ant-upload-text">Click or drag file to this area to upload</p>
-          <p className="ant-upload-hint">Support for single upload.</p>
-        </Upload.Dragger>
+        <Col span={12} style={{ textAlign: "center", height: "100%" }}>
+          <Button size="large" type="primary" icon="plus"
+            onClick={() => this.props.setGraphCreated(true)}
+            style={{ marginTop: "30vh" }}
+          >Click To Start</Button>
+        </Col>
+        <Col span={12} style={{ height: "100%" }}>
+          <Upload.Dragger
+            name="files"
+            action={`${flaskUrl}/pipeline/upload_config`}
+            accept=".json,.yml"
+            onChange={this.handleFileChange}
+            multiple={false}
+            fileList={this.state.currentFileList}
+            style={{ height: "100%" }}
+          >
+            <p className="ant-upload-drag-icon">
+              <Icon type="inbox" />
+            </p>
+            <p className="ant-upload-text">Click or drag file to this area to upload</p>
+            <p className="ant-upload-hint">Support for single upload.</p>
+          </Upload.Dragger>
+        </Col>
       </MyLayout>
     } else {
       return (
@@ -315,9 +341,17 @@ export class CreatePipelineComponent extends React.Component<
             <TabPane tab="Adapters" key="adapters" style={{ height: "600px" }}>
               <Row style={{ margin: "20px 0px"}}>
                 <Col span={16}>
-                  { _.isEmpty(this.state.selected) ? <b>* Click on adapter component to edit.</b> : null}
+                  { _.isEmpty(this.state.selected) && _.isEmpty(this.state.currentAction) ?
+                    <p>
+                      <b>* Click on node to edit</b> OR <Button
+                        style={{ margin: "5px" }}
+                        onClick={() => this.setState({ currentAction: "add-a-new-node"})}
+                      >Add A New Node</Button>
+                    </p>
+                    : null
+                  }
                   { this.state.selected && _.isEmpty(this.state.currentAction) ? <span>
-                    <p>Select an action: </p>
+                    <p>{`Select an action on Node-${this.state.selected}: `}</p>
                     <Button
                       style={{ margin: "5px" }}
                       onClick={() => this.setState({ currentAction: "add-a-new-node"})}
@@ -334,8 +368,13 @@ export class CreatePipelineComponent extends React.Component<
                       style={{ margin: "5px" }}
                       onClick={() => this.setState({ currentAction: "delete-its-edge"})}
                     >Delete Its Edge</Button>
+                    <Button
+                      style={{ margin: "5px" }}
+                      onClick={() => this.setState({ selected: null })}
+                      type="dashed"
+                    >Cancel</Button>
                   </span> : null}
-                  { this.state.selected && this.state.currentAction === "add-a-new-node"
+                  { this.state.currentAction === "add-a-new-node"
                     ? <span>
                       <p>Add A New Node: </p>
                       <Dropdown overlay={this.createAdapterMenu()}>
@@ -349,6 +388,7 @@ export class CreatePipelineComponent extends React.Component<
                         onClick={() => {
                           console.log("adding a new node to the graph");
                           const { maxX, maxY, minX, minY, maxId } = this.findBoundingBoxGraphNodes();
+                          console.log(maxX, maxY, minX, minY);
                           const newNode: INode = {
                             id: `${maxId + 1}`,
                             title: `${this.state.currentAdapter}`,
@@ -375,7 +415,7 @@ export class CreatePipelineComponent extends React.Component<
                       >Clear</Button>
                     </span> : null
                   }
-                  { this.state.selected && this.state.currentAction === "add-a-new-edge"
+                  { this.state.currentAction === "add-a-new-edge"
                     ? <span>
                       <p>{`Add A New Edge From Node-${this.state.selected} To:`} </p>
                       <Dropdown overlay={this.createNodeMenu()}>
@@ -411,7 +451,7 @@ export class CreatePipelineComponent extends React.Component<
                       >Clear</Button>
                     </span> : null
                   }
-                  { this.state.selected && this.state.currentAction === "delete-this-node"
+                  { this.state.currentAction === "delete-this-node"
                     ? <span>
                       <p>Are you sure you want to delete this node? All inputs/edges of this node will be lost.</p>
                       <Button
@@ -439,7 +479,7 @@ export class CreatePipelineComponent extends React.Component<
                       >No</Button>
                     </span> : null
                   }
-                  { this.state.selected && this.state.currentAction === "delete-its-edge"
+                  { this.state.currentAction === "delete-its-edge"
                     ? <span>
                       <p>{`Select An Edge From Node-${this.state.selected}:`} </p>
                       <Dropdown overlay={this.createNodeEdgeMenu()}>
@@ -463,6 +503,7 @@ export class CreatePipelineComponent extends React.Component<
                             currentToNode: ""
                           })
                         }}
+                        disabled={this.state.currentToNode === ""}
                       >Yes</Button>
                       <Button
                         style={{ float: "right", margin: "5px" }}

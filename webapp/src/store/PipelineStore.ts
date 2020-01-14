@@ -35,7 +35,7 @@ export class PipelineStore {
   @observable pipelines: PipelineType[] = [];
   @observable currentPipeline: PipelineType | null = null;
   @observable uploadedPipelineData: UploadedPipelineDataType | null = null;
-  @observable uploadedPipelineConfig: object | null = null;
+  @observable graphCreated: boolean = false;
 
   @action.bound getPipelines = () => {
     axios.get(`${flaskUrl}/pipelines`).then(
@@ -72,14 +72,14 @@ export class PipelineStore {
           message.info(`An error has occurred: ${resp.data.error}`); 
         } else {
           this.uploadedPipelineData = resp.data.data;
-          this.uploadedPipelineConfig = resp.data.config;
+          this.graphCreated = true;
         }
       }
     );
   }
 
-  @action.bound setUploadedPipelineConfig = (uploadedPipelineConfig: object | null) => {
-    this.uploadedPipelineConfig = uploadedPipelineConfig;
+  @action.bound setGraphCreated = (graphCreated: boolean) => {
+    this.graphCreated = graphCreated;
   }
 
   @action.bound createPipeline = (

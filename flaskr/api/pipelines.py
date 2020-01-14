@@ -103,7 +103,7 @@ def upload_pipeline_config():
         parser = ConfigParser({})
         parsed_pipeline, parsed_inputs = parser.parse(conf_obj=config)
         display_data = parsed_pipeline.graph_inputs_to_json(parsed_inputs)
-        return jsonify({"data": display_data, "config": config})
+        return jsonify({"data": display_data})
     except Exception as e:
         return jsonify({"error": str(e)})
 
@@ -122,7 +122,7 @@ def get_dcat_config(dcat_id: str):
             parser = ConfigParser({})
             parsed_pipeline, parsed_inputs = parser.parse(conf_obj=dataset_config)
             display_data = parsed_pipeline.graph_inputs_to_json(parsed_inputs)
-            return jsonify({"data": display_data, "config": dataset_config})
+            return jsonify({"data": display_data})
     except Exception as e:
         return jsonify({"error": str(e)})
 
