@@ -27,8 +27,10 @@ export type NodeType = {
 }
 
 export type EdgeType = {
-  source: number,
-  target: number
+  source: string,
+  target: string,
+  input: string,
+  output: string,
 }
 
 export class PipelineStore {

@@ -63,6 +63,8 @@ interface CreatePipelineState {
   currentAction: string,
   currentAdapter: string,
   currentToNode: string,
+  fromNodeOutput: string,
+  toNodeInput: string,
 }
 
 @inject((stores: IStore) => ({
@@ -90,7 +92,9 @@ export class CreatePipelineComponent extends React.Component<
     graphEdges: [],
     currentAction: "",
     currentAdapter: "",
-    currentToNode: ""
+    currentToNode: "",
+    fromNodeOutput: "",
+    toNodeInput: "",
   };
 
   componentDidMount() {
@@ -216,22 +220,22 @@ export class CreatePipelineComponent extends React.Component<
   }
 
   createGraphEdges = (edges: EdgeType[]) => {
-    return edges.map((e, idx) => ({
-      target: `${e.target}`,
-      source: `${e.source}`,
-      type: "emptyEdge"
+    return edges.map(e => ({
+      ...e,
+      type: "emptyEdge",
     }))
   }
 
   createEdges = (edges: IEdge[]) => {
     return edges.map(e => ({
-      source: parseInt(e.source),
-      target: parseInt(e.target)
+      source: e.source,
+      target: e.target,
+      input: e.input,
+      output: e.output,
     }))
   }
 
   onUpdateNode = (node: INode) => {
-    const selectedAdapter =  this.state.graphNodes.filter(n => n.id === node.id)[0].adapter;
     this.setState({
       selected: node.id,
       graphNodes: this.state.graphNodes.map(v => v.id === node.id ? node : v)
@@ -250,7 +254,20 @@ export class CreatePipelineComponent extends React.Component<
     </Menu>);
   };
 
-  createNodeMenu = () => {
+  createFromNodeOutputMenu = () => {
+    const selectedAdapter = this.state.graphNodes.filter(n => n.id === this.state.selected)[0].adapter;
+    return (<Menu onClick={({ item }) => {
+      this.setState({ fromNodeOutput: item.props.children });
+      }}>
+      {Object.keys(selectedAdapter.outputs).map((k, idx) => {
+        return (<Menu.Item key={`output-${idx}`}>
+          {k}
+        </Menu.Item>);
+      })}
+    </Menu>);
+  };
+
+  createToNodeMenu = () => {
     return (<Menu onClick={({ item }) => {
       this.setState({ currentToNode: item.props.children });
       }}>
@@ -262,17 +279,36 @@ export class CreatePipelineComponent extends React.Component<
     </Menu>);
   };
 
-  createNodeEdgeMenu = () => {
-    const outgoingEdges = this.state.graphEdges.filter(e => e.source === this.state.selected);
-    const targetNodeIds = outgoingEdges.map(e => e.target);
-    const targetNodes: INode[] = this.state.graphNodes.filter(n => targetNodeIds.includes(n.id));
+  createToNodeInputMenu = () => {
+    const selectedAdapter = this.state.graphNodes.filter(n => n.id === this.state.currentToNode)[0].adapter;
     return (<Menu onClick={({ item }) => {
-      this.setState({ currentToNode: item.props.children });
+      this.setState({ toNodeInput: item.props.children });
+      }}>
+      {Object.keys(selectedAdapter.inputs).map((k, idx) => {
+        return (<Menu.Item key={`input-${idx}`}>
+          {k}
+        </Menu.Item>);
+      })}
+    </Menu>);
+  };
+
+  createNodeEdgeMenu = () => {
+    const nodeEdges = this.state.graphEdges.filter(
+      e => e.source === this.state.selected || e.target === this.state.selected
+    );
+    return (<Menu onClick={({ key }) => {
+        const updates = key.split("-");
+        this.setState({
+          selected: updates[0],
+          fromNodeOutput: updates[1],
+          currentToNode: updates[2],
+          toNodeInput: updates[3]
+        });
       }}>
       {
-      targetNodes.map((node, idx) => {
-        return (<Menu.Item key={`node-${idx}`}>
-          {node.id}
+      nodeEdges.map((e, idx) => {
+        return (<Menu.Item key={`${e.source}-${e.output}-${e.target}-${e.input}`}>
+          {`Node-${e.source}.${e.output} => Node-${e.target}.${e.input}`}
         </Menu.Item>);
       })}
     </Menu>);
@@ -283,7 +319,9 @@ export class CreatePipelineComponent extends React.Component<
       selected: null,
       currentAction: "",
       currentAdapter: "",
-      currentToNode: ""
+      currentToNode: "",
+      toNodeInput: "",
+      fromNodeOutput: ""
     });
   }
 
@@ -378,7 +416,6 @@ export class CreatePipelineComponent extends React.Component<
                         onClick={() => {
                           console.log("adding a new node to the graph");
                           const { maxX, maxY, minX, minY, maxId } = this.findBoundingBoxGraphNodes();
-                          console.log(maxX, maxY, minX, minY);
                           const newNode: INode = {
                             id: `${maxId + 1}`,
                             title: `${this.state.currentAdapter}`,
@@ -406,37 +443,56 @@ export class CreatePipelineComponent extends React.Component<
                   }
                   { this.state.currentAction === "add-a-new-edge"
                     ? <span>
-                      <p>{`Add A New Edge From Node-${this.state.selected} To:`} </p>
-                      <Dropdown overlay={this.createNodeMenu()}>
-                        { this.state.currentToNode
-                        ? <b>{`Adding A New Edge From Node-${this.state.selected} To Node-${this.state.currentToNode}`}</b>
-                        : <Button><b>Select Node Index</b></Button>}
-                      </Dropdown>
-                      <Button
-                        style={{ float: "right", margin: "5px" }}
-                        disabled={_.isEmpty(this.state.currentToNode)}
-                        onClick={() => {
-                          console.log("adding a new edge to the graph");
-                          const newEdges = this.state.graphEdges;
-                          newEdges.push({
-                            target: this.state.currentToNode,
-                            source: this.state.selected || "",
-                            type: "empty"
-                          });
-                          this.setState({
-                            graphEdges: newEdges,
-                            selected: null,
-                            currentAction: "",
-                            currentAdapter: "",
-                            currentToNode: ""
-                          });
-                        }}
-                        type="primary"
-                      >OK</Button>
-                      <Button
-                        style={{ float: "right", margin: "5px" }}
-                        onClick={this.onClear}
-                      >Clear</Button>
+                      <p>
+                        {`Add A New Edge From Node-${this.state.selected} `}
+                        <Dropdown overlay={this.createFromNodeOutputMenu()}>
+                          { this.state.fromNodeOutput
+                          ? <b>{ `${this.state.fromNodeOutput}`}</b>
+                          : <Button><b>Select Node Output</b></Button>}
+                        </Dropdown>
+                        {` To `}
+                        <Dropdown overlay={this.createToNodeMenu()}>
+                          { this.state.currentToNode
+                          ? <b>{` Node-${this.state.currentToNode}` }</b>
+                          : <Button><b>Select Node Output</b></Button>}
+                        </Dropdown>
+                        {`   `}
+                        { _.isEmpty(this.state.currentToNode) ? null : <Dropdown overlay={this.createToNodeInputMenu()}>
+                          { this.state.toNodeInput
+                          ? <b>{ `${this.state.toNodeInput}`}</b>
+                          : <Button><b>Select Node Output</b></Button>}
+                        </Dropdown>}
+                        <Button
+                          style={{ float: "right", margin: "5px" }}
+                          disabled={_.isEmpty(this.state.toNodeInput)}
+                          onClick={() => {
+                            console.log("adding a new edge to the graph");
+                            // FIXME: should we update node fields as well?
+                            const newEdges = this.state.graphEdges;
+                            newEdges.push({
+                              target: this.state.currentToNode,
+                              source: this.state.selected || "",
+                              type: "empty",
+                              input: this.state.toNodeInput,
+                              output: this.state.fromNodeOutput
+                            });
+                            this.setState({
+                              graphEdges: newEdges,
+                              selected: null,
+                              currentAction: "",
+                              currentAdapter: "",
+                              currentToNode: "",
+                              toNodeInput: "",
+                              fromNodeOutput: ""
+                            });
+                          }}
+                          type="primary"
+                        >OK</Button>
+                        <Button
+                          style={{ float: "right", margin: "5px" }}
+                          onClick={this.onClear}
+                        >Clear</Button>
+                      </p>
                     </span> : null
                   }
                   { this.state.currentAction === "delete-this-node"
@@ -471,16 +527,22 @@ export class CreatePipelineComponent extends React.Component<
                       <p>{`Select An Edge From Node-${this.state.selected}:`} </p>
                       <Dropdown overlay={this.createNodeEdgeMenu()}>
                         { this.state.currentToNode
-                        ? <b>{`Deleting The Edge From Node-${this.state.selected} To Node-${this.state.currentToNode}`}</b>
-                        : <Button><b>Select Node Index</b></Button>}
+                        ? <b>{
+                          `Deleting The Edge From Node-${this.state.selected}.${this.state.fromNodeOutput}
+                           To Node-${this.state.currentToNode}.${this.state.toNodeInput}`}</b>
+                        : <Button><b>Select Node Edges</b></Button>}
                       </Dropdown>
                       <Button
                         style={{ float: "right", margin: "5px" }}
                         type="danger"
                         onClick={() => {
                           console.log("deleting this node in the graph");
-                          const { selected, currentToNode } = this.state;
-                          const newEdges = this.state.graphEdges.filter(e => e.target !== currentToNode && e.source !== selected );
+                          const { selected, currentToNode, fromNodeOutput, toNodeInput } = this.state;
+                          // FIXME: should we update graphNodes as well?
+                          const newEdges = this.state.graphEdges.filter(
+                            e => e.target !== currentToNode || e.source !== selected
+                            || e.input !== toNodeInput || e.output !== fromNodeOutput
+                          );
                           this.setState({
                             graphEdges: newEdges,
                             selected: null,
@@ -602,11 +664,19 @@ export class CreatePipelineComponent extends React.Component<
                                 borderRadius: "5px",
                                 width: "100%"
                               }}
+                              disabled={selectedAdapter.inputs[ip].id === "graph"}
                             />
                           </p>
                         );
                       })}
                     </form>
+                    <p style={{ margin: "20px 20px"}}><b>Wiring of this adapter:</b></p>
+                    {this.state.graphEdges.filter(e => e.source === this.state.selected || e.target === this.state.selected)
+                    .map((e, idx) => {
+                      return (<p style={{ margin: "20px 20px"}} key={`edge-${idx}`}>
+                        • {`Node-${e.source}`}.{e.output} <b>=></b> {`Node-${e.target}`}.{e.input}
+                      </p>);
+                    })}
                   </React.Fragment>
                   : null}
                 </Col>
