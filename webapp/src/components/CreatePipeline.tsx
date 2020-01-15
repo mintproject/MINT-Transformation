@@ -60,7 +60,6 @@ interface CreatePipelineState {
   selected: string | null,
   graphNodes: INode[],
   graphEdges: IEdge[],
-  currentInput: string,
   currentAction: string,
   currentAdapter: string,
   currentToNode: string,
@@ -89,7 +88,6 @@ export class CreatePipelineComponent extends React.Component<
     selected: null,
     graphNodes: [],
     graphEdges: [],
-    currentInput: "",
     currentAction: "",
     currentAdapter: "",
     currentToNode: ""
@@ -110,6 +108,7 @@ export class CreatePipelineComponent extends React.Component<
 
   componentDidUpdate(prevProps: CreatePipelineProps) {
     if (
+      // Integration with dcat
       prevProps.uploadedPipelineData !== this.props.uploadedPipelineData
       && this.props.uploadedPipelineData !== null
     ) {
@@ -158,7 +157,6 @@ export class CreatePipelineComponent extends React.Component<
       selected: null,
       graphNodes: [],
       graphEdges: [],
-      currentInput: "",
       currentAction: "",
       currentAdapter: ""
     });
@@ -236,8 +234,7 @@ export class CreatePipelineComponent extends React.Component<
     const selectedAdapter =  this.state.graphNodes.filter(n => n.id === node.id)[0].adapter;
     this.setState({
       selected: node.id,
-      graphNodes: this.state.graphNodes.map(v => v.id === node.id ? node : v),
-      currentInput: JSON.stringify(_.get(selectedAdapter, "inputs"), null, 2)
+      graphNodes: this.state.graphNodes.map(v => v.id === node.id ? node : v)
     });
   };
 
@@ -284,7 +281,6 @@ export class CreatePipelineComponent extends React.Component<
   onClear = () => {
     this.setState({
       selected: null,
-      currentInput: "",
       currentAction: "",
       currentAdapter: "",
       currentToNode: ""
@@ -297,12 +293,6 @@ export class CreatePipelineComponent extends React.Component<
     const selectedAdapter = _.get(
       selectedNode[0], "adapter"
     );
-    var saveDisabled = false;
-    try {
-      JSON.parse(this.state.currentInput);
-    } catch (e) {
-      saveDisabled = true;
-    }
 
     if (!graphCreated) {
       return <MyLayout>
@@ -403,8 +393,7 @@ export class CreatePipelineComponent extends React.Component<
                             graphNodes: newNodes,
                             selected: null,
                             currentAction: "",
-                            currentAdapter: "",
-                            currentInput: ""
+                            currentAdapter: ""
                           });
                         }}
                         type="primary"
@@ -439,7 +428,6 @@ export class CreatePipelineComponent extends React.Component<
                             selected: null,
                             currentAction: "",
                             currentAdapter: "",
-                            currentInput: "",
                             currentToNode: ""
                           });
                         }}
@@ -466,7 +454,6 @@ export class CreatePipelineComponent extends React.Component<
                             graphEdges: newEdges,
                             graphNodes: newNodes,
                             selected: null,
-                            currentInput: "",
                             currentAction: "",
                             currentAdapter: ""
                           })
@@ -497,7 +484,6 @@ export class CreatePipelineComponent extends React.Component<
                           this.setState({
                             graphEdges: newEdges,
                             selected: null,
-                            currentInput: "",
                             currentAction: "",
                             currentAdapter: "",
                             currentToNode: ""
@@ -530,7 +516,7 @@ export class CreatePipelineComponent extends React.Component<
                 </Col>
               </Row>
               <Row>
-                <Col span={16} style={{ height: "50vh" }}>
+                <Col span={!_.isEmpty(selectedAdapter) ? 16 : 24} style={{ height: "50vh" }}>
                   <GraphView
                     ref='GraphView'
                     nodeKey="id"
@@ -585,30 +571,44 @@ export class CreatePipelineComponent extends React.Component<
                     maxZoom={1}
                   />
                 </Col>
-                <Col span={7}>
-                  { selectedAdapter !== null && selectedAdapter !== undefined ? <p style={{ margin: "20px 20px"}}>
-                    • <b><u>Function Name</u></b>: {selectedAdapter.id}<br/>
-                    • <b><u>Description</u></b>: {selectedAdapter.description}<br/>
-                  </p> : null}
-                  <TextArea
-                    style={{ margin: "20px 20px"}}
-                    rows={15}
-                    value={this.state.currentInput}
-                    onChange={({ target }) => {
-                      this.setState({ currentInput: target.value })
-                    }}
-                  />
-                  <Button
-                    disabled={selectedAdapter === null || saveDisabled}
-                    onClick={() => {
-                      const newAdapter = Object.assign(selectedNode[0].adapter, { inputs: JSON.parse(this.state.currentInput)});
-                      const newNode = Object.assign(selectedNode[0], { adapter: newAdapter });
-                      this.setState({
-                        graphNodes: this.state.graphNodes.map(v => v.id === this.state.selected ? newNode : v)
-                      });
-                    }}
-                    style={{ float: "right" }}
-                  > Save </Button>
+                <Col span={!_.isEmpty(selectedAdapter) ? 8 : 1}>
+                  { !_.isEmpty(selectedAdapter) ?
+                  <React.Fragment>
+                    <p style={{ margin: "20px 20px"}}>
+                      • <b><u>Function Name</u></b>: {selectedAdapter.id}<br/>
+                      • <b><u>Description</u></b>: {selectedAdapter.description}<br/>
+                    </p>
+                    <p style={{ margin: "20px 20px"}}><b>Inputs to adapter: </b></p>
+                    <form>
+                      {Object.keys(selectedAdapter.inputs).map((ip, idx) => {
+                        return (
+                          <p key={`input-${idx}`} style={{ margin: "20px 20px"}}>
+                            {`${ip}: `}
+                            <input
+                              name={ip}
+                              type="text"
+                              required={selectedAdapter.inputs[ip].optional}
+                              value={selectedAdapter.inputs[ip].val || ""}
+                              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                const { currentTarget } = event;
+                                var newNodes = this.state.graphNodes;
+                                var newNode = newNodes.filter(n => n.id === this.state.selected)[0];
+                                newNode.adapter.inputs[currentTarget.name].val = currentTarget.value;
+                                this.setState({ graphNodes: newNodes });
+                              }}
+                              style={{
+                                padding:"5px",
+                                border:"2px solid",
+                                borderRadius: "5px",
+                                width: "100%"
+                              }}
+                            />
+                          </p>
+                        );
+                      })}
+                    </form>
+                  </React.Fragment>
+                  : null}
                 </Col>
               </Row>
               {/* <pre>{JSON.stringify(uploadedPipelineData, null, 2)}</pre> */}

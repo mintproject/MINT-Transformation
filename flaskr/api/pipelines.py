@@ -67,8 +67,8 @@ def list_pipeline(pipeline_id):
 
 @pipelines_blueprint.route('/pipeline/create', methods=["POST"])
 def create_pipeline():
-    pipeline_name = request.json.get("name", "")
-    pipeline_description = request.json.get("description", "")
+    pipeline_name = request.json.get("name", "Unnamed")
+    pipeline_description = request.json.get("description", "No Description")
     pipeline_nodes = request.json.get("nodes", "")
     pipeline_edges = request.json.get("edges", "")
     try:

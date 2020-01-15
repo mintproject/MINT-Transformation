@@ -4,9 +4,15 @@ import axios from "axios";
 export type AdapterType = {
   id: string,
   description: string,
-  inputs: { [key: string]: any; },
-  ouputs: { [key: string]: any; }
+  inputs: { [key: string]: AdapterInputType; },
+  ouputs: { [key: string]: AdapterInputType; }
 };
+
+export type AdapterInputType = {
+  id: string,
+  optional: boolean,
+  val: string | null,
+}
 
 // FIXME: should pass in backend url via env var
 export const flaskUrl = "http://localhost:5000/api"
