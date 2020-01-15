@@ -68,7 +68,17 @@ class Pipeline(object):
         self.schema = Schema.from_dict(self.schema)
 
     def exec(self, inputs: dict) -> dict:
-        inputs = self.inputs_to_func_order(inputs)
+        inputs_copy = {}
+        for arg in inputs:
+            if isinstance(arg, WiredIOArg):
+                if arg.func_idx is None:
+                    func_idx = self.get_func_order(arg.func_id)
+                else:
+                    func_idx = arg.func_idx
+                inputs_copy[WiredIOArg.get_arg_name(arg.func_id, func_idx, arg.name)] = inputs[arg]
+            else:
+                inputs_copy[arg] = inputs[arg]
+        inputs = inputs_copy
         self.validate(inputs)
 
         output = {}
@@ -128,18 +138,6 @@ class Pipeline(object):
     def load(load_path: Union[str, Path]):
         pass
 
-    def inputs_to_func_order(self, inputs: dict) -> dict:
-        inputs_copy = {}
-        for arg in inputs:
-            if isinstance(arg, WiredIOArg):
-                if arg.func_idx is None:
-                    func_idx = self.get_func_order(arg.func_id)
-                else:
-                    func_idx = arg.func_idx
-                inputs_copy[WiredIOArg.get_arg_name(arg.func_id, func_idx, arg.name)] = inputs[arg]
-            else:
-                inputs_copy[arg] = inputs[arg]
-        return inputs_copy
 
 
 

@@ -25,16 +25,6 @@ class IFunc(metaclass=IFuncIO):
     inputs: Dict[str, ArgType] = {}
     outputs: Dict[str, ArgType] = {}
 
-    # TODO: hierarchical serialization
-    @classmethod
-    def to_dict(cls) -> Dict[str, Any]:
-        return {
-            "id": cls.id,
-            "description": cls.description,
-            "inputs": {i: cls.inputs[i].to_dict() for i in cls.inputs},
-            "outputs": {o: cls.outputs[o].to_dict() for o in cls.outputs},
-        }
-
     @abc.abstractmethod
     def validate(self) -> bool:
         """
