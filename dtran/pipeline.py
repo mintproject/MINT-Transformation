@@ -141,36 +141,6 @@ class Pipeline(object):
                 inputs_copy[arg] = inputs[arg]
         return inputs_copy
 
-    def graph_inputs_to_json(self, inputs: dict) -> dict:
-        inputs = self.inputs_to_func_order(inputs)
-        self.validate(inputs)
-
-        nodes, edges = [], []
-        for i, func_cls in enumerate(self.func_classes):
-            node_class = func_cls.to_dict()
-            for argname in func_cls.inputs.keys():
-                gname = WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)
-                if gname in self.wired and i > 0:
-                    edges.append({
-                        "source": i - 1,
-                        "target": i,
-                    })
-                try:
-                    node_class["inputs"][argname]["val"] = inputs[gname]
-                except KeyError as e:
-                    if argname == "graph" or func_cls.inputs[argname].optional:
-                        continue
-                    raise e
-            nodes.append({
-                "id": i,
-                "adapter": node_class,
-            })
-
-        return {
-            "nodes": nodes,
-            "edges": edges
-        }
-
 
 
 

@@ -16,14 +16,6 @@ class ArgType(object):
     Boolean: 'ArgType' = None
     DateTime: 'ArgType' = None
 
-    # TODO: hierarchical serialization
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "optional": self.optional,
-            "val": self.val
-        }
-
     def __init__(self, id: str, optional: bool = False, val: Any = None,
                  validate: Callable[[Any], bool] = lambda val: True, from_str: Callable[[str], Any] = lambda val: val):
         self.id = id

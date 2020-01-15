@@ -72,7 +72,7 @@ def create_pipeline():
     pipeline_nodes = request.json.get("nodes", "")
     pipeline_edges = request.json.get("edges", "")
     try:
-        # TODO: de-serialize the pipeline here
+        # TODO: de-serialize the pipeline here and get config
         # run_pipeline(pipeline_name, pipeline_description, pipeline_config)
         print(json.dumps(pipeline_nodes, indent=2))
         print(json.dumps(pipeline_edges, indent=2))
@@ -102,7 +102,7 @@ def upload_pipeline_config():
     try:
         parser = ConfigParser({})
         parsed_pipeline, parsed_inputs = parser.parse(conf_obj=config)
-        display_data = parsed_pipeline.graph_inputs_to_json(parsed_inputs)
+        # display_data = parsed_pipeline.graph_inputs_to_json(parsed_inputs)
         return jsonify({"data": display_data})
     except Exception as e:
         return jsonify({"error": str(e)})
@@ -121,7 +121,7 @@ def get_dcat_config(dcat_id: str):
         else:
             parser = ConfigParser({})
             parsed_pipeline, parsed_inputs = parser.parse(conf_obj=dataset_config)
-            display_data = parsed_pipeline.graph_inputs_to_json(parsed_inputs)
+            # display_data = parsed_pipeline.graph_inputs_to_json(parsed_inputs)
             return jsonify({"data": display_data})
     except Exception as e:
         return jsonify({"error": str(e)})
