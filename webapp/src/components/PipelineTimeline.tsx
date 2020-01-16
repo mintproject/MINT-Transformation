@@ -49,9 +49,10 @@ export class PipelineTimelineComponent extends React.Component<
   }
 
   render() {
+    // FIXME: loading indicator, not null pipelines
     return (
       <MyLayout>
-        { _.isEmpty(this.props.pipelines) ?
+        { this.props.pipelines === null ?
           <Spin size="large" style={{ textAlign: "center" }}>
             <Alert
               message="Loading pipeline history"
@@ -95,43 +96,46 @@ export class PipelineTimelineComponent extends React.Component<
               </Col>
             </Row>
             {this.props.pipelines.map((pl, index) => <Row
-            key={`row-${index}`}
-            type="flex" align="middle"
-          >
-            <Col span={2} style={{ textAlign: "right" }}>
-              <Title
-                style={{
-                  color: `${_.get(this.statusColorCode, pl.status, "black")}`,
-                }}
-                level={4}
-              >{pl.status}</Title>
-            </Col>
-            <Col span={1}/>
-            <Col span={19}>
-              <Row style={{ margin: "0 0"}}>
-                <Title level={4}>
-                  <Link to={`/pipelines/${pl.id}`} style={{ color: "black" }}>
-                    {pl.name}
-                  </Link>
-                </Title>
-              </Row>
-              <Row style={{ margin: "0 0"}}>
-                <p>{
-                  pl.end_timestamp === ""
-                  ? `Started at ${pl.start_timestamp}, still running`
-                  : `Started at ${pl.start_timestamp}, ended at ${pl.end_timestamp}`
-                }</p>
-              </Row>
-            </Col>
-            <Col span={2}>
-              <Button
-                type="danger"
-                onClick={() => console.log("Doesn't do anything!")}
-                disabled={pl.status !== "running"}
-                style={{ marginRight: "10px"}}
-              >STOP</Button>
-            </Col>
-          </Row>)}
+              key={`row-${index}`}
+              type="flex" align="middle"
+            >
+              <Col span={2} style={{ textAlign: "right" }}>
+                <Title
+                  style={{
+                    color: `${_.get(this.statusColorCode, pl.status, "black")}`,
+                  }}
+                  level={4}
+                >{pl.status}</Title>
+              </Col>
+              <Col span={1}/>
+              <Col span={19}>
+                <Row style={{ margin: "0 0"}}>
+                  <Title level={4}>
+                    <Link to={`/pipelines/${pl.id}`} style={{ color: "black" }}>
+                      {_.isEmpty(pl.name) ? "Unnamed" : pl.name}
+                    </Link>
+                  </Title>
+                </Row>
+                <Row style={{ margin: "0 0"}}>
+                  <p>{
+                    pl.end_timestamp === ""
+                    ? `Started at ${pl.start_timestamp}, still running`
+                    : `Started at ${pl.start_timestamp}, ended at ${pl.end_timestamp}`
+                  }</p>
+                </Row>
+              </Col>
+              <Col span={2}>
+                <Button
+                  type="danger"
+                  onClick={() => console.log("Doesn't do anything!")}
+                  disabled={pl.status !== "running"}
+                  style={{ marginRight: "10px"}}
+                >STOP</Button>
+              </Col>
+            </Row>)}
+            { this.props.pipelines.length === 0 ?
+            <p style={{ textAlign: "center" }}
+            ><b>No pipeline to show :/</b></p> : null}
           </React.Fragment>
         }
       </MyLayout>

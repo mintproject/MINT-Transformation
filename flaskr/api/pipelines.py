@@ -1,7 +1,6 @@
 from flask import Blueprint, jsonify, request
 import json
 import yaml
-from dtran.config_parser import ConfigParser
 from dcatreg.dcat_api import DCatAPI
 from dtran.ui_config_parser import DiGraphSchema
 
@@ -11,6 +10,17 @@ import subprocess
 from dataclasses import dataclass, asdict
 import ujson
 from datetime import datetime
+from collections import OrderedDict
+
+
+def setup_yaml():
+  """ https://stackoverflow.com/a/8661021 """
+  represent_dict_order = lambda self, data:  self.represent_mapping('tag:yaml.org,2002:map', data.items())
+  yaml.add_representer(OrderedDict, represent_dict_order)
+
+
+setup_yaml()
+
 
 @dataclass
 class Pipeline:
@@ -69,18 +79,24 @@ def list_pipeline(pipeline_id):
 
 @pipelines_blueprint.route('/pipeline/create', methods=["POST"])
 def create_pipeline():
-    pipeline_name = request.json.get("name", "Unnamed")
-    pipeline_description = request.json.get("description", "No Description")
-    pipeline_nodes = request.json.get("nodes", "")
-    pipeline_edges = request.json.get("edges", "")
+    pipeline_name = request.json.get("name", "")
+    pipeline_description = request.json.get("description", "")
+    if pipeline_description == "":
+        pipeline_description = "No Description"
+    if pipeline_name == "":
+        pipeline_name = "Unnamed"
+    pipeline_nodes = request.json.get("nodes", [])
+    pipeline_edges = request.json.get("edges", [])
     try:
         # TODO: de-serialize the pipeline here and get config
         pipeline_config = DiGraphSchema().load({
+            "version": "1",
             "description": pipeline_description,
             "nodes": pipeline_nodes,
             "edges": pipeline_edges
+            # TODO: Missing comment
         })
-        run_pipeline(pipeline_name, pipeline_description, pipeline_config)
+        run_pipeline(pipeline_name, pipeline_description, dict(pipeline_config))
         # print(json.dumps(pipeline_nodes, indent=2))
         # print(json.dumps(pipeline_edges, indent=2))
         return jsonify({
@@ -89,7 +105,7 @@ def create_pipeline():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-   
+
 @pipelines_blueprint.route('/pipeline/upload_config', methods=["POST"])
 def upload_pipeline_config():
     if 'files' not in request.files:
@@ -154,7 +170,7 @@ def run_pipeline(name: str, description: str, config: object, id=""):
     host_end_log_file = f"/tmp/run.end.{sess_id}.log"
 
     with open(host_conf_file, "w") as f:
-        yaml.safe_dump(config, f)
+        yaml.dump(config, f)
 
     with open(host_start_log_file, "w") as f, open(host_end_log_file, "w"):
         # TODO: write details of pipeline
@@ -193,7 +209,7 @@ def list_pipeline_detail(id: str):
     with open(host_start_log_file, "r") as f1, open(host_end_log_file, "r") as f2, open(host_conf_file, "r") as f3:
         start_log = json.load(f1)
         end_log = f2.read().splitlines()[0]
-        config = yaml.safe_load(f3)
+        config = yaml.load(f3)
         if end_log:
             status = "finished"
         else:
