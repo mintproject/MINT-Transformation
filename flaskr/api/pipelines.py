@@ -3,6 +3,8 @@ import json
 import yaml
 from dcatreg.dcat_api import DCatAPI
 from dtran.ui_config_parser import DiGraphSchema
+import glob
+import os
 
 from typing import *
 from uuid import uuid4
@@ -12,14 +14,25 @@ import ujson
 from datetime import datetime
 from collections import OrderedDict
 
+TMP_DIR = "/tmp/mintdt"
+
+
+def setup_mintdt():
+    if not os.path.isdir(TMP_DIR):
+        print(f"Creating {TMP_DIR}...")
+        os.mkdir(f"{TMP_DIR}")
+    else:
+        print(f"{TMP_DIR} already exists...")
+
 
 def setup_yaml():
-  """ https://stackoverflow.com/a/8661021 """
-  represent_dict_order = lambda self, data:  self.represent_mapping('tag:yaml.org,2002:map', data.items())
-  yaml.add_representer(OrderedDict, represent_dict_order)
+    """ https://stackoverflow.com/a/8661021 """
+    represent_dict_order = lambda self, data:  self.represent_mapping('tag:yaml.org,2002:map', data.items())
+    yaml.add_representer(OrderedDict, represent_dict_order)
 
 
 setup_yaml()
+setup_mintdt()
 
 
 @dataclass
@@ -61,18 +74,24 @@ def test_func():
 @pipelines_blueprint.route('/pipelines', methods=["GET"])
 def list_pipelines():
     # TODO: add search parameters, list all entries from 'docker ps -a'
-    try:
-        pipelines = list_pipelines_detail()
-        return jsonify(pipelines)
-    except Exception as e:
-        return jsonify({"error": str(e)})
+    # try:
+    pipelines = list_pipelines_detail()
+    # import pdb; pdb.set_trace()
+    return jsonify(pipelines)
+    # except Exception as e:
+    #     print(str(e))
+    #     return jsonify({"error": str(e)})
 
 
 @pipelines_blueprint.route('/pipelines/<pipeline_id>', methods=["GET"])
 def list_pipeline(pipeline_id):
     try:
-        pipeline = list_pipeline_detail(pipeline_id)
-        return jsonify(pipeline)
+        pipeline_ids, pipeline_names = list_all_pipelines_docker()
+        for pid, pn in zip(pipeline_ids, pipeline_names):
+            if pipeline_id == pn:
+                pipeline = list_pipeline_detail(pid, pn)
+                return jsonify(pipeline)
+        return jsonify({"error": "No such pipeline exists!"})
     except Exception as e:
         return jsonify({"error": str(e)})
 
@@ -164,15 +183,18 @@ def run_pipeline(name: str, description: str, config: object, id=""):
             "error": "invalid pipeline id"
         })
 
+    print(f"creating pipeline id: {id}")
+
     sess_id = str(uuid4())
     host_conf_file = f"/tmp/config.{sess_id}.yml"
     host_start_log_file = f"/tmp/run.start.{sess_id}.log"
     host_end_log_file = f"/tmp/run.end.{sess_id}.log"
+    host_cache = f"{TMP_DIR}/{id}.json"
 
     with open(host_conf_file, "w") as f:
         yaml.dump(config, f)
 
-    with open(host_start_log_file, "w") as f, open(host_end_log_file, "w"):
+    with open(host_start_log_file, "w") as f, open(host_end_log_file, "w"), open(host_cache, "w") as fd:
         # TODO: write details of pipeline
         start_time = datetime.now()
         ujson.dump({
@@ -181,39 +203,99 @@ def run_pipeline(name: str, description: str, config: object, id=""):
             "start_time": start_time.strftime("%Y-%m-%dT%H:%M:%S"),
             # "config": config
         }, f)
+        print(f"Writing to {TMP_DIR}/{id}.json")
+        ujson.dump({
+            "config": config,
+            "start": {
+                "name": name,
+                "description": description,
+                "start_time": start_time.strftime("%Y-%m-%dT%H:%M:%S"),
+            },
+            "end": {}
+        }, fd)
 
     # TODO: modify the command to mount directory or add environment variables if needed
-    subprocess.check_call(
-        f"docker run --name {id} -d -v /tmp:/tmp -v $(pwd):/ws mint_dt bash /ws/scripts/run_pipeline_from_ui.sh {sess_id}", shell=True
+    subprocess.Popen(
+        f"docker run --name {id} -d -v /tmp:/tmp -v $(pwd):/ws mint_dt bash /ws/scripts/run_pipeline_from_ui.sh {sess_id}",
+        shell=True
     )
+    return
 
 
-def list_pipeline_detail(id: str):
+def list_pipeline_detail(pid: str, id: str):
     if not is_valid_id(id):
         return jsonify({
             "error": "invalid pipeline id to display"
         })
 
+    # check if it's already in docker id
+    docker_names, filenames = list_all_files_mintdt()
+    print(f"current docker ids are: {docker_names}")
+    if id in docker_names:
+        print(f"{TMP_DIR}/{id}.json exists!")
+        with open(f"{TMP_DIR}/{id}.json", "r") as f:
+            try:
+                data = json.load(f)
+            except ValueError:
+                data = {}
+            if "end" in data and data["end"]:
+                # if the process has already finished
+                print(f"Reading from {TMP_DIR}/{id}.json")
+                run_log = subprocess.check_output(f"docker logs {pid}", shell=True)
+                print("AM I HERE?")
+                pipeline = Pipeline(
+                    id=id,
+                    name=data["start"].get("name", ""),
+                    description=data["start"].get("description", ""),
+                    start_timestamp=data["start"].get("start_time", ""),
+                    end_timestamp=data["end"],
+                    config=data["config"],
+                    output=run_log.decode("utf-8"),
+                    status="finished"
+                )
+                return asdict(pipeline)
+
+    # pipeline is still running: remove this json file
+    if os.path.exists(f"{TMP_DIR}/{id}.json"):
+        print(f"Removing {TMP_DIR}/{id}.json since process is not finished")
+        os.remove(f"{TMP_DIR}/{id}.json")
+
     sess_id = str(uuid4())
     host_conf_file = f"/tmp/config.{sess_id}.yml"
     host_start_log_file = f"/tmp/run.start.{sess_id}.log"
     host_end_log_file = f"/tmp/run.end.{sess_id}.log"
+    host_cache = f"{TMP_DIR}/{id}.json"
 
     container_conf_file = "/run/config.yml"  # the file we are going to write the config to
     container_start_log_file = "/run/start.run.log"  # the file that keeps the start_time
     container_end_log_file = "/run/end.run.log"  # the file that keeps the end_time
 
     subprocess.check_call(f"docker cp {id}:{container_conf_file} {host_conf_file} && docker cp {id}:{container_start_log_file} {host_start_log_file} && docker cp {id}:{container_end_log_file} {host_end_log_file}", shell=True)
-    run_log = subprocess.check_output(f"docker logs {id}", shell=True)
+    run_log = subprocess.check_output(f"docker logs {pid}", shell=True)
     # TODO: deserialize the configuration file and the log file to get the pipeline and return it.
-    with open(host_start_log_file, "r") as f1, open(host_end_log_file, "r") as f2, open(host_conf_file, "r") as f3:
+    with open(host_start_log_file, "r") as f1, open(host_end_log_file, "r") as f2, open(host_conf_file, "r") as f3, open(host_cache, "w") as fd:
         start_log = json.load(f1)
-        end_log = f2.read().splitlines()[0]
         config = yaml.safe_load(f3)
-        if end_log:
+        # import pdb; pdb.set_trace()
+        end_log = f2.read().splitlines()
+        if len(end_log) > 0:
+            print(f2.read().splitlines())
+            data = {
+                "config": config,
+                "start": start_log,
+                "end": end_log[0]
+            }
+            print(f"Writing to {TMP_DIR}/{id}.json (again)")
             status = "finished"
+            ujson.dump(data, fd)
+            end_log = end_log[0]
         else:
+            ujson.dump({
+                "config": config,
+                "start": start_log,
+            }, fd)
             status = "running"
+            end_log = ""
         pipeline = Pipeline(
             id=id,
             name=start_log.get("name", ""),
@@ -231,11 +313,19 @@ def list_pipelines_detail():
     # TODO: parse the JSON output and return a list of pipelines, some information that is expensive to obtain such as
     #  output, configuration file can be omitted. Use pagination to save query
     # TODO: THIS IS WAY TOO SLOW
-    pipeline_ids = list_all_pipelines_docker()
-    return [list_pipeline_detail(pid) for pid in pipeline_ids]
+    pipeline_ids, pipeline_names = list_all_pipelines_docker()
+    return [list_pipeline_detail(pid, pn) for pid, pn in zip(pipeline_ids, pipeline_names)]
 
 
 def list_all_pipelines_docker():
-    output = subprocess.check_output("docker ps -a --format='{{json .ID}}'", shell=True)
+    output = subprocess.check_output("docker ps -a --format '{{json .ID}}'", shell=True)
     pipeline_ids_quoted = str.splitlines(output.decode("utf-8"))
-    return [pid.replace('"', '') for pid in pipeline_ids_quoted]
+    output = subprocess.check_output("docker ps -a --format '{{.Names}}'", shell=True)
+    pipeline_names = str.splitlines(output.decode("utf-8"))
+    return [pid.replace('"', '') for pid in pipeline_ids_quoted], [pid.replace('"', '') for pid in pipeline_names]
+
+
+def list_all_files_mintdt():
+    filesnames = glob.glob(f"{TMP_DIR}/*.json")
+    docker_names = [fn.split("/")[-1].split(".")[0] for fn in filesnames]
+    return docker_names, filesnames

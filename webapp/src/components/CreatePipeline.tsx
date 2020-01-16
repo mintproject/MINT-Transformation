@@ -177,8 +177,6 @@ export class CreatePipelineComponent extends React.Component<
     return nodes.map((n, idx) => {
       const title = n.adapter.split(".")[1];
       const currAdapter = this.props.adapters.filter(ad => ad.id === title)[0];
-      console.log("current title is:");
-      console.log(title);
       return ({
         id: n.id,
         title: title,
@@ -348,8 +346,6 @@ export class CreatePipelineComponent extends React.Component<
   isAlphaNumericUnderscore = (check: string) => {
     const subStrings = check.split("_");
     for (var i = 0; i < subStrings.length; i++){
-      console.log(`checking ${subStrings[i]}`);
-      console.log(subStrings[i].match(/^[0-9a-zA-Z]+$/g));
       if (subStrings[i].match(/^[0-9a-zA-Z]+$/g) === null) { return false; }
     }
     return true;
@@ -469,7 +465,8 @@ export class CreatePipelineComponent extends React.Component<
                             graphNodes: newNodes,
                             selected: null,
                             currentAction: "",
-                            currentAdapter: ""
+                            currentAdapter: "",
+                            currentAdapterName: ""
                           });
                         }}
                         type="primary"
@@ -499,7 +496,7 @@ export class CreatePipelineComponent extends React.Component<
                         { _.isEmpty(this.state.currentToNode) ? null : <Dropdown overlay={this.createToNodeInputMenu()}>
                           { this.state.toNodeInput
                           ? <b>{ `${this.state.toNodeInput}`}</b>
-                          : <Button><b>Select Node Output</b></Button>}
+                          : <Button><b>Select Node Input</b></Button>}
                         </Dropdown>}
                         <Button
                           style={{ float: "right", margin: "5px" }}
@@ -658,7 +655,6 @@ export class CreatePipelineComponent extends React.Component<
                       );
                     }}
                     renderNode={({ selected }) => {
-                      // console.log(selected);
                       return (
                         <g className="shape" height={100} width={100}>
                           <rect
@@ -685,6 +681,26 @@ export class CreatePipelineComponent extends React.Component<
                     <p style={{ margin: "20px 20px"}}><b>Inputs to adapter: </b></p>
                     <form>
                       {Object.keys(selectedAdapter.inputs).map((ip, idx) => {
+                        if (selectedAdapter.inputs[ip].id === "graph") {
+                          const wiredEdges = this.state.graphEdges.filter(e => e.target === this.state.selected && e.input === "graph");
+                          return <p key={`input-${idx}`} style={{ margin: "20px 20px"}}>
+                            {`${ip}: `}
+                            <input
+                              disabled={true}
+                              type="text"
+                              value={
+                                _.isEmpty(wiredEdges) ? "Only Changeable By Editing Edges"
+                                : `${wiredEdges[0].source}.${wiredEdges[0].output}`
+                              }
+                              style={{
+                                padding:"5px",
+                                border:"2px solid",
+                                borderRadius: "5px",
+                                width: "100%"
+                              }}
+                            />
+                          </p>
+                        }
                         return (
                           <p key={`input-${idx}`} style={{ margin: "20px 20px"}}>
                             {`${ip}: `}
@@ -706,7 +722,6 @@ export class CreatePipelineComponent extends React.Component<
                                 borderRadius: "5px",
                                 width: "100%"
                               }}
-                              disabled={selectedAdapter.inputs[ip].id === "graph"}
                             />
                           </p>
                         );
