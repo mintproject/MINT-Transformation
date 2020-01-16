@@ -1,6 +1,6 @@
 import { observable, action } from "mobx";
 import axios from "axios";
-import { AdapterType, flaskUrl } from "./AdapterStore";
+import { AdapterType, flaskUrl, AdapterInputType } from "./AdapterStore";
 import { message } from "antd";
 
 // FIXME: settle down on the final format of pipeline object:
@@ -23,7 +23,11 @@ export type UploadedPipelineDataType = {
 
 export type NodeType = {
   id: number,
-  adapter: AdapterType
+  adapter: string,
+  // comment: string
+  inputs: AdapterInputType[],
+  outputs: AdapterInputType[],
+  comment?: string
 }
 
 export type EdgeType = {

@@ -62,6 +62,7 @@ interface CreatePipelineState {
   graphEdges: IEdge[],
   currentAction: string,
   currentAdapter: string,
+  currentAdapterName: string,
   currentToNode: string,
   fromNodeOutput: string,
   toNodeInput: string,
@@ -95,6 +96,7 @@ export class CreatePipelineComponent extends React.Component<
     currentToNode: "",
     fromNodeOutput: "",
     toNodeInput: "",
+    currentAdapterName: ""
   };
 
   componentDidMount() {
@@ -162,26 +164,44 @@ export class CreatePipelineComponent extends React.Component<
       graphNodes: [],
       graphEdges: [],
       currentAction: "",
-      currentAdapter: ""
+      currentAdapter: "",
+      currentToNode: "",
+      fromNodeOutput: "",
+      toNodeInput: "",
+      currentAdapterName: ""
     });
     this.props.history.push('/pipeline/create');
   }
 
   createGraphNodes = (nodes: NodeType[]) => {
-    return nodes.map((n, idx) => ({
-      id: `${n.id}`,
-      title: n.adapter.id,
-      // type: "empty",
-      x: 100 + 200*idx,
-      y: 100,
-      adapter: n.adapter
-    }))
+    return nodes.map((n, idx) => {
+      const title = n.adapter.split(".")[1];
+      const currAdapter = this.props.adapters.filter(ad => ad.id === title)[0];
+      console.log("current title is:");
+      console.log(title);
+      return ({
+        id: n.id,
+        title: title,
+        // type: "empty",
+        x: 100 + 200*idx,
+        y: 100,
+        adapter: {
+          id: title,
+          description: currAdapter.description,
+          inputs: n.inputs,
+          outputs: n.outputs
+        }
+      });
+    })
   }
 
   createNodes = (nodes: INode[]) => {
     return nodes.map(n => ({
-      id: parseInt(n.id),
-      adapter: n.adapter
+      id: n.id,
+      adapter: `funcs.${n.title}`,
+      inputs: n.adapter.inputs,
+      outputs: n.adapter.outputs,
+      // FIXME: missing comment
     }))
   }
 
@@ -191,11 +211,10 @@ export class CreatePipelineComponent extends React.Component<
     var minX = Number.POSITIVE_INFINITY, minY = Number.POSITIVE_INFINITY;
     var maxId = -1;
     for (var i = 0; i < graphNodes.length; i++) {
-      const nodeId = parseInt(graphNodes[i].id);
       const nodeX = Number(graphNodes[i].x);
       const nodeY = Number(graphNodes[i].y);
-      if (nodeId > maxId) {
-        maxId = nodeId;
+      if (i > maxId) {
+        maxId = i;
       }
       if (nodeX > maxX) {
         maxX = nodeX;
@@ -210,7 +229,7 @@ export class CreatePipelineComponent extends React.Component<
         minY = nodeY;
       }
     }
-    if (graphNodes.length < 1) {
+    if (maxId < 0) {
       maxX = 300;
       maxY = 300;
       minX = 300;
@@ -272,7 +291,7 @@ export class CreatePipelineComponent extends React.Component<
       this.setState({ currentToNode: item.props.children });
       }}>
       {this.state.graphNodes.filter(n => n.id !== this.state.selected).map((node, idx) => {
-        return (<Menu.Item key={`node-${idx}`}>
+        return (<Menu.Item key={`${idx}`}>
           {node.id}
         </Menu.Item>);
       })}
@@ -308,7 +327,7 @@ export class CreatePipelineComponent extends React.Component<
       {
       nodeEdges.map((e, idx) => {
         return (<Menu.Item key={`${e.source}-${e.output}-${e.target}-${e.input}`}>
-          {`Node-${e.source}.${e.output} => Node-${e.target}.${e.input}`}
+          {`${e.source}.${e.output} => ${e.target}.${e.input}`}
         </Menu.Item>);
       })}
     </Menu>);
@@ -321,8 +340,19 @@ export class CreatePipelineComponent extends React.Component<
       currentAdapter: "",
       currentToNode: "",
       toNodeInput: "",
-      fromNodeOutput: ""
+      fromNodeOutput: "",
+      currentAdapterName: ""
     });
+  }
+
+  isAlphaNumericUnderscore = (check: string) => {
+    const subStrings = check.split("_");
+    for (var i = 0; i < subStrings.length; i++){
+      console.log(`checking ${subStrings[i]}`);
+      console.log(subStrings[i].match(/^[0-9a-zA-Z]+$/g));
+      if (subStrings[i].match(/^[0-9a-zA-Z]+$/g) === null) { return false; }
+    }
+    return true;
   }
 
   render() {
@@ -379,7 +409,7 @@ export class CreatePipelineComponent extends React.Component<
                     : null
                   }
                   { this.state.selected && _.isEmpty(this.state.currentAction) ? <span>
-                    <p>{`Select an action on Node-${this.state.selected}: `}</p>
+                    <p>{`Select an action on ${this.state.selected}: `}</p>
                     <Button
                       style={{ margin: "5px" }}
                       onClick={() => this.setState({ currentAction: "add-a-new-node"})}
@@ -410,17 +440,26 @@ export class CreatePipelineComponent extends React.Component<
                         ? <b>{`Selected Adapter: ${this.state.currentAdapter}`}</b>
                         : <Button><b>Select An Adapter</b></Button>}
                       </Dropdown>
+                      { this.state.currentAdapter ? <p>
+                        Enter adapter name (Please only use "_" as delimiter):
+                        <input
+                          style={{ margin: "10px" }}
+                          value={this.state.currentAdapterName}
+                          onChange={({ target }) => this.setState({ currentAdapterName: target.value })}
+                        /> 
+                      </p> : null}
                       <Button
                         style={{ float: "right", margin: "5px" }}
-                        disabled={_.isEmpty(this.state.currentAdapter)}
+                        disabled={_.isEmpty(this.state.currentAdapter) || !this.isAlphaNumericUnderscore(this.state.currentAdapterName)}
                         onClick={() => {
                           console.log("adding a new node to the graph");
                           const { maxX, maxY, minX, minY, maxId } = this.findBoundingBoxGraphNodes();
+                          const customName = this.state.currentAdapterName ? this.state.currentAdapterName : `Node-${maxId + 1}`;
                           const newNode: INode = {
-                            id: `${maxId + 1}`,
+                            id: customName,
                             title: `${this.state.currentAdapter}`,
                             // type: "empty",
-                            x: 200 + (maxX + minX)/2,
+                            x: 300 + (maxX + minX)/2,
                             y: (maxY + minY)/2,
                             adapter: this.props.adapters.filter(ad => ad.id === this.state.currentAdapter)[0]
                           };
@@ -444,7 +483,7 @@ export class CreatePipelineComponent extends React.Component<
                   { this.state.currentAction === "add-a-new-edge"
                     ? <span>
                       <p>
-                        {`Add A New Edge From Node-${this.state.selected} `}
+                        {`Add A New Edge From ${this.state.selected} `}
                         <Dropdown overlay={this.createFromNodeOutputMenu()}>
                           { this.state.fromNodeOutput
                           ? <b>{ `${this.state.fromNodeOutput}`}</b>
@@ -453,7 +492,7 @@ export class CreatePipelineComponent extends React.Component<
                         {` To `}
                         <Dropdown overlay={this.createToNodeMenu()}>
                           { this.state.currentToNode
-                          ? <b>{` Node-${this.state.currentToNode}` }</b>
+                          ? <b>{` ${this.state.currentToNode}` }</b>
                           : <Button><b>Select Node Output</b></Button>}
                         </Dropdown>
                         {`   `}
@@ -524,12 +563,12 @@ export class CreatePipelineComponent extends React.Component<
                   }
                   { this.state.currentAction === "delete-its-edge"
                     ? <span>
-                      <p>{`Select An Edge From Node-${this.state.selected}:`} </p>
+                      <p>{`Select An Edge From ${this.state.selected}:`} </p>
                       <Dropdown overlay={this.createNodeEdgeMenu()}>
                         { this.state.currentToNode
                         ? <b>{
-                          `Deleting The Edge From Node-${this.state.selected}.${this.state.fromNodeOutput}
-                           To Node-${this.state.currentToNode}.${this.state.toNodeInput}`}</b>
+                          `Deleting The Edge From ${this.state.selected}.${this.state.fromNodeOutput}
+                           To ${this.state.currentToNode}.${this.state.toNodeInput}`}</b>
                         : <Button><b>Select Node Edges</b></Button>}
                       </Dropdown>
                       <Button
@@ -607,11 +646,14 @@ export class CreatePipelineComponent extends React.Component<
                     renderNodeText={(data: any, id: string | number, isSelected: boolean) => {
                       const { title } = data;
                       const lineOffset = 18;
-                      // console.log(data)
+                      if (typeof id !== "string") {
+                        return;
+                      }
+                      const customName = id.split("-")[1];
                       return (
                         <text textAnchor="middle" x={0} y={0} fontSize="smaller">
                           {!!title && <tspan x={0} dy={-lineOffset} opacity="1">{title}</tspan>}
-                          {!!id && <tspan x={0} dy={2 * lineOffset} opacity="1">{id}</tspan>}
+                          {!!customName && <tspan x={0} dy={2 * lineOffset} opacity="1">{customName}</tspan>}
                         </text>
                       );
                     }}
@@ -674,7 +716,7 @@ export class CreatePipelineComponent extends React.Component<
                     {this.state.graphEdges.filter(e => e.source === this.state.selected || e.target === this.state.selected)
                     .map((e, idx) => {
                       return (<p style={{ margin: "20px 20px"}} key={`edge-${idx}`}>
-                        • {`Node-${e.source}`}.{e.output} <b>=></b> {`Node-${e.target}`}.{e.input}
+                        • {`${e.source}`}.{e.output} <b>=></b> {`${e.target}`}.{e.input}
                       </p>);
                     })}
                   </React.Fragment>

@@ -1,6 +1,9 @@
 import { observable, action } from "mobx";
 import axios from "axios";
 
+// FIXME: adapter comes from JSON, not db?
+// pipeline serialization should agree with above json
+// integrate front end and back end :/
 export type AdapterType = {
   id: string,
   description: string,

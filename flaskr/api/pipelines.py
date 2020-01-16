@@ -3,6 +3,7 @@ import json
 import yaml
 from dtran.config_parser import ConfigParser
 from dcatreg.dcat_api import DCatAPI
+from dtran.ui_config_parser import DiGraphSchema
 
 from typing import *
 from uuid import uuid4
@@ -39,11 +40,12 @@ def test_func():
     # data_str = data.to_dict()
     # # data_str = data.adapter2dict()
     # print(data_str)
-    test_parser = ConfigParser({})
-    parsed_pipeline, parsed_inputs = test_parser.parse(path="./test_long.yml")
+    with open("./test_long.yml", "r") as f:
+        config = yaml.safe_load(f)
+    print(config)
     # import pdb; pdb.set_trace()
-    data_str = parsed_pipeline.graph_inputs_to_json(parsed_inputs)
-    return jsonify({ "res": data_str })
+    display_data = DiGraphSchema().dump(config)
+    return jsonify({"data": display_data})
 
 
 @pipelines_blueprint.route('/pipelines', methods=["GET"])
@@ -73,16 +75,21 @@ def create_pipeline():
     pipeline_edges = request.json.get("edges", "")
     try:
         # TODO: de-serialize the pipeline here and get config
-        # run_pipeline(pipeline_name, pipeline_description, pipeline_config)
-        print(json.dumps(pipeline_nodes, indent=2))
-        print(json.dumps(pipeline_edges, indent=2))
+        pipeline_config = DiGraphSchema().load({
+            "description": pipeline_description,
+            "nodes": pipeline_nodes,
+            "edges": pipeline_edges
+        })
+        run_pipeline(pipeline_name, pipeline_description, pipeline_config)
+        # print(json.dumps(pipeline_nodes, indent=2))
+        # print(json.dumps(pipeline_edges, indent=2))
         return jsonify({
             "result": "success"
         })
     except Exception as e:
         return jsonify({"error": str(e)})
 
-
+   
 @pipelines_blueprint.route('/pipeline/upload_config', methods=["POST"])
 def upload_pipeline_config():
     if 'files' not in request.files:
@@ -100,9 +107,7 @@ def upload_pipeline_config():
             })
     # TODO: should handle error messages here!
     try:
-        parser = ConfigParser({})
-        parsed_pipeline, parsed_inputs = parser.parse(conf_obj=config)
-        # display_data = parsed_pipeline.graph_inputs_to_json(parsed_inputs)
+        display_data = DiGraphSchema().dump(config)
         return jsonify({"data": display_data})
     except Exception as e:
         return jsonify({"error": str(e)})
@@ -119,9 +124,7 @@ def get_dcat_config(dcat_id: str):
                 "error": "This dataset has no config associated!"
             })
         else:
-            parser = ConfigParser({})
-            parsed_pipeline, parsed_inputs = parser.parse(conf_obj=dataset_config)
-            # display_data = parsed_pipeline.graph_inputs_to_json(parsed_inputs)
+            display_data = DiGraphSchema().dump(dataset_config)
             return jsonify({"data": display_data})
     except Exception as e:
         return jsonify({"error": str(e)})
