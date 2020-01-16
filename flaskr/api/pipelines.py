@@ -209,7 +209,7 @@ def list_pipeline_detail(id: str):
     with open(host_start_log_file, "r") as f1, open(host_end_log_file, "r") as f2, open(host_conf_file, "r") as f3:
         start_log = json.load(f1)
         end_log = f2.read().splitlines()[0]
-        config = yaml.load(f3)
+        config = yaml.safe_load(f3)
         if end_log:
             status = "finished"
         else:

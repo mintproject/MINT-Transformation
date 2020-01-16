@@ -11,9 +11,10 @@ export type PipelineType = {
   start_timestamp: string,
   status: string,
   end_timestamp: string,
-  config_file: string,
+  config: string,
   id: string,
-  adapters?: AdapterType[]
+  adapters?: AdapterType[],
+  output?: string
 };
 
 export type UploadedPipelineDataType = {

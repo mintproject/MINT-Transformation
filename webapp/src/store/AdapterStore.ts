@@ -8,7 +8,7 @@ export type AdapterType = {
   id: string,
   description: string,
   inputs: { [key: string]: AdapterInputType; },
-  ouputs: { [key: string]: AdapterInputType; }
+  outputs: { [key: string]: AdapterInputType; }
 };
 
 export type AdapterInputType = {

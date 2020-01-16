@@ -4,6 +4,7 @@ import { observer, inject } from "mobx-react";
 import { IStore } from "../store";
 import { Card } from 'antd';
 import { AdapterType } from "../store/AdapterStore";
+import _ from "lodash";
 
 const defaultProps = {};
 interface AdapterProps extends Readonly<typeof defaultProps> {
@@ -50,8 +51,16 @@ export class AdapterComponent extends React.Component<
                 <pre>
                   • <b><u>Function Name</u></b>: {ad.id}<br/>
                   • <b><u>Description</u></b>: {ad.description}<br/>
-                  • <b><u>Inputs</u></b>: {JSON.stringify(ad.inputs, null, 2)}<br/>
-                  • <b><u>Outputs</u></b>: {JSON.stringify(ad.ouputs, null, 2)}<br/>
+                  • <b><u>Inputs</u></b>: {_.isEmpty(ad.inputs) ? <p>None</p> :Object.keys(ad.inputs).map((inputKey, idx) => (
+                    <p key={`input-${idx}`}>
+                      {inputKey}: Type: <input value={ad.inputs[inputKey].id} readOnly/>; Optional: <input value={JSON.stringify(ad.inputs[inputKey].optional)} readOnly/>
+                    </p>
+                  ))}<br/>
+                  • <b><u>Outputs</u></b>: {_.isEmpty(ad.outputs) ? <p>None</p> :Object.keys(ad.outputs).map((outputKey, idx) => (
+                    <p key={`input-${idx}`}>
+                      {outputKey}: Type: <input value={ad.outputs[outputKey].id} readOnly/>; Optional: <input value={JSON.stringify(ad.outputs[outputKey].optional)} readOnly/>
+                    </p>
+                  ))}
                 </pre>
               </Card>
           )}
