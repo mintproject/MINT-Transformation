@@ -74,13 +74,11 @@ def test_func():
 @pipelines_blueprint.route('/pipelines', methods=["GET"])
 def list_pipelines():
     # TODO: add search parameters, list all entries from 'docker ps -a'
-    # try:
-    pipelines = list_pipelines_detail()
-    # import pdb; pdb.set_trace()
-    return jsonify(pipelines)
-    # except Exception as e:
-    #     print(str(e))
-    #     return jsonify({"error": str(e)})
+    try:
+        pipelines = list_pipelines_detail()
+        return jsonify(pipelines), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 
 @pipelines_blueprint.route('/pipelines/<pipeline_id>', methods=["GET"])
@@ -90,10 +88,10 @@ def list_pipeline(pipeline_id):
         for pid, pn in zip(pipeline_ids, pipeline_names):
             if pipeline_id == pn:
                 pipeline = list_pipeline_detail(pid, pn)
-                return jsonify(pipeline)
+                return jsonify(pipeline), 200
         return jsonify({"error": "No such pipeline exists!"})
     except Exception as e:
-        return jsonify({"error": str(e)})
+        return jsonify({"error": str(e)}), 400
 
 
 @pipelines_blueprint.route('/pipeline/create', methods=["POST"])
@@ -120,9 +118,9 @@ def create_pipeline():
         # print(json.dumps(pipeline_edges, indent=2))
         return jsonify({
             "result": "success"
-        })
+        }), 200
     except Exception as e:
-        return jsonify({"error": str(e)})
+        return jsonify({"error": str(e)}), 400
 
 
 @pipelines_blueprint.route('/pipeline/upload_config', methods=["POST"])
@@ -139,13 +137,13 @@ def upload_pipeline_config():
         else:
             return jsonify({
                 "error": "Please upload json/yml config file!"
-            })
+            }), 400
     # TODO: should handle error messages here!
     try:
         display_data = DiGraphSchema().dump(config)
-        return jsonify({"data": display_data})
+        return jsonify({"data": display_data}), 200
     except Exception as e:
-        return jsonify({"error": str(e)})
+        return jsonify({"error": str(e)}), 400
 
 
 @pipelines_blueprint.route('/pipeline/dcat/<dcat_id>', methods=["GET"])
@@ -157,12 +155,12 @@ def get_dcat_config(dcat_id: str):
         if dataset_config is None:
             return jsonify({
                 "error": "This dataset has no config associated!"
-            })
+            }), 400
         else:
             display_data = DiGraphSchema().dump(dataset_config)
-            return jsonify({"data": display_data})
+            return jsonify({"data": display_data}), 200
     except Exception as e:
-        return jsonify({"error": str(e)})
+        return jsonify({"error": str(e)}), 400
 
 # ------ fake pipeline -------
 

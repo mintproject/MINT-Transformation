@@ -132,7 +132,7 @@ export class CreatePipelineComponent extends React.Component<
       message.info(`${file.response.error}`);
     } else if (file.response && file.response.data) {
       const { data } = file.response;
-      this.props.setUploadedPipelineData(data);
+      // this.props.setUploadedPipelineData(data);
       this.props.setGraphCreated(true);
       this.setState({
         graphEdges: this.createGraphEdges(data.edges),

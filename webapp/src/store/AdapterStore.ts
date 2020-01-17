@@ -1,5 +1,6 @@
 import { observable, action } from "mobx";
 import axios from "axios";
+import { ErrorStore } from "./ErrorStore";
 
 // FIXME: adapter comes from JSON, not db?
 // pipeline serialization should agree with above json
@@ -21,6 +22,11 @@ export type AdapterInputType = {
 export const flaskUrl = "http://localhost:5000/api"
 
 export class AdapterStore {
+  constructor(errorStore: ErrorStore) {
+    this.errorStore = errorStore;
+  }
+
+  errorStore: ErrorStore
   @observable adapters: AdapterType[] = [];
 
   @action.bound getAdapters = () => {

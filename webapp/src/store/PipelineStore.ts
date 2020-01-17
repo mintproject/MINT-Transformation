@@ -1,7 +1,7 @@
 import { observable, action } from "mobx";
 import axios from "axios";
 import { AdapterType, flaskUrl, AdapterInputType } from "./AdapterStore";
-import { message } from "antd";
+import { ErrorStore } from "./ErrorStore";
 
 // FIXME: settle down on the final format of pipeline object:
 // metadata + list of adapters?
@@ -39,33 +39,77 @@ export type EdgeType = {
 }
 
 export class PipelineStore {
+  constructor(errorStore: ErrorStore) {
+    this.errorStore = errorStore;
+  }
+
+  errorStore: ErrorStore
   @observable pipelines: PipelineType[] = [];
   @observable currentPipeline: PipelineType | null = null;
   @observable uploadedPipelineData: UploadedPipelineDataType | null = null;
   @observable graphCreated: boolean = false;
 
+  @action.bound startFetch = () => {
+    this.errorStore.isLoading = true;
+    console.log("inside start fetch!");
+  }
+
+  @action.bound successFetch = () => {
+    this.errorStore.isLoading = false;
+    this.errorStore.hasFailed = false;
+    console.log("inside success fetch!");
+  }
+
+  @action.bound failedFetch = (errorData: Error) => {
+    console.log("inside failed fetch!");
+    this.errorStore.isLoading = false;
+    this.errorStore.hasFailed = true;
+    this.errorStore.errorData = errorData;
+  }
+
   @action.bound getPipelines = () => {
-    axios.get(`${flaskUrl}/pipelines`).then(
-      (resp) => {
-        if (resp.data.error) {
-          message.info(`An error has occurred: ${resp.data.error}`)
-        } else {
+    Promise.resolve().then(this.startFetch).then(() =>
+      axios.get(`${flaskUrl}/pipelines`)
+      .then(
+        resp => {
           this.pipelines = resp.data;
-        }
-      }
-    );
+          this.successFetch();
+        },
+        error => {
+          this.failedFetch(error.response);
+          /* 
+          if (error.response) {
+              // The request was made and the server responded with a
+              // status code that falls out of the range of 2xx
+              console.log(error.response.data);
+              console.log(error.response.status);
+              console.log(error.response.headers);
+          } else if (error.request) {
+              //  * The request was made but no response was received, `error.request`
+              //  * is an instance of XMLHttpRequest in the browser and an instance
+              //  * of http.ClientRequest in Node.js
+              console.log(error.request);
+          } else {
+              // Something happened in setting up the request and triggered an Error
+              console.log('Error', error.message);
+          }
+          console.log(error.config);
+          */
+      })
+    )
   }
 
   @action.bound getPipeline = (pipelineId: string) => {
-    axios.get(`${flaskUrl}/pipelines/${pipelineId}`).then(
-      (resp) => {
-        if (resp.data.error) {
-          message.info(`An error has occurred: ${resp.data.error}`);
-        } else {
+    Promise.resolve().then(this.startFetch).then(() =>
+      axios.get(`${flaskUrl}/pipelines/${pipelineId}`)
+      .then(
+        resp => {
           this.currentPipeline = resp.data;
-        }
-      }
-    );
+          this.successFetch();
+        },
+        error => {
+          this.failedFetch(error);
+    }));
   }
 
   @action.bound setUploadedPipelineData = (uploadedPipelineData: UploadedPipelineDataType | null) => {
@@ -73,16 +117,17 @@ export class PipelineStore {
   }
 
   @action.bound setUploadedPipelineFromDcat = (dcatId: string) => {
-    axios.get(`${flaskUrl}/pipeline/dcat/${dcatId}`).then(
-      (resp) => {
-        if (resp.data.error) {
-          message.info(`An error has occurred: ${resp.data.error}`); 
-        } else {
+    Promise.resolve().then(this.startFetch).then(() =>
+      axios.get(`${flaskUrl}/pipeline/dcat/${dcatId}`)
+      .then(
+        resp => {
           this.uploadedPipelineData = resp.data.data;
           this.graphCreated = true;
-        }
-      }
-    );
+          this.successFetch();
+        },
+        error => {
+          this.failedFetch(error);
+    }));
   }
 
   @action.bound setGraphCreated = (graphCreated: boolean) => {
@@ -93,19 +138,18 @@ export class PipelineStore {
     pipelineName: string, pipelineDescription: string,
     graphNodes: NodeType[], graphEdges: EdgeType[]
   ) => {
-    axios.post(`${flaskUrl}/pipeline/create`, {
-      name: pipelineName,
-      description: pipelineDescription,
-      nodes: graphNodes,
-      edges: graphEdges
-    }).then(
-      (resp) => {
-        if (resp.data.error) {
-          message.info(`An error has occurred: ${resp.data.error}`); 
-        }
-      }
-    );
+    Promise.resolve().then(this.startFetch).then(() =>
+      axios.post(`${flaskUrl}/pipeline/create`, {
+        name: pipelineName,
+        description: pipelineDescription,
+        nodes: graphNodes,
+        edges: graphEdges
+      }).then(
+        resp => {
+          this.successFetch();
+        },
+        error => {
+          this.failedFetch(error);
+    }));
   }
 };
-
-
