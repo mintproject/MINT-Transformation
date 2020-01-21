@@ -28,8 +28,7 @@ class DcatWriteFunc(IFunc):
         self, resource_path: Union[str, Path], metadata: str,
     ):
         self.resource_path = Path(resource_path)
-        print(type(metadata))
-
+        
         self.metadata = json.loads(metadata)
 
         self.dcat = DCatAPI.get_instance()
@@ -39,7 +38,6 @@ class DcatWriteFunc(IFunc):
             f"curl -sD - --user upload:HVmyqAPWDNuk5SmkLOK2 --upload-file {self.resource_path.absolute()} https://publisher.mint.isi.edu",
             shell=True,
         )
-
 
         upload_url = f'https://{upload_output.decode("utf-8").split("https://")[-1]}'
 
