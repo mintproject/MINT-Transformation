@@ -21,10 +21,14 @@ shp_dir = "/Users/rook/workspace/MINT/MINT-Transformation/data/woredas-fixed"
 outfile = "/Users/rook/workspace/MINT/MINT-Transformation/data/flood.csv"
 year = 2007
 
+
 def get_woreda_details(shp_file):
     with fiona.open(shp_file, "r") as f:
         for line in f:
-            return line['properties']['WOREDANAME'].strip(), line['properties']['ZONENAME'].strip()
+            return line['properties']['WOREDANAME'].strip(), line['properties']['ZONENAME'].strip(), line['properties'][
+                    'WOREDANO_']
+
+
 def process_shapefile(shp_file):
     global raster
     try:
@@ -55,17 +59,28 @@ def process_shapefile(shp_file):
         index += days
         record_list.append([*get_woreda_details(shp_file), f"{year}-{'%02d' % month}-01", *month_counts[1:]])
     return record_list
-shp_files = sorted(glob.glob(os.path.join(shp_dir, "*.shp")))
+
+shp_files = []
+for fpath in sorted(glob.glob(os.path.join(shp_dir, "woredas", "*.shp"))):
+    fname = Path(fpath).name
+    if os.path.exists(os.path.join(shp_dir, "woredas-fixed", fname)):
+        shp_files.append(os.path.join(shp_dir, "woredas-fixed", fname))
+    else:
+        shp_files.append(fpath)
+
 ds = Dataset(infile)
 gdal_ds = gdal.Open("NETCDF:{0}:{1}".format(infile, 'flood'), gdal.GA_ReadOnly)
 raster = Raster(np.nan_to_num(np.asarray(ds.variables['flood']), nan=0.0), GeoTransform.from_gdal(gdal_ds.GetGeoTransform()), EPSG.WGS_84)
+
 if __name__ == '__main__':
     records = []
     pool = Pool()
-    for record_list in tqdm(pool.imap_unordered(process_shapefile, shp_files), total=len(shp_files)):
+    # for record_list in tqdm(pool.imap_unordered(process_shapefile, shp_files), total=len(shp_files)):
+    for shp_file in tqdm(shp_files):
+        record_list = process_shapefile(shp_file)
         records.extend(record_list)
     with open(outfile, "w") as f:
         writer = csv.writer(f)
-        writer.writerow(['woredas', 'zones', 'month', '2-yr_flooding', '5-yr_flooding', '20-yr_flooding'])
+        writer.writerow(['woreda', 'zone', 'woreda_no', 'month', '2-yr_flooding', '5-yr_flooding', '20-yr_flooding'])
         for record in records:
             writer.writerow(record)
