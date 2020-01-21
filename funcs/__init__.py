@@ -4,6 +4,7 @@
 # TODO: no gdal installed :/
 from .readers.read_func import ReadFunc
 from .readers.dcat_read_func import DcatReadFunc
+from .readers.dcat_read_no_repr import DcatReadNoReprFunc
 from .trans_unit_func import UnitTransFunc
 from .write_func import GraphWriteFunc, VisJsonWriteFunc
 from .graph_str2str_func import GraphStr2StrFunc

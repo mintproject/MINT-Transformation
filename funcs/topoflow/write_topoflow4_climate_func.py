@@ -27,16 +27,16 @@ class Topoflow4ClimateWriteFunc(IFunc):
     '''
     inputs = {
         "input_dir": ArgType.String,
-        "crop_region_dir": ArgType.String,
-        "output_file": ArgType.FilePath,
+        "temp_dir": ArgType.String,
+        "output_file": ArgType.String,
         "var_name": ArgType.String,
         "DEM_bounds": ArgType.String,
         "DEM_xres_arcsecs": ArgType.String,
         "DEM_yres_arcsecs": ArgType.String,
     }
-    outputs = {}
+    outputs = {"output_file": ArgType.String}
 
-    def __init__(self, input_dir: str, crop_region_dir: str, output_file: Union[str, Path], var_name: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str):
+    def __init__(self, input_dir: str, temp_dir: str, output_file: Union[str, Path], var_name: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str):
         self.DEM = {
             "bounds": [float(x.strip()) for x in DEM_bounds.split(",")],
             "xres": float(DEM_xres_arcsecs) / 3600.0,
@@ -44,12 +44,17 @@ class Topoflow4ClimateWriteFunc(IFunc):
         }
         self.var_name = var_name
         self.input_dir = str(input_dir)
-        self.crop_region_dir = str(crop_region_dir)
+        self.crop_region_dir = str(temp_dir)
         self.output_file = str(output_file)
 
     def exec(self) -> dict:
+        for path in [self.input_dir, self.crop_region_dir]:
+            Path(path).mkdir(exist_ok=True, parents=True)
+
+        Path(self.output_file).parent.mkdir(exist_ok=True, parents=True)
+
         create_rts_from_nc_files(self.input_dir, self.crop_region_dir, self.output_file, self.DEM, self.var_name, IN_MEMORY=True)
-        return {}
+        return {"output_file": self.output_file}
 
     def validate(self) -> bool:
         return True

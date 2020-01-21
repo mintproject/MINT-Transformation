@@ -43,6 +43,25 @@
     }
   },
   {
+    "name": "DcatReadNoReprFunc",
+    "func_name": "DcatReadNoReprFunc",
+    "description": " An entry point in the pipeline.\n    Fetches a dataset and its metadata (no repr) from the MINT Data-Catalog.\n    ",
+    "input": {
+      "dataset_id": {
+        "id": "string",
+        "val": null,
+        "optional": false
+      }
+    },
+    "output": {
+      "data": {
+        "id": "string",
+        "val": null,
+        "optional": false
+      }
+    }
+  },
+  {
     "name": "UnitTransFunc",
     "func_name": "UnitTransFunc",
     "description": " A transformation adapter.\n    Alters the graph by performing unit conversion on some values in the graph.\n    ",
@@ -216,7 +235,7 @@
         "val": null,
         "optional": false
       },
-      "crop_region_dir": {
+      "temp_dir": {
         "id": "string",
         "val": null,
         "optional": false
@@ -247,7 +266,13 @@
         "optional": false
       }
     },
-    "output": {}
+    "output": {
+      "output_file": {
+        "id": "string",
+        "val": null,
+        "optional": false
+      }
+    }
   },
   {
     "name": "Topoflow4ClimateWritePerMonthFunc",
@@ -349,7 +374,7 @@
         "optional": false
       },
       "metadata": {
-        "id": "ordered_dict",
+        "id": "string",
         "val": null,
         "optional": false
       }

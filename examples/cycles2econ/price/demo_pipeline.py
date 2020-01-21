@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     dcat_api = DCatAPI.get_instance()
 
-    resources = dcat_api.find_dataset_by_id("", id)
+    resources = dcat_api.find_resources_by_dataset_id("", id)
     drepr = resources['dataset']['metadata']['layout']
     wdir = Path(os.path.abspath(__file__)).parent
 

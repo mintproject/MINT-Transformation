@@ -39,7 +39,7 @@ class DcatReadTopoflow4ClimateUploadFunc(IFunc):
 
         self.var_name = var_name
 
-        results = DCatAPI.get_instance(DCAT_URL).find_dataset_by_id(dataset_id)
+        results = DCatAPI.get_instance(DCAT_URL).find_resources_by_dataset_id(dataset_id)
         assert len(results) == 1
 
         resource_ids = {"default": results[0]['resource_data_url']}

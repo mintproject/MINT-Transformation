@@ -26,10 +26,12 @@ class DcatReadFunc(IFunc):
         # TODO: move to a diff arch (pointer to Data-Catalog URL)
         DCAT_URL = "https://api.mint-data-catalog.org"
 
-        results = DCatAPI.get_instance(DCAT_URL).find_dataset_by_id(dataset_id)
+        self.dataset_id  = dataset_id
+
+        resource_results = DCatAPI.get_instance(DCAT_URL).find_resources_by_dataset_id(dataset_id)
         # TODO: fix me!!
-        assert len(results) == 1
-        resource_ids = {"default": results[0]['resource_data_url']}
+        assert len(resource_results) == 1
+        resource_ids = {"default": resource_results[0]['resource_data_url']}
         Path("/tmp/dcat_read_func").mkdir(exist_ok=True, parents=True)
 
         self.resources = {}
@@ -38,11 +40,13 @@ class DcatReadFunc(IFunc):
             subprocess.check_call(f'wget {resource_url} -O {file_full_path}', shell=True)
             self.resources[resource_id] = file_full_path
 
-        self.repr = DRepr.parse(results[0]['dataset_metadata']['layout'])
+        dataset_result = DCatAPI.get_instance(DCAT_URL).find_dataset_by_id(dataset_id)
+        self.repr = DRepr.parse(dataset_result['metadata']['layout'])
+
 
     def exec(self) -> dict:
-        g = Graph.from_drepr(self.repr, self.resources)
-        return {"data": g}
+            g = Graph.from_drepr(self.repr, self.resources)
+            return {"data": g}
 
     def validate(self) -> bool:
         return True
@@ -63,15 +67,25 @@ class DCatAPI:
             DCatAPI.instance = DCatAPI(dcat_url)
         return DCatAPI.instance
 
-    def find_dataset_by_id(self, dataset_id: str):
+    def find_resources_by_dataset_id(self, dataset_id: str):
         request_headers = {'Content-Type': "application/json", 'X-Api-Key': self.get_api_key()}
-        resp = requests.post(f"{self.dcat_url}/datasets/find",
+        resp = requests.post(f"{self.dcat_url}/datasets/dataset_resources",
                              headers=request_headers,
                              json={
-                                "dataset_ids__in": [dataset_id]
-                             }).json()
-        assert resp['result'] == "success", resp['result']
-        return resp['resources']
+                                "dataset_id": dataset_id
+                             })
+        assert resp.status_code == 200, resp.text
+        return resp.json()['resources']
+
+    def find_dataset_by_id(self, dataset_id):
+        request_headers = {'Content-Type': "application/json", 'X-Api-Key': self.get_api_key()}
+        resp = requests.post(f"{self.dcat_url}/datasets/get_dataset_info",
+                             headers=request_headers,
+                             json={
+                                 "dataset_id": dataset_id
+                             })
+        assert resp.status_code == 200, resp.text
+        return resp.json()
 
     def get_api_key(self):
         """
@@ -129,3 +143,8 @@ class DCatAPI:
             """
 
             raise Exception(msg)
+
+
+# if __name__ == "__main__":
+#     dcat = DCatAPI.get_instance("https://api.mint-data-catalog.org")
+#     print(dcat.find_dataset_by_id("f6025d61-3dfd-4d7d-9e2c-a8c22f2ed2ec"))
