@@ -5,12 +5,13 @@ from flaskr.api.adapters import adapters_blueprint
 from flaskr.api.pipelines import pipelines_blueprint
 import os
 
-app = Flask(__name__, static_url_path="", static_folder=os.path.dirname(os.path.abspath(__file__)))
+app = Flask(__name__)
+app.static_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 print(app.static_folder)
 CORS(app)
 
-app.register_blueprint(adapters_blueprint)
-app.register_blueprint(pipelines_blueprint)
+app.register_blueprint(adapters_blueprint, url_prefix='/api')
+app.register_blueprint(pipelines_blueprint, url_prefix='/api')
 
 
 @app.route("/", methods=["GET"])
