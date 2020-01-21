@@ -24,7 +24,7 @@ class GraphWriteFunc(IFunc):
         "mapped_columns": ArgType.OrderedDict,
         "filter": ArgType.String(optional=True)
     }
-    outputs = {"data": ArgType.String}
+    outputs = {"output_file": ArgType.String}
 
     def __init__(
             self, graph: Graph, main_class: str, output_file: Union[str, Path], mapped_columns: Dict[str, str],
@@ -45,7 +45,7 @@ class GraphWriteFunc(IFunc):
             GraphWriteFunc._dump_to_json(all_data_rows, attr_names, self.output_file)
         else:
             all_data_rows = []
-        return {"data": all_data_rows}
+        return {"output_file": str(self.output_file)}
 
     def validate(self) -> bool:
         return True

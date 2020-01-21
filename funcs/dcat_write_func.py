@@ -9,27 +9,26 @@ from dtran.argtype import ArgType
 from dtran.ifunc import IFunc
 
 
-class GraphWriteFunc(IFunc):
-    id = "graph_write_func"
+class DcatWriteFunc(IFunc):
+    id = "dcat_write_func"
     description = """ A writer adapter.
-    Generates a csv/json file.
+    Write files to DCAT.
     """
     inputs = {
-        "resource_path": ArgType.FilePath,
+        "resource_path": ArgType.String,
         "metadata": ArgType.OrderedDict,
-        "provenance_id": ArgType.String,
-        "name": ArgType.String,
     }
     outputs = {"data": ArgType.String}
 
-    def __init__(self, resource_path: Union[str, Path], metadata: Dict, provenance_id: str, name: str):
+    PROVENANCE_ID = "b3e79dc2-8fa1-4203-ac82-b5267925191f"
+
+    def __init__(
+        self, resource_path: Union[str, Path], metadata: Dict,
+    ):
         self.resource_path = Path(resource_path)
         self.metadata = metadata
 
         self.dcat = DCatAPI.get_instance()
-
-        self.provenance_id = provenance_id
-        self.name = name
 
     def exec(self) -> dict:
         response = "success"
@@ -42,7 +41,7 @@ class GraphWriteFunc(IFunc):
 
         self.metadata[0]["url"] = upload_url
 
-        self.dcat.register_datasets(self.provenance_id, self.metadata)
+        self.dcat.register_datasets(self.PROVENANCE_ID, self.metadata)
 
         return {"response": response}
 

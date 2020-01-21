@@ -113,7 +113,7 @@
       }
     },
     "output": {
-      "data": {
+      "output_file": {
         "id": "string",
         "val": null,
         "optional": false
@@ -332,6 +332,24 @@
       },
       "no_data": {
         "id": "number",
+        "val": null,
+        "optional": false
+      }
+    },
+    "output": {}
+  },
+  {
+    "name": "DcatWriteFunc",
+    "func_name": "DcatWriteFunc",
+    "description": "A writer adapter that register datasets to DCAT",
+    "input": {
+      "resource_path": {
+        "id": "string",
+        "val": null,
+        "optional": false
+      },
+      "metadata": {
+        "id": "ordered_dict",
         "val": null,
         "optional": false
       }

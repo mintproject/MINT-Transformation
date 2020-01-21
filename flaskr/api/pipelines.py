@@ -157,9 +157,12 @@ def get_dcat_config(dcat_id: str):
                 "error": "This dataset has no config associated!"
             }), 400
         else:
+            print(dataset_config)
             display_data = DiGraphSchema().dump(dataset_config)
+            print(display_data)
             return jsonify({"data": display_data}), 200
     except Exception as e:
+        print(e)
         return jsonify({"error": str(e)}), 400
 
 # ------ fake pipeline -------

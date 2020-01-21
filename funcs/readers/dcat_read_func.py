@@ -24,7 +24,7 @@ class DcatReadFunc(IFunc):
 
     def __init__(self, dataset_id: str):
         # TODO: move to a diff arch (pointer to Data-Catalog URL)
-        DCAT_URL = "https://sandbox.mint-data-catalog.org"
+        DCAT_URL = "https://api.mint-data-catalog.org"
 
         results = DCatAPI.get_instance(DCAT_URL).find_dataset_by_id(dataset_id)
         # TODO: fix me!!

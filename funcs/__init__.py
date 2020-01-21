@@ -11,3 +11,4 @@ from .merge_func import MergeFunc
 from .topoflow.write_topoflow4_climate_func import Topoflow4ClimateWriteFunc, Topoflow4ClimateWritePerMonthFunc
 from .topoflow.write_topoflow4_soil_func import Topoflow4SoilWriteFunc
 from .topoflow.nc2geotiff import NC2GeoTiff
+from .dcat_write_func import DcatWriteFunc
