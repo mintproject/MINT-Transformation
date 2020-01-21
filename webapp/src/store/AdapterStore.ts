@@ -19,7 +19,7 @@ export type AdapterInputType = {
 }
 
 // FIXME: should pass in backend url via env var
-export const flaskUrl = "http://localhost:5000/api"
+export const flaskUrl = ""
 
 export class AdapterStore {
   constructor(errorStore: ErrorStore) {
