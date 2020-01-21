@@ -120,11 +120,6 @@
         "val": null,
         "optional": false
       },
-      "mapped_columns": {
-        "id": "ordered_dict",
-        "val": null,
-        "optional": false
-      },
       "filter": {
         "id": "string",
         "val": null,

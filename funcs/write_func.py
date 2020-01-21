@@ -14,25 +14,26 @@ from dtran.ifunc import IFunc
 
 class GraphWriteFunc(IFunc):
     id = "graph_write_func"
-    description = ''' A writer adapter.
+    description = """ A writer adapter.
     Generates a csv/json file.
-    '''
+    """
     inputs = {
         "graph": ArgType.Graph(None),
         "main_class": ArgType.String,
-        "output_file": ArgType.FilePath,
-        "mapped_columns": ArgType.OrderedDict,
-        "filter": ArgType.String(optional=True)
+        "output_file": ArgType.String,
+        "filter": ArgType.String(optional=True),
     }
     outputs = {"output_file": ArgType.String}
 
     def __init__(
-            self, graph: Graph, main_class: str, output_file: Union[str, Path], mapped_columns: Dict[str, str],
-            filter: Optional[str] = None
+        self,
+        graph: Graph,
+        main_class: str,
+        output_file: Union[str, Path],
+        filter: Optional[str] = None,
     ):
         self.graph = graph
         self.main_class = main_class
-        self.mapped_columns = mapped_columns
 
         self.output_file = str(output_file)
         self.filter_func = IFunc.filter_func(filter)
@@ -70,30 +71,34 @@ class GraphWriteFunc(IFunc):
                     main_class_nodes.append(node)
 
         # modified code to allow rename & select a subset of attributes
-        if len(self.mapped_columns) == 0:
-            all_data_rows = []
-            all_attr_names = set()
-            for idx, node in enumerate(main_class_nodes):
-                dict_data_rows, attr_names = self._divide_search(node, [])
-                all_data_rows.extend(dict_data_rows)
+        # if len(self.mapped_columns) == 0:
+        all_data_rows = []
+        all_attr_names = set()
+        for idx, node in enumerate(main_class_nodes):
+            dict_data_rows, attr_names = self._divide_search(node, [])
+            all_data_rows.extend(dict_data_rows)
 
-                if idx == 0:
-                    all_attr_names = attr_names
-                else:
-                    all_attr_names = all_attr_names.union(attr_names)
+            if idx == 0:
+                all_attr_names = attr_names
+            else:
+                all_attr_names = all_attr_names.union(attr_names)
 
-            return all_data_rows, all_attr_names
-        else:
-            all_data_rows = []
-            for node in main_class_nodes:
-                dict_data_rows, attr_names = self._divide_search(node, [])
-                for row in dict_data_rows:
-                    all_data_rows.append({new_k: row[old_k] for old_k, new_k in self.mapped_columns.items()})
+        return all_data_rows, all_attr_names
+        # else:
+        #     all_data_rows = []
+        #     for node in main_class_nodes:
+        #         dict_data_rows, attr_names = self._divide_search(node, [])
+        #         for row in dict_data_rows:
+        #             all_data_rows.append({new_k: row[old_k] for old_k, new_k in self.mapped_columns.items()})
 
-            return all_data_rows, list(self.mapped_columns.values())
+        # return all_data_rows, list(self.mapped_columns.values())
 
     def _divide_search(
-            self, node: Node, visited: List[Node], with_ids: bool = False, excluding_attrs=None
+        self,
+        node: Node,
+        visited: List[Node],
+        with_ids: bool = False,
+        excluding_attrs=None,
     ) -> (list, set):
         if excluding_attrs is None:
             excluding_attrs = ["@type"]
@@ -102,11 +107,15 @@ class GraphWriteFunc(IFunc):
         for attr, value in node.data.items():
             tuple_data_rows[0].append((attr, value, node.id))
 
-        for child_node in [self.graph.nodes[self.graph.edges[eid].target] for eid in node.edges_out]:
+        for child_node in [
+            self.graph.nodes[self.graph.edges[eid].target] for eid in node.edges_out
+        ]:
             if child_node not in visited:
                 child_data_rows = self._divide_search(node, visited + [child_node])
                 tuple_data_rows = tuple_data_rows * len(child_data_rows)
-                tuple_data_rows = [x[0] + x[1] for x in zip(tuple_data_rows, child_data_rows)]
+                tuple_data_rows = [
+                    x[0] + x[1] for x in zip(tuple_data_rows, child_data_rows)
+                ]
 
         dict_data_rows = []
         attr_list = set()
@@ -127,15 +136,15 @@ class GraphWriteFunc(IFunc):
 
 class VisJsonWriteFunc(GraphWriteFunc):
     id = "vis_json_write_func"
-    description = ''' A writer adapter.
+    description = """ A writer adapter.
     Generates a json file following the format of the MINT-Data-Catalog Visualizer.
-    '''
+    """
     inputs = {
         "graph": ArgType.Graph(None),
         "main_class": ArgType.String,
         "output_file": ArgType.FilePath,
         "mapped_columns": ArgType.OrderedDict(None),
-        "filter": ArgType.String(optional=True)
+        "filter": ArgType.String(optional=True),
     }
     outputs = {"data": ArgType.String}
 

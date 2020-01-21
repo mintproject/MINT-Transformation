@@ -28,7 +28,7 @@ class DcatWriteFunc(IFunc):
         self, resource_path: Union[str, Path], metadata: str,
     ):
         self.resource_path = Path(resource_path)
-        
+
         self.metadata = json.loads(metadata)
 
         self.dcat = DCatAPI.get_instance()
