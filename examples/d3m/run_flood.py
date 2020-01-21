@@ -10,16 +10,16 @@ from multiprocessing.pool import Pool
 from funcs.gdal.raster import EPSG, Raster, GeoTransform, ReSample
 from netCDF4 import Dataset
 import gdal
+#
+# infile = sys.argv[1]
+# shp_dir = sys.argv[2]
+# outfile = sys.argv[3]
+# year = int(sys.argv[4])
 
-infile = sys.argv[1]
-shp_dir = sys.argv[2]
-outfile = sys.argv[3]
-
-# infile = "/Users/rook/workspace/MINT/MINT-Transformation/data/flood.nc"
-# shp_dir = "/Users/rook/workspace/MINT/MINT-Transformation/data/woredas"
-# outfile = "/Users/rook/workspace/MINT/MINT-Transformation/data/flood.csv"
-
-year = int(sys.argv[4])
+infile = "/Users/rook/workspace/MINT/MINT-Transformation/data/flood.nc"
+shp_dir = "/Users/rook/workspace/MINT/MINT-Transformation/data/woredas-fixed"
+outfile = "/Users/rook/workspace/MINT/MINT-Transformation/data/flood.csv"
+year = 2007
 
 def get_woreda_details(shp_file):
     with fiona.open(shp_file, "r") as f:
@@ -31,7 +31,8 @@ def process_shapefile(shp_file):
         raster_woredas = raster.crop(vector_file=shp_file)
     except Exception as e:
         print(">>> error", shp_file)
-        return [[*get_woreda_details(shp_file), f"{year}-{'%02d' % month}-01", 0, 0, 0] for month in range(1, 13)]
+        raise
+        # return [[*get_woreda_details(shp_file), f"{year}-{'%02d' % month}-01", 0, 0, 0] for month in range(1, 13)]
     record_list = []
     index = 0
     for month in range(1, 13):
