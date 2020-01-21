@@ -319,9 +319,9 @@ def list_pipelines_detail():
 
 
 def list_all_pipelines_docker():
-    output = subprocess.check_output("docker ps -a --format '{{json .ID}}'", shell=True)
+    output = subprocess.check_output("docker ps -a --format '{{json .ID}}' --filter ancestor=mint_dt", shell=True)
     pipeline_ids_quoted = str.splitlines(output.decode("utf-8"))
-    output = subprocess.check_output("docker ps -a --format '{{.Names}}'", shell=True)
+    output = subprocess.check_output("docker ps -a --format '{{.Names}}' --filter ancestor=mint_dt", shell=True)
     pipeline_names = str.splitlines(output.decode("utf-8"))
     return [pid.replace('"', '') for pid in pipeline_ids_quoted], [pid.replace('"', '') for pid in pipeline_names]
 
