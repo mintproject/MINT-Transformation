@@ -28,6 +28,5 @@ adapters:
       graph: "$.my_unit_trans_func.graph"
       main_class: qb:Observation
       output_file: "./price-test.csv"
-      mapped_columns: {}
     adapter: funcs.GraphWriteFunc
     comment: My graph write func adapter
