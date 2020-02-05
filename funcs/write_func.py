@@ -9,7 +9,7 @@ import ujson as json
 from drepr.graph import Node, Graph
 
 from dtran.argtype import ArgType
-from dtran.ifunc import IFunc
+from dtran.ifunc import IFunc, IFuncType
 
 
 class GraphWriteFunc(IFunc):
@@ -17,6 +17,7 @@ class GraphWriteFunc(IFunc):
     description = """ A writer adapter.
     Generates a csv/json file.
     """
+    func_type = IFuncType.WRITER
     inputs = {
         "graph": ArgType.Graph(None),
         "main_class": ArgType.String,

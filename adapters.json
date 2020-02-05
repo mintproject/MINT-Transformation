@@ -1,379 +1,398 @@
 [
-  {
-    "name": "ReadFunc",
-    "func_name": "ReadFunc",
-    "description": " An entry point in the pipeline.\n    Reads an input file and a yml file describing the D-REPR layout of this file.\n    The data are representated in a Graph object.\n    ",
-    "input": {
-      "repr_file": {
-        "id": "file_path",
-        "val": null,
-        "optional": false
-      },
-      "resources": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      }
+    {
+        "id": "ReadFunc",
+        "description": " An entry point in the pipeline.\n    Reads an input file and a yml file describing the D-REPR layout of this file.\n    The data are representated in a Graph object.\n    ",
+        "inputs": {
+            "repr_file": {
+                "id": "file_path",
+                "val": null,
+                "optional": false
+            },
+            "resources": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {
+            "data": {
+                "id": "graph",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Reader",
+        "friendly_name": ""
     },
-    "output": {
-      "data": {
-        "id": "graph",
-        "val": null,
-        "optional": false
-      }
+    {
+        "id": "DcatReadFunc",
+        "description": " An entry point in the pipeline.\n    Fetches a dataset and its metadata from the MINT Data-Catalog.\n    ",
+        "inputs": {
+            "dataset_id": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {
+            "data": {
+                "id": "graph",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Reader",
+        "friendly_name": null
+    },
+    {
+        "id": "DcatReadNoReprFunc",
+        "description": " An entry point in the pipeline.\n    Fetches a dataset and its metadata from the MINT Data-Catalog.\n    ",
+        "inputs": {
+            "dataset_id": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {
+            "data": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Reader",
+        "friendly_name": null
+    },
+    {
+        "id": "UnitTransFunc",
+        "description": " A transformation adapter.\n    Alters the graph by performing unit conversion on some values in the graph.\n    ",
+        "inputs": {
+            "graph": {
+                "id": "graph",
+                "val": null,
+                "optional": false
+            },
+            "unit_value": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "unit_label": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "unit_desired": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "filter": {
+                "id": "string",
+                "val": null,
+                "optional": true
+            }
+        },
+        "outputs": {
+            "graph": {
+                "id": "graph",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Others",
+        "friendly_name": null
+    },
+    {
+        "id": "GraphWriteFunc",
+        "description": " A writer adapter.\n    Generates a csv/json file.\n    ",
+        "inputs": {
+            "graph": {
+                "id": "graph",
+                "val": null,
+                "optional": false
+            },
+            "main_class": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "output_file": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "filter": {
+                "id": "string",
+                "val": null,
+                "optional": true
+            }
+        },
+        "outputs": {
+            "output_file": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Writer",
+        "friendly_name": null
+    },
+    {
+        "id": "VisJsonWriteFunc",
+        "description": " A writer adapter.\n    Generates a json file following the format of the MINT-Data-Catalog Visualizer.\n    ",
+        "inputs": {
+            "graph": {
+                "id": "graph",
+                "val": null,
+                "optional": false
+            },
+            "main_class": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "output_file": {
+                "id": "file_path",
+                "val": null,
+                "optional": false
+            },
+            "mapped_columns": {
+                "id": "ordered_dict",
+                "val": null,
+                "optional": null
+            },
+            "filter": {
+                "id": "string",
+                "val": null,
+                "optional": true
+            }
+        },
+        "outputs": {
+            "data": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Others",
+        "friendly_name": null
+    },
+    {
+        "id": "GraphStr2StrFunc",
+        "description": " A transformation adapter.\n    Maps an existing set of strings (semantic attributes) to a new desired set of strings.\n    ",
+        "inputs": {
+            "graph": {
+                "id": "graph",
+                "val": null,
+                "optional": false
+            },
+            "semantic_type": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "str2str": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {},
+        "func_type": "Others",
+        "friendly_name": null
+    },
+    {
+        "id": "MergeFunc",
+        "description": " A transformation adapter.\n    Merges two graphs into one.\n    ",
+        "inputs": {
+            "graph1": {
+                "id": "graph",
+                "val": null,
+                "optional": false
+            },
+            "graph2": {
+                "id": "graph",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {
+            "data": {
+                "id": "graph",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Others",
+        "friendly_name": null
+    },
+    {
+        "id": "Topoflow4ClimateWriteFunc",
+        "description": " A reader-transformation-writer multi-adapter.\n    Creates an RTS (and RTI) file from NetCDF (climate) files.\n    ",
+        "inputs": {
+            "input_dir": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "temp_dir": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "output_file": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "var_name": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "DEM_bounds": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "DEM_xres_arcsecs": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "DEM_yres_arcsecs": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {
+            "output_file": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Others",
+        "friendly_name": null
+    },
+    {
+        "id": "Topoflow4ClimateWritePerMonthFunc",
+        "description": " A reader-transformation-writer multi-adapter.\n    Creates RTS (and RTI) files per month from NetCDF (climate) files.\n    ",
+        "inputs": {
+            "grid_dir": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "date_regex": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "output_file": {
+                "id": "file_path",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {},
+        "func_type": "Others",
+        "friendly_name": null
+    },
+    {
+        "id": "Topoflow4SoilWriteFunc",
+        "description": " A reader-transformation-writer multi-adapter.\n    Creates Bin (and RTI) files from tiff (soil) files.\n    ",
+        "inputs": {
+            "input_dir": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "output_dir": {
+                "id": "file_path",
+                "val": null,
+                "optional": false
+            },
+            "layer": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "DEM_bounds": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "DEM_xres_arcsecs": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "DEM_yres_arcsecs": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {},
+        "func_type": "Others",
+        "friendly_name": null
+    },
+    {
+        "id": "NC2GeoTiff",
+        "description": "Convert all netcdf file in one folder to geotiff file in another folder",
+        "inputs": {
+            "input_dir": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "output_dir": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "var_name": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "no_data": {
+                "id": "number",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {},
+        "func_type": "Others",
+        "friendly_name": null
+    },
+    {
+        "id": "DcatWriteFunc",
+        "description": " A writer adapter.\n    Write files to DCAT.\n    ",
+        "inputs": {
+            "resource_path": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "metadata": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {
+            "data": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Writer",
+        "friendly_name": null
     }
-  },
-  {
-    "name": "DcatReadFunc",
-    "func_name": "DcatReadFunc",
-    "description": " An entry point in the pipeline.\n    Fetches a dataset and its metadata from the MINT Data-Catalog.\n    ",
-    "input": {
-      "dataset_id": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      }
-    },
-    "output": {
-      "data": {
-        "id": "graph",
-        "val": null,
-        "optional": false
-      }
-    }
-  },
-  {
-    "name": "DcatReadNoReprFunc",
-    "func_name": "DcatReadNoReprFunc",
-    "description": " An entry point in the pipeline.\n    Fetches a dataset and its metadata (no repr) from the MINT Data-Catalog.\n    ",
-    "input": {
-      "dataset_id": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      }
-    },
-    "output": {
-      "data": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      }
-    }
-  },
-  {
-    "name": "UnitTransFunc",
-    "func_name": "UnitTransFunc",
-    "description": " A transformation adapter.\n    Alters the graph by performing unit conversion on some values in the graph.\n    ",
-    "input": {
-      "graph": {
-        "id": "graph",
-        "val": null,
-        "optional": false
-      },
-      "unit_value": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "unit_label": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "unit_desired": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "filter": {
-        "id": "string",
-        "val": null,
-        "optional": true
-      }
-    },
-    "output": {
-      "graph": {
-        "id": "graph",
-        "val": null,
-        "optional": false
-      }
-    }
-  },
-  {
-    "name": "GraphWriteFunc",
-    "func_name": "GraphWriteFunc",
-    "description": " A writer adapter.\n    Generates a csv/json file.\n    ",
-    "input": {
-      "graph": {
-        "id": "graph",
-        "val": null,
-        "optional": false
-      },
-      "main_class": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "output_file": {
-        "id": "file_path",
-        "val": null,
-        "optional": false
-      },
-      "filter": {
-        "id": "string",
-        "val": null,
-        "optional": true
-      }
-    },
-    "output": {
-      "output_file": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      }
-    }
-  },
-  {
-    "name": "VisJsonWriteFunc",
-    "func_name": "VisJsonWriteFunc",
-    "description": " A writer adapter.\n    Generates a json file following the format of the MINT-Data-Catalog Visualizer.\n    ",
-    "input": {
-      "graph": {
-        "id": "graph",
-        "val": null,
-        "optional": false
-      },
-      "main_class": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "output_file": {
-        "id": "file_path",
-        "val": null,
-        "optional": false
-      },
-      "mapped_columns": {
-        "id": "ordered_dict",
-        "val": null,
-        "optional": null
-      },
-      "filter": {
-        "id": "string",
-        "val": null,
-        "optional": true
-      }
-    },
-    "output": {
-      "data": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      }
-    }
-  },
-  {
-    "name": "GraphStr2StrFunc",
-    "func_name": "GraphStr2StrFunc",
-    "description": " A transformation adapter.\n    Maps an existing set of strings (semantic attributes) to a new desired set of strings.\n    ",
-    "input": {
-      "graph": {
-        "id": "graph",
-        "val": null,
-        "optional": false
-      },
-      "semantic_type": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "str2str": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      }
-    },
-    "output": {}
-  },
-  {
-    "name": "MergeFunc",
-    "func_name": "MergeFunc",
-    "description": " A transformation adapter.\n    Merges two graphs into one.\n    ",
-    "input": {
-      "graph1": {
-        "id": "graph",
-        "val": null,
-        "optional": false
-      },
-      "graph2": {
-        "id": "graph",
-        "val": null,
-        "optional": false
-      }
-    },
-    "output": {
-      "data": {
-        "id": "graph",
-        "val": null,
-        "optional": false
-      }
-    }
-  },
-  {
-    "name": "Topoflow4ClimateWriteFunc",
-    "func_name": "Topoflow4ClimateWriteFunc",
-    "description": " A reader-transformation-writer multi-adapter.\n    Creates an RTS (and RTI) file from NetCDF (climate) files.\n    ",
-    "input": {
-      "input_dir": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "temp_dir": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "output_file": {
-        "id": "file_path",
-        "val": null,
-        "optional": false
-      },
-      "var_name": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "DEM_bounds": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "DEM_xres_arcsecs": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "DEM_yres_arcsecs": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      }
-    },
-    "output": {
-      "output_file": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      }
-    }
-  },
-  {
-    "name": "Topoflow4ClimateWritePerMonthFunc",
-    "func_name": "Topoflow4ClimateWritePerMonthFunc",
-    "description": " A reader-transformation-writer multi-adapter.\n    Creates RTS (and RTI) files per month from NetCDF (climate) files.\n    ",
-    "input": {
-      "grid_dir": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "date_regex": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "output_file": {
-        "id": "file_path",
-        "val": null,
-        "optional": false
-      }
-    },
-    "output": {}
-  },
-  {
-    "name": "Topoflow4SoilWriteFunc",
-    "func_name": "Topoflow4SoilWriteFunc",
-    "description": " A reader-transformation-writer multi-adapter.\n    Creates Bin (and RTI) files from tiff (soil) files.\n    ",
-    "input": {
-      "input_dir": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "output_dir": {
-        "id": "file_path",
-        "val": null,
-        "optional": false
-      },
-      "layer": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "DEM_bounds": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "DEM_xres_arcsecs": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "DEM_yres_arcsecs": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      }
-    },
-    "output": {}
-  },
-  {
-    "name": "NC2GeoTiff",
-    "func_name": "NC2GeoTiff",
-    "description": "Convert all netcdf file in one folder to geotiff file in another folder",
-    "input": {
-      "input_dir": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "output_dir": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "var_name": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "no_data": {
-        "id": "number",
-        "val": null,
-        "optional": false
-      }
-    },
-    "output": {}
-  },
-  {
-    "name": "DcatWriteFunc",
-    "func_name": "DcatWriteFunc",
-    "description": "A writer adapter that register datasets to DCAT",
-    "input": {
-      "resource_path": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      },
-      "metadata": {
-        "id": "string",
-        "val": null,
-        "optional": false
-      }
-    },
-    "output": {}
-  }
 ]

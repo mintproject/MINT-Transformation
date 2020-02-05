@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import abc
+from enum import Enum
 from typing import Dict, Any
 from dtran.argtype import ArgType
 from dtran.wireio import WiredIO
@@ -17,6 +18,12 @@ class IFuncIO(type):
     @property
     def O(cls):
         return WiredIO("o", cls.id, cls.outputs)
+
+
+class IFuncType(Enum):
+    READER = "Reader"
+    WRITER = "Writer"
+    OTHERS = "Others"
 
 
 class IFunc(metaclass=IFuncIO):

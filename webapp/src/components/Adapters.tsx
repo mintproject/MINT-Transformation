@@ -50,6 +50,8 @@ export class AdapterComponent extends React.Component<
             >
               <pre>
                 • <b><u>Function Name</u></b>: {ad.id}<br/>
+                • <b><u>Friendly Name</u></b>: {ad.friendly_name}<br/>
+                • <b><u>Function Type</u></b>: {ad.func_type}<br/>
                 • <b><u>Description</u></b>: {ad.description}<br/>
                 • <b><u>Inputs</u></b>: {_.isEmpty(ad.inputs) ? <p>None</p> :Object.keys(ad.inputs).map((inputKey, idx) => (
                   <p key={`input-${idx}`}>

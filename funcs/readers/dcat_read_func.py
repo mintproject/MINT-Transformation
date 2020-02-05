@@ -11,7 +11,7 @@ from drepr import Graph, DRepr
 import subprocess
 
 from dtran.argtype import ArgType
-from dtran.ifunc import IFunc
+from dtran.ifunc import IFunc, IFuncType
 
 
 class DcatReadFunc(IFunc):
@@ -19,6 +19,7 @@ class DcatReadFunc(IFunc):
     description = ''' An entry point in the pipeline.
     Fetches a dataset and its metadata from the MINT Data-Catalog.
     '''
+    func_type = IFuncType.READER
     inputs = {"dataset_id": ArgType.String}
     outputs = {"data": ArgType.Graph(None)}
 

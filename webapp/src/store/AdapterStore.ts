@@ -9,7 +9,9 @@ export type AdapterType = {
   id: string,
   description: string,
   inputs: { [key: string]: AdapterInputType; },
-  outputs: { [key: string]: AdapterInputType; }
+  outputs: { [key: string]: AdapterInputType; },
+  func_type: string,
+  friendly_name: string | null,
 };
 
 export type AdapterInputType = {

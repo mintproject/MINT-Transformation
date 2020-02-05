@@ -8,7 +8,7 @@ import ujson as json
 
 from dcatreg.dcat_api import DCatAPI
 from dtran.argtype import ArgType
-from dtran.ifunc import IFunc
+from dtran.ifunc import IFunc, IFuncType
 
 
 class DcatWriteFunc(IFunc):
@@ -16,6 +16,7 @@ class DcatWriteFunc(IFunc):
     description = """ A writer adapter.
     Write files to DCAT.
     """
+    func_type = IFuncType.WRITER
     inputs = {
         "resource_path": ArgType.String,
         "metadata": ArgType.String,

@@ -5,7 +5,7 @@ import subprocess
 from pathlib import Path
 
 from dtran.argtype import ArgType
-from dtran.ifunc import IFunc
+from dtran.ifunc import IFunc, IFuncType
 from funcs.readers.dcat_read_func import DCatAPI
 
 
@@ -14,6 +14,7 @@ class DcatReadNoReprFunc(IFunc):
     description = """ An entry point in the pipeline.
     Fetches a dataset and its metadata from the MINT Data-Catalog.
     """
+    func_type = IFuncType.READER
     inputs = {"dataset_id": ArgType.String}
     outputs = {"data": ArgType.String}
 

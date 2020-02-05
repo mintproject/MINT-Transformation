@@ -13,6 +13,7 @@ import {
   GraphView, INode, IEdge,
 } from "react-digraph";
 import _ from "lodash";
+import SubMenu from "antd/lib/menu/SubMenu";
 const { TextArea } = Input;
 const { TabPane } = Tabs;
 
@@ -260,13 +261,23 @@ export class CreatePipelineComponent extends React.Component<
   };
 
   createAdapterMenu = () => {
+    const currAdapters = this.props.adapters;
+    const currAdapterTypes = currAdapters.map(ad => ad.func_type).filter(
+      (v, i, a) => a.indexOf(v) === i
+    );
     return (<Menu onClick={({ item }) => {
       this.setState({ currentAdapter: item.props.children });
-      }}>
-      {this.props.adapters.map((ad, idx) => {
-        return (<Menu.Item key={`ad-${idx}`}>
-          {ad.id}
-        </Menu.Item>);
+    }}>
+      {currAdapterTypes.map((adt, i) => {
+        return (<SubMenu
+            key={`adt-${i}`} title={adt}
+          >
+          {currAdapters.filter(ad => ad.func_type === adt).map((ad, idx) => {
+            return (<Menu.Item key={`ad-${idx}`}>
+              {_.isEmpty(ad.friendly_name) ? ad.id : ad.friendly_name}
+            </Menu.Item>);
+          })}
+        </SubMenu>)
       })}
     </Menu>);
   };

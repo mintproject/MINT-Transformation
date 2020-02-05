@@ -56,29 +56,6 @@ export class PipelineComponent extends React.Component<
             style={{ margin: "5px 5px", height: "100%" }}
           >
             <pre>
-              {/* {JSON.stringify(currentPipeline, undefined, 2)} */}
-              {/*{
-                "config": {
-                  "adapters": {
-                    "my_read_func": {
-                      "adapter": "funcs.ReadFunc",
-                      "inputs": {
-                        "repr_file": "./wfp_food_prices_south-sudan.repr.yml",
-                        "resources": "./wfp_food_prices_south-sudan.csv"
-                      }
-                    }
-                  },
-                  "description": "Test description",
-                  "version": "1"
-                },
-                "description": "Test description",
-                "end_timestamp": "2020-01-15T18:27:45",
-                "id": "48b62deeb48d",
-                "name": "Test Name",
-                "output": "Importing TopoFlow 3.6 packages:\n   topoflow.utils\n   topoflow.utils.tests\n   topoflow.components\n   topoflow.components.tests\n   topoflow.framework\n   topoflow.framework.tests\n \nImporting TopoFlow 3.6 packages:\n   topoflow.utils\n   topoflow.utils.tests\n   topoflow.components\n   topoflow.components.tests\n   topoflow.framework\n   topoflow.framework.tests\n \nPaths for this package:\nframework_dir = /ws/extra_libs/topoflow/framework/\nparent_dir    = /ws/extra_libs/topoflow/\nexamples_dir  = /ws/extra_libs/topoflow/examples/\n__file__      = /ws/extra_libs/topoflow/framework/emeli.py\n__name__      = topoflow.framework.emeli\n \n",
-                "start_timestamp": "2020-01-15T18:27:42",
-                "status": "finished"
-              } */}
               • <b><u>Pipeline ID</u></b>: {currentPipeline.id}<br/><br/>
               • <b><u>Pipeline Name</u></b>: {currentPipeline.name}<br/><br/>
               • <b><u>Description</u></b>: {currentPipeline.description}<br/><br/>
