@@ -1,7 +1,7 @@
 import React from "react";
 import { observer, inject } from "mobx-react";
 import { IStore } from "../store";
-import { message, Upload, Icon, Row, Button, Tabs, Input, Col, Dropdown, Menu } from "antd";
+import { message, Upload, Icon, Row, Button, Tabs, Input, Col, Dropdown, Menu, Modal } from "antd";
 import MyLayout from "./Layout";
 import { UploadedPipelineDataType, NodeType, EdgeType } from "../store/PipelineStore"
 import "antd/dist/antd.css";
@@ -67,6 +67,7 @@ interface CreatePipelineState {
   currentToNode: string,
   fromNodeOutput: string,
   toNodeInput: string,
+  showAdapterSpecs: boolean,
 }
 
 @inject((stores: IStore) => ({
@@ -97,7 +98,8 @@ export class CreatePipelineComponent extends React.Component<
     currentToNode: "",
     fromNodeOutput: "",
     toNodeInput: "",
-    currentAdapterName: ""
+    currentAdapterName: "",
+    showAdapterSpecs: false
   };
 
   componentDidMount() {
@@ -341,6 +343,55 @@ export class CreatePipelineComponent extends React.Component<
       })}
     </Menu>);
   };
+
+  createNodeInput = (selectedAdapter: AdapterType, ip: string, idx: number, optional: boolean) => {
+    if (selectedAdapter.inputs[ip].id === "graph") {
+      const wiredEdges = this.state.graphEdges.filter(e => e.target === this.state.selected && e.input === "graph");
+      return <p key={`input-${idx}`} style={{ margin: "20px 20px"}}>
+        {`${ip}: `}
+        {!optional ? "* " : null}
+        <input
+          disabled={true}
+          type="text"
+          value={
+            _.isEmpty(wiredEdges) ? "Only Changeable By Editing Edges"
+            : `${wiredEdges[0].source}.${wiredEdges[0].output}`
+          }
+          style={{
+            padding:"5px",
+            border:"2px solid",
+            borderRadius: "5px",
+            width: "100%"
+          }}
+        />
+      </p>
+    }
+    return (
+      <p key={`input-${idx}`} style={{ margin: "20px 20px"}}>
+        {`${ip}: `}
+        {!optional ? "* " : null}
+        <input
+          name={ip}
+          type="text"
+          required={selectedAdapter.inputs[ip].optional}
+          value={selectedAdapter.inputs[ip].val || ""}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            const { currentTarget } = event;
+            var newNodes = this.state.graphNodes;
+            var newNode = newNodes.filter(n => n.id === this.state.selected)[0];
+            newNode.adapter.inputs[currentTarget.name].val = currentTarget.value;
+            this.setState({ graphNodes: newNodes });
+          }}
+          style={{
+            padding:"5px",
+            border:"2px solid",
+            borderRadius: "5px",
+            width: "100%"
+          }}
+        />
+      </p>
+    );
+  }
 
   onClear = () => {
     this.setState({
@@ -689,53 +740,44 @@ export class CreatePipelineComponent extends React.Component<
                       • <b><u>Function Name</u></b>: {selectedAdapter.id}<br/>
                       • <b><u>Description</u></b>: {selectedAdapter.description}<br/>
                     </p>
-                    <p style={{ margin: "20px 20px"}}><b>Inputs to adapter: </b></p>
+                    <p style={{ margin: "20px 20px"}}>
+                      <b>Inputs to adapter: </b>
+                      <Button onClick={() => this.setState({ showAdapterSpecs: true })}>
+                        See Input Specs
+                      </Button>
+                      <Modal
+                        title="Adpater Inputs Detail"
+                        visible={this.state.showAdapterSpecs}
+                        onOk={() => this.setState({ showAdapterSpecs: false })}
+                        onCancel={() => this.setState({ showAdapterSpecs: false })}
+                      >
+                        <pre>
+                          {/* • <b><u>Inputs</u></b>:  */}
+                          {_.isEmpty(selectedAdapter.inputs) ? <p>None</p> :Object.keys(selectedAdapter.inputs).map(
+                            (inputKey, idx) => (<pre key={`input-${idx}`}>
+                              <b><u>{inputKey}</u></b>:<br/>
+                                Type: <input value={selectedAdapter.inputs[inputKey].id} readOnly/>;<br/>
+                                Optional: <input value={JSON.stringify(selectedAdapter.inputs[inputKey].optional)} readOnly/>
+                            </pre>))}<br/>
+                          {/* • <b><u>Outputs</u></b>: {_.isEmpty(selectedAdapter.outputs) ? <p>None</p> :Object.keys(selectedAdapter.outputs).map((outputKey, idx) => (
+                            <pre key={`input-${idx}`}>
+                              <b><u>{outputKey}</u></b>:<br/>
+                                Type: <input value={selectedAdapter.outputs[outputKey].id} readOnly/>;<br/>
+                                Optional: <input value={JSON.stringify(selectedAdapter.outputs[outputKey].optional)} readOnly/>
+                            </pre>))}<br/> */}
+                        </pre>                     
+                      </Modal>
+                    </p>
                     <form>
-                      {Object.keys(selectedAdapter.inputs).map((ip, idx) => {
-                        if (selectedAdapter.inputs[ip].id === "graph") {
-                          const wiredEdges = this.state.graphEdges.filter(e => e.target === this.state.selected && e.input === "graph");
-                          return <p key={`input-${idx}`} style={{ margin: "20px 20px"}}>
-                            {`${ip}: `}
-                            <input
-                              disabled={true}
-                              type="text"
-                              value={
-                                _.isEmpty(wiredEdges) ? "Only Changeable By Editing Edges"
-                                : `${wiredEdges[0].source}.${wiredEdges[0].output}`
-                              }
-                              style={{
-                                padding:"5px",
-                                border:"2px solid",
-                                borderRadius: "5px",
-                                width: "100%"
-                              }}
-                            />
-                          </p>
-                        }
-                        return (
-                          <p key={`input-${idx}`} style={{ margin: "20px 20px"}}>
-                            {`${ip}: `}
-                            <input
-                              name={ip}
-                              type="text"
-                              required={selectedAdapter.inputs[ip].optional}
-                              value={selectedAdapter.inputs[ip].val || ""}
-                              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                                const { currentTarget } = event;
-                                var newNodes = this.state.graphNodes;
-                                var newNode = newNodes.filter(n => n.id === this.state.selected)[0];
-                                newNode.adapter.inputs[currentTarget.name].val = currentTarget.value;
-                                this.setState({ graphNodes: newNodes });
-                              }}
-                              style={{
-                                padding:"5px",
-                                border:"2px solid",
-                                borderRadius: "5px",
-                                width: "100%"
-                              }}
-                            />
-                          </p>
-                        );
+                      {Object.keys(selectedAdapter.inputs).filter(
+                        ip => !selectedAdapter.inputs[ip].optional
+                      ).map((ip, idx) => {
+                        return this.createNodeInput(selectedAdapter, ip, idx, false)
+                      })}
+                      {Object.keys(selectedAdapter.inputs).filter(
+                        ip => selectedAdapter.inputs[ip].optional
+                      ).map((ip, idx) => {
+                        return this.createNodeInput(selectedAdapter, ip, idx, true)
                       })}
                     </form>
                     <p style={{ margin: "20px 20px"}}><b>Wiring of this adapter:</b></p>

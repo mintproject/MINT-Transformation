@@ -53,16 +53,18 @@ export class AdapterComponent extends React.Component<
                 • <b><u>Friendly Name</u></b>: {ad.friendly_name}<br/>
                 • <b><u>Function Type</u></b>: {ad.func_type}<br/>
                 • <b><u>Description</u></b>: {ad.description}<br/>
-                • <b><u>Inputs</u></b>: {_.isEmpty(ad.inputs) ? <p>None</p> :Object.keys(ad.inputs).map((inputKey, idx) => (
-                  <p key={`input-${idx}`}>
-                    {inputKey}: Type: <input value={ad.inputs[inputKey].id} readOnly/>; Optional: <input value={JSON.stringify(ad.inputs[inputKey].optional)} readOnly/>
-                  </p>
-                ))}<br/>
+                • <b><u>Inputs</u></b>: {_.isEmpty(ad.inputs) ? <p>None</p> :Object.keys(ad.inputs).map(
+                  (inputKey, idx) => (<pre key={`input-${idx}`}>
+                    <b><u>{inputKey}</u></b>:<br/>
+                      Type: <input value={ad.inputs[inputKey].id} readOnly/>;<br/>
+                      Optional: <input value={JSON.stringify(ad.inputs[inputKey].optional)} readOnly/>
+                  </pre>))}<br/>
                 • <b><u>Outputs</u></b>: {_.isEmpty(ad.outputs) ? <p>None</p> :Object.keys(ad.outputs).map((outputKey, idx) => (
-                  <p key={`input-${idx}`}>
-                    {outputKey}: Type: <input value={ad.outputs[outputKey].id} readOnly/>; Optional: <input value={JSON.stringify(ad.outputs[outputKey].optional)} readOnly/>
-                  </p>
-                ))}
+                  <pre key={`input-${idx}`}>
+                    <b><u>{outputKey}</u></b>:<br/>
+                      Type: <input value={ad.outputs[outputKey].id} readOnly/>;<br/>
+                      Optional: <input value={JSON.stringify(ad.outputs[outputKey].optional)} readOnly/>
+                  </pre>))}<br/>
               </pre>
             </Card>
         )}
