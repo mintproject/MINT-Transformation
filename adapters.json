@@ -111,7 +111,7 @@
                 "optional": false
             }
         },
-        "func_type": "Unit Transformation",
+        "func_type": "Unit Conversion Transformation",
         "friendly_name": "Unit Transformation Function",
         "example": {
             "unit_value": "dcat: measure_1_value",
@@ -308,8 +308,8 @@
                 "optional": false
             }
         },
-        "func_type": "Model Specific Transformation",
-        "friendly_name": "Topoflow Climate File Writer",
+        "func_type": "Model-specific Transformation",
+        "friendly_name": "Topoflow Climate",
         "example": {
             "input_dir": "$.my_dcat_read_func.data",
             "temp_dir": "/data/mint/sample_grid_baro",
@@ -341,8 +341,8 @@
             }
         },
         "outputs": {},
-        "func_type": "Model Specific Transformation",
-        "friendly_name": "Topoflow Climate Per Month File Writer",
+        "func_type": "Model-specific Transformation",
+        "friendly_name": "Topoflow Climate Per Month",
         "example": {
             "grid_dir": "/data/mint/gpm_grid_baro",
             "date_regex": "3B-HHR-E.MS.MRG.3IMERG.(?P<year>\\d{4})(?P<month>\\d{2})(?P<day>\\d{2})",
@@ -385,8 +385,8 @@
             }
         },
         "outputs": {},
-        "func_type": "Model Specific Transformation",
-        "friendly_name": "Topoflow Soil File Writer",
+        "func_type": "Model-specific Transformation",
+        "friendly_name": "Topoflow Soil",
         "example": {
             "input_dir": "/ws/oct_eval_data/soilGrids/",
             "output_dir": "/ws/examples/scotts_transformations/tmp/soil_BARO_l1",

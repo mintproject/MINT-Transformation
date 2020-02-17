@@ -31,7 +31,7 @@ class Topoflow4SoilWriteFunc(IFunc):
         "DEM_yres_arcsecs": ArgType.String,
     }
     outputs = {}
-    friendly_name: str = "Topoflow Soil File Writer"
+    friendly_name: str = "Topoflow Soil"
     func_type = IFuncType.MODEL_TRANS
     example = {
         "input_dir": "/ws/oct_eval_data/soilGrids/",

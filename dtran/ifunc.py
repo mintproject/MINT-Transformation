@@ -25,8 +25,8 @@ class IFuncType(Enum):
     WRITER = "Writer"
     OTHERS = "Others"
     SPATIAL_TRANS = "Spatial Transformation"
-    UNIT_TRANS = "Unit Transformation"
-    MODEL_TRANS = "Model Specific Transformation"
+    UNIT_TRANS = "Unit Conversion Transformation"
+    MODEL_TRANS = "Model-specific Transformation"
     INTERMEDIATE = "Other Transformation"
 
 

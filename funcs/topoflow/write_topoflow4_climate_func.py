@@ -35,7 +35,7 @@ class Topoflow4ClimateWriteFunc(IFunc):
         "DEM_yres_arcsecs": ArgType.String,
     }
     outputs = {"output_file": ArgType.String}
-    friendly_name: str = "Topoflow Climate File Writer"
+    friendly_name: str = "Topoflow Climate"
     func_type = IFuncType.MODEL_TRANS
     example = {
         "input_dir": "$.my_dcat_read_func.data",
@@ -82,7 +82,7 @@ class Topoflow4ClimateWritePerMonthFunc(IFunc):
         "output_file": ArgType.FilePath,
     }
     outputs = {}
-    friendly_name: str = "Topoflow Climate Per Month File Writer"
+    friendly_name: str = "Topoflow Climate Per Month"
     func_type = IFuncType.MODEL_TRANS
     example = {
         "grid_dir": f"/data/mint/gpm_grid_baro",
