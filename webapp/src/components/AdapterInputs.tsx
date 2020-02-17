@@ -9,6 +9,8 @@ import {
 } from "react-digraph";
 import _ from "lodash";
 import InputWiredComponent from "./InputComponentWired";
+import InputTextComponent from "./InputComponentText";
+import InputFilePathComponent from "./InputComponentFilePath";
 
 interface AdapterInputsProps {
   selectedNode: INode | null,
@@ -53,53 +55,52 @@ export class AdapterInputsComponent extends React.Component<
   }
 
   createNodeInput = (selectedNode: INode, ip: string, idx: number, optional: boolean) => {
-    const { graphNodes, graphEdges, setGraphNodes } = this.props;
+    const { graphEdges } = this.props;
     const selectedAdapter = selectedNode.adapter;
     if (selectedAdapter.inputs[ip].id === "graph") {
       const wiredEdges = graphEdges.filter(e => e.target === selectedNode.id && e.input === "graph");
       // this should be a dropdown to select from
       return <p key={`input-${idx}`} style={{ margin: "20px 20px"}}>
         {`${ip}: `}
-        {!optional ? "* " : null}
+        {!optional ? <span style={{ color: "red" }}>{`*`}</span> : null}
         <InputWiredComponent
           selectedNode={selectedNode}
           graphNodes={this.props.graphNodes}
           graphEdges={this.props.graphEdges}
-          setGraphNodes={this.props.setGraphNodes}
           setGraphEdges={this.props.setGraphEdges}
           setSelectedNode={this.props.setSelectedNode}
-          adapters={this.props.adapters}
-          graphCreated={this.props.graphCreated}
           input={ip}
           wiredEdges={wiredEdges}
         />
       </p>
+    } else if (selectedAdapter.inputs[ip].id === "file_path") {
+      return (
+        <p key={`input-${idx}`} style={{ margin: "20px 20px"}}>
+          {`${ip}: `}
+          {!optional ? <span style={{ color: "red" }}>{`*`}</span> : null}
+          <InputFilePathComponent
+            selectedNode={selectedNode}
+            graphNodes={this.props.graphNodes}
+            setGraphNodes={this.props.setGraphNodes}
+            input={ip}
+          />
+        </p>
+      );
     }
-    return (
-      <p key={`input-${idx}`} style={{ margin: "20px 20px"}}>
-        {`${ip}: `}
-        {!optional ? "* " : null}
-        <input
-          name={ip}
-          type="text"
-          value={selectedAdapter.inputs[ip].val || ""}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-            const { currentTarget } = event;
-            var newNodes = graphNodes;
-            var newNode = newNodes.filter(n => n.id === selectedNode.id)[0];
-            newNode.adapter.inputs[currentTarget.name].val = currentTarget.value;
-            // this.setState({ graphNodes: newNodes });
-            setGraphNodes(newNodes);
-          }}
-          style={{
-            padding:"5px",
-            border:"2px solid",
-            borderRadius: "5px",
-            width: "100%"
-          }}
-        />
-      </p>
-    );
+    else {
+      return (
+        <p key={`input-${idx}`} style={{ margin: "20px 20px"}}>
+          {`${ip}: `}
+          {!optional ? <span style={{ color: "red" }}>{`*`}</span> : null}
+          <InputTextComponent
+            selectedNode={selectedNode}
+            graphNodes={this.props.graphNodes}
+            setGraphNodes={this.props.setGraphNodes}
+            input={ip}
+          />
+        </p>
+      );
+    }
   }
 
   render() {

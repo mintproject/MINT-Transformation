@@ -1,9 +1,7 @@
 import React from "react";
 import { observer, inject } from "mobx-react";
 import { IStore } from "../store";
-import { Menu, Dropdown } from "antd";
-import "antd/dist/antd.css";
-import { AdapterType } from "../store/AdapterStore";
+import { Menu, Dropdown, Input } from "antd";
 import {
   INode, IEdge,
 } from "react-digraph";
@@ -13,28 +11,20 @@ interface InputWiredProps {
   selectedNode: INode | null,
   graphNodes: INode[],
   graphEdges: IEdge[],
-  setGraphNodes: (nodes: INode[]) => any,
   setGraphEdges: (edges: IEdge[]) => any,
   setSelectedNode: (node: INode | null) => any,
-  adapters: AdapterType[],
-  graphCreated: boolean,
   input: string,
   wiredEdges: IEdge[]
 }
 
-interface InputWiredState {
-  showAdapterSpecs: boolean,
-}
+interface InputWiredState {}
 
 @inject((stores: IStore) => ({
   selectedNode: stores.pipelineStore.selectedNode,
   graphNodes: stores.pipelineStore.graphNodes,
   graphEdges: stores.pipelineStore.graphEdges,
-  setGraphNodes: stores.pipelineStore.setGraphNodes,
   setGraphEdges: stores.pipelineStore.setGraphEdges,
   setSelectedNode: stores.pipelineStore.setSelectedNode,
-  adapters: stores.adapterStore.adapters,
-  graphCreated: stores.pipelineStore.graphCreated,
 }))
 @observer
 export class InputWiredComponent extends React.Component<
@@ -59,18 +49,25 @@ export class InputWiredComponent extends React.Component<
       const { eventKey } = item.props;
       const data = eventKey.split("-");
       var newEdges = graphEdges
-      if (wiredEdges.length > 0) {
-        // remove old wiring
-        newEdges = newEdges.filter(e => !wiredEdges.includes(e))
+      if (data[1] === "null" && data[2] === "null") {
+        newEdges = newEdges.filter(e => !(e.target === selectedNode!.id && e.input === input))
+      } else {
+        if (wiredEdges.length > 0) {
+          // remove old wiring
+          newEdges = newEdges.filter(e => !wiredEdges.includes(e))
+        }
+        newEdges.push({
+          target: selectedNode!.id,
+          source: data[1],
+          input: input,
+          output: data[2]
+        });
       }
-      newEdges.push({
-        target: selectedNode!.id,
-        source: data[1],
-        input: input,
-        output: data[2]
-      });
       setGraphEdges(newEdges);
       }}>
+      <Menu.Item key={`menu-null-null-0`}>
+        {`None`}
+      </Menu.Item>
       {menuList.map((m, idx) => {
         return (
           <Menu.Item key={`menu-${m.node}-${m.output}-${idx}`}>
@@ -80,12 +77,13 @@ export class InputWiredComponent extends React.Component<
       })}      
     </Menu>
   }
+
   render() {
     const { wiredEdges } = this.props;
     const menu = this.createEdgeMenu(); 
     return (
       <Dropdown overlay={menu}>
-        <input
+        <Input
           disabled={true}
           type="text"
           value={
