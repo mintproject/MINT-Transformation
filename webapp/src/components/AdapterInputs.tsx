@@ -8,6 +8,7 @@ import {
   INode, IEdge,
 } from "react-digraph";
 import _ from "lodash";
+import InputWiredComponent from "./InputComponentWired";
 
 interface AdapterInputsProps {
   selectedNode: INode | null,
@@ -60,19 +61,17 @@ export class AdapterInputsComponent extends React.Component<
       return <p key={`input-${idx}`} style={{ margin: "20px 20px"}}>
         {`${ip}: `}
         {!optional ? "* " : null}
-        <input
-          disabled={true}
-          type="text"
-          value={
-            _.isEmpty(wiredEdges) ? "Only Changeable By Editing Edges"
-            : `${wiredEdges[0].source}.${wiredEdges[0].output}`
-          }
-          style={{
-            padding:"5px",
-            border:"2px solid",
-            borderRadius: "5px",
-            width: "100%"
-          }}
+        <InputWiredComponent
+          selectedNode={selectedNode}
+          graphNodes={this.props.graphNodes}
+          graphEdges={this.props.graphEdges}
+          setGraphNodes={this.props.setGraphNodes}
+          setGraphEdges={this.props.setGraphEdges}
+          setSelectedNode={this.props.setSelectedNode}
+          adapters={this.props.adapters}
+          graphCreated={this.props.graphCreated}
+          input={ip}
+          wiredEdges={wiredEdges}
         />
       </p>
     }
