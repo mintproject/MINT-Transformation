@@ -17,6 +17,7 @@ interface AdapterInputsProps {
   setGraphEdges: (edges: IEdge[]) => any,
   setSelectedNode: (node: INode | null) => any,
   adapters: AdapterType[],
+  graphCreated: boolean,
 }
 
 interface AdapterInputsState {
@@ -31,6 +32,7 @@ interface AdapterInputsState {
   setGraphEdges: stores.pipelineStore.setGraphEdges,
   setSelectedNode: stores.pipelineStore.setSelectedNode,
   adapters: stores.adapterStore.adapters,
+  graphCreated: stores.pipelineStore.graphCreated,
 }))
 @observer
 export class AdapterInputsComponent extends React.Component<
@@ -39,6 +41,14 @@ export class AdapterInputsComponent extends React.Component<
 > {
   public state: AdapterInputsState = {
     showAdapterSpecs: false,
+  }
+
+  componentDidUpdate(prevProps: AdapterInputsProps) {
+    if(prevProps.graphCreated === false && this.props.graphCreated === true) {
+      this.setState({
+        showAdapterSpecs: false
+      })
+    }
   }
 
   createNodeInput = (selectedNode: INode, ip: string, idx: number, optional: boolean) => {

@@ -123,7 +123,10 @@ export class PipelineEditorComponent extends React.Component<
 
   handleCancel = () => {
     this.props.setUploadedPipelineData(null);
+    this.props.setGraphNodes([]);
+    this.props.setGraphEdges([]);
     this.props.setGraphCreated(false);
+    this.props.setSelectedNode(null);
     this.setState({
       currentFileList: [],
       pipelineName: "",
@@ -225,6 +228,7 @@ export class PipelineEditorComponent extends React.Component<
                   setGraphEdges={this.props.setGraphEdges}
                   setSelectedNode={this.props.setSelectedNode}
                   adapters={this.props.adapters}
+                  graphCreated={this.props.graphCreated}
                 />
               </Col>
               <Col span={8}>
@@ -252,6 +256,7 @@ export class PipelineEditorComponent extends React.Component<
                     setGraphEdges={this.props.setGraphEdges}
                     setSelectedNode={this.props.setSelectedNode}
                     adapters={this.props.adapters}
+                    graphCreated={this.props.graphCreated}
                   />
                 </Row>
               </Col>

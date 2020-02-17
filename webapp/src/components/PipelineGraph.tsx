@@ -44,6 +44,7 @@ interface PipelineGraphProps {
   setGraphEdges: (edges: IEdge[]) => any,
   setSelectedNode: (node: INode | null) => any,
   adapters: AdapterType[],
+  graphCreated: boolean,
 }
 interface PipelineGraphState {
   currentAction: string,
@@ -62,6 +63,7 @@ interface PipelineGraphState {
   setGraphEdges: stores.pipelineStore.setGraphEdges,
   setSelectedNode: stores.pipelineStore.setSelectedNode,
   adapters: stores.adapterStore.adapters,
+  graphCreated: stores.pipelineStore.graphCreated,
 }))
 @observer
 export class PipelineGraphComponent extends React.Component<
@@ -75,6 +77,19 @@ export class PipelineGraphComponent extends React.Component<
     currentToNode: "",
     fromNodeOutput: "",
     toNodeInput: "",
+  }
+
+  componentDidUpdate(prevProps: PipelineGraphProps) {
+    if(prevProps.graphCreated === false && this.props.graphCreated === true) {
+      this.setState({
+        currentAction: "",
+        currentAdapter: "",
+        currentAdapterName: "",
+        currentToNode: "",
+        fromNodeOutput: "",
+        toNodeInput: "",
+      })
+    }
   }
 
   onUpdateNode = (node: INode) => {
