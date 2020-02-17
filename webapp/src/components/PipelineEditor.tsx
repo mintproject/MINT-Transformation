@@ -1,7 +1,7 @@
 import React from "react";
 import { observer, inject } from "mobx-react";
 import { IStore } from "../store";
-import { message, Upload, Icon, Row, Button, Tabs, Input, Col, } from "antd";
+import { message, Upload, Icon, Row, Button, Tabs, Input, Col, Modal } from "antd";
 import MyLayout from "./Layout";
 import { UploadedPipelineDataType, NodeType, EdgeType } from "../store/PipelineStore"
 import "antd/dist/antd.css";
@@ -39,6 +39,7 @@ interface PipelineEditorState {
   currentFileList: UploadFile[],
   pipelineName: string,
   pipelineDescription: string,
+  willSubmit: boolean,
 }
 
 @inject((stores: IStore) => ({
@@ -67,6 +68,7 @@ export class PipelineEditorComponent extends React.Component<
     currentFileList: [],
     pipelineName: "",
     pipelineDescription: "",
+    willSubmit: false,
   };
 
   componentDidMount() {
@@ -214,12 +216,12 @@ export class PipelineEditorComponent extends React.Component<
       return (
         <MyLayout> 
           <Tabs
-            defaultActiveKey="adapters"
+            defaultActiveKey="pipeline"
             // tabPosition="left"
             style={{ overflowY: "auto", height: "100%" }}
           >
-            <TabPane tab="Adapters" key="adapters" style={{ height: "600px" }}>
-              <Col span={16} style={{ height: "100%" }}>
+            <TabPane tab="Pipeline" key="pipeline" style={{ height: "600px" }}>
+              <Col span={16} style={{ height: "90%" }}>
                 <PipelineGraph
                   selectedNode={selectedNode}
                   graphNodes={this.props.graphNodes}
@@ -241,11 +243,36 @@ export class PipelineEditorComponent extends React.Component<
                   </Button>
                   <Button
                     key="submit" type="primary"
-                    onClick={this.handleSubmit}
+                    onClick={() => this.setState({ willSubmit: true })}
                     style={{ margin: "10px", float: "right" }}
                   >
                     Submit
                   </Button>
+                  <Modal
+                    title="Submitting current pipeline..."
+                    visible={this.state.willSubmit}
+                    onOk={() => {
+                      this.handleSubmit();
+                      this.setState({ willSubmit: false })
+                    }}
+                    onCancel={() => this.setState({ willSubmit: false })}
+                  >
+                    <Row style={{ margin: "20px 10px"}}>
+                      <Input
+                        value={this.state.pipelineName}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => this.setState({ pipelineName: event.target.value})}
+                        placeholder="Enter Pipeline Name"
+                      />
+                    </Row>
+                    <Row style={{ margin: "20px 10px"}}>
+                      <TextArea
+                        rows={16}
+                        value={this.state.pipelineDescription}
+                        onChange={({ target }) => this.setState({ pipelineDescription: target.value})}
+                        placeholder="Enter Pipeline Description"
+                      />
+                    </Row>
+                  </Modal>
                 </Row>
                 <Row style={{ margin: "20px 0px"}}>
                   <AdapterInputs
@@ -260,41 +287,6 @@ export class PipelineEditorComponent extends React.Component<
                   />
                 </Row>
               </Col>
-            </TabPane>
-            <TabPane tab="Metadata" key="metadata">
-              <Row style={{ margin: "20px 0px"}}>
-                <Col span={16}>
-                  <Input
-                    value={this.state.pipelineName}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => this.setState({ pipelineName: event.target.value})}
-                    placeholder="Enter Pipeline Name"
-                    style={{ margin: "10px" }}
-                  />
-                </Col>
-                <Col span={8}>
-                  <Button
-                    key="discard" onClick={this.handleCancel}
-                    style={{ margin: "10px", float: "right" }}
-                  >
-                    Discard
-                  </Button>
-                  <Button
-                    key="submit" type="primary"
-                    onClick={this.handleSubmit}
-                    style={{ margin: "10px", float: "right" }}
-                  >
-                    Submit
-                  </Button>
-                </Col>
-              </Row>
-              <Row style={{ margin: "20px 10px"}}>
-                <TextArea
-                  rows={16}
-                  value={this.state.pipelineDescription}
-                  onChange={({ target }) => this.setState({ pipelineDescription: target.value})}
-                  placeholder="Enter Pipeline Description"
-                />
-              </Row>
             </TabPane>
           </Tabs>
         </MyLayout>

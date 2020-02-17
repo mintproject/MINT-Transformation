@@ -5,7 +5,7 @@ import subprocess
 
 from dcatreg.dataset_registration import register_dataset
 from dtran.argtype import ArgType
-from dtran.ifunc import IFunc
+from dtran.ifunc import IFunc, IFuncType
 from os import listdir
 
 from funcs.topoflow.write_topoflow4_climate_func import create_rts_from_nc_files
@@ -27,6 +27,8 @@ class DcatReadTopoflow4ClimateUploadFunc(IFunc):
         "DEM_yres_arcsecs": ArgType.String,
     }
     outputs = {}
+    friendly_name: str = "Topoflow Climate File To Data Catalog Writer"
+    func_type = IFuncType.WRITER
 
     def __init__(self, dataset_id: str, var_name: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str):
         self.DEM = {

@@ -22,7 +22,7 @@
             }
         },
         "func_type": "Reader",
-        "friendly_name": ""
+        "friendly_name": "Local File Reader"
     },
     {
         "id": "DcatReadFunc",
@@ -42,7 +42,7 @@
             }
         },
         "func_type": "Reader",
-        "friendly_name": null
+        "friendly_name": "Data Catalog Reader"
     },
     {
         "id": "DcatReadNoReprFunc",
@@ -62,7 +62,7 @@
             }
         },
         "func_type": "Reader",
-        "friendly_name": null
+        "friendly_name": " Data Catalog Reader Without repr File"
     },
     {
         "id": "UnitTransFunc",
@@ -101,8 +101,8 @@
                 "optional": false
             }
         },
-        "func_type": "Others",
-        "friendly_name": null
+        "func_type": "Unit Transformation",
+        "friendly_name": "Unit Transformation Function"
     },
     {
         "id": "GraphWriteFunc",
@@ -137,7 +137,7 @@
             }
         },
         "func_type": "Writer",
-        "friendly_name": null
+        "friendly_name": "csv/json Writer"
     },
     {
         "id": "VisJsonWriteFunc",
@@ -176,8 +176,8 @@
                 "optional": false
             }
         },
-        "func_type": "Others",
-        "friendly_name": null
+        "func_type": "Writer",
+        "friendly_name": "JSON and Visualizer Writer"
     },
     {
         "id": "GraphStr2StrFunc",
@@ -200,8 +200,8 @@
             }
         },
         "outputs": {},
-        "func_type": "Others",
-        "friendly_name": null
+        "func_type": "Intermediate Transformation",
+        "friendly_name": "Semantic Attributes Mapper"
     },
     {
         "id": "MergeFunc",
@@ -225,8 +225,8 @@
                 "optional": false
             }
         },
-        "func_type": "Others",
-        "friendly_name": null
+        "func_type": "Intermediate Transformation",
+        "friendly_name": "Merge Two Graphs Into One"
     },
     {
         "id": "Topoflow4ClimateWriteFunc",
@@ -275,8 +275,8 @@
                 "optional": false
             }
         },
-        "func_type": "Others",
-        "friendly_name": null
+        "func_type": "Model Specific Transformation",
+        "friendly_name": "Topoflow Climate File Writer"
     },
     {
         "id": "Topoflow4ClimateWritePerMonthFunc",
@@ -299,8 +299,8 @@
             }
         },
         "outputs": {},
-        "func_type": "Others",
-        "friendly_name": null
+        "func_type": "Model Specific Transformation",
+        "friendly_name": "Topoflow Climate Per Month File Writer"
     },
     {
         "id": "Topoflow4SoilWriteFunc",
@@ -338,8 +338,8 @@
             }
         },
         "outputs": {},
-        "func_type": "Others",
-        "friendly_name": null
+        "func_type": "Model Specific Transformation",
+        "friendly_name": "Topoflow Soil File Writer"
     },
     {
         "id": "NC2GeoTiff",
@@ -367,8 +367,8 @@
             }
         },
         "outputs": {},
-        "func_type": "Others",
-        "friendly_name": null
+        "func_type": "Writer",
+        "friendly_name": "Netcdf to Geotiff Converter"
     },
     {
         "id": "DcatWriteFunc",
@@ -393,6 +393,6 @@
             }
         },
         "func_type": "Writer",
-        "friendly_name": null
+        "friendly_name": "Data Catalog Writer"
     }
 ]

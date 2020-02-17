@@ -108,7 +108,8 @@ export class AdapterInputsComponent extends React.Component<
     const selectedAdapter = selectedNode ? selectedNode.adapter : null;
     return ( selectedNode === null ? null : <React.Fragment>
       <p style={{ margin: "20px 20px"}}>
-        • <b><u>Function Name</u></b>: {selectedAdapter.id}<br/>
+        • <b><u>Function Friendly Name</u></b>: {selectedAdapter.friendly_name}<br/>
+        • <b><u>Function Type</u></b>: {selectedAdapter.func_type}<br/>
         • <b><u>Description</u></b>: {selectedAdapter.description}<br/>
       </p>
       <p style={{ margin: "20px 20px"}}>

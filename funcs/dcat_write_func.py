@@ -22,6 +22,8 @@ class DcatWriteFunc(IFunc):
         "metadata": ArgType.String,
     }
     outputs = {"data": ArgType.String}
+    friendly_name: str = "Data Catalog Writer"
+    func_type = IFuncType.WRITER
 
     PROVENANCE_ID = "b3e79dc2-8fa1-4203-ac82-b5267925191f"
 

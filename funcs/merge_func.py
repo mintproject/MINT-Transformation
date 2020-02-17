@@ -1,6 +1,7 @@
 from drepr import Graph
 
 from dtran import IFunc, ArgType
+from dtran.ifunc import IFuncType
 
 
 class MergeFunc(IFunc):
@@ -10,6 +11,8 @@ class MergeFunc(IFunc):
     '''
     inputs = {"graph1": ArgType.Graph(None), "graph2": ArgType.Graph(None)}
     outputs = {"data": ArgType.Graph(None)}
+    friendly_name: str = "Merge Two Graphs Into One"
+    func_type = IFuncType.INTERMEDIATE
 
     def __init__(self, graph1: Graph, graph2: Graph):
         self.graph1 = graph1

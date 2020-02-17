@@ -18,6 +18,7 @@ class GraphWriteFunc(IFunc):
     Generates a csv/json file.
     """
     func_type = IFuncType.WRITER
+    friendly_name: str = "csv/json Writer"
     inputs = {
         "graph": ArgType.Graph(None),
         "main_class": ArgType.String,
@@ -148,6 +149,8 @@ class VisJsonWriteFunc(GraphWriteFunc):
         "filter": ArgType.String(optional=True),
     }
     outputs = {"data": ArgType.String}
+    func_type = IFuncType.WRITER
+    friendly_name: str = "JSON and Visualizer Writer"
 
     @staticmethod
     def _dump_to_json(tabular_rows, attr_names, file_path):

@@ -7,6 +7,7 @@ import gdal, numpy as np, osr
 from netCDF4 import Dataset
 from tqdm.auto import tqdm
 from dtran import IFunc, ArgType
+from dtran.ifunc import IFuncType
 from topoflow.utils import regrid
 from multiprocessing import Pool
 
@@ -22,6 +23,8 @@ class NC2GeoTiff(IFunc):
         "no_data": ArgType.Number
     }
     outputs = {}
+    friendly_name: str = "Netcdf to Geotiff Converter"
+    func_type = IFuncType.WRITER
 
     def __init__(self, input_dir, output_dir, var_name, no_data: float):
         self.input_dir = input_dir

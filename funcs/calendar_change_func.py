@@ -2,6 +2,7 @@ from drepr import Graph
 from ethiopian_date import EthiopianDateConverter
 
 from dtran import IFunc, ArgType
+from dtran.ifunc import IFuncType
 
 
 class CalendarChangeFunc(IFunc):
@@ -11,6 +12,8 @@ class CalendarChangeFunc(IFunc):
     """
     inputs = {"graph1": ArgType.Graph(None), "field": ArgType.String}
     outputs = {"data": ArgType.Graph(None)}
+    friendly_name: str = "Ethiopian Calendar To Standard Calendar Mapper"
+    func_type = IFuncType.UNIT_TRANS
 
     def __init__(self, graph1: Graph, field: str):
         self.graph = graph1

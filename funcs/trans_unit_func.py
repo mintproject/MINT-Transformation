@@ -3,7 +3,7 @@
 
 from ccut.app.ccut_lib import CCUT, RET_VAL_OK, RET_STR_MAP
 from dtran.argtype import ArgType, Optional
-from dtran.ifunc import IFunc
+from dtran.ifunc import IFunc, IFuncType
 from drepr import Graph
 
 
@@ -20,6 +20,8 @@ class UnitTransFunc(IFunc):
         "filter": ArgType.String(True),
     }
     outputs = {"graph": ArgType.Graph(None)}
+    friendly_name: str = "Unit Transformation Function"
+    func_type = IFuncType.UNIT_TRANS
 
     def __init__(
         self, graph: Graph, unit_value: str, unit_label: str, unit_desired: str, filter: Optional[str] = None

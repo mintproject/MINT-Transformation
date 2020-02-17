@@ -24,6 +24,10 @@ class IFuncType(Enum):
     READER = "Reader"
     WRITER = "Writer"
     OTHERS = "Others"
+    SPATIAL_TRANS = "Spatial Transformation"
+    UNIT_TRANS = "Unit Transformation"
+    MODEL_TRANS = "Model Specific Transformation"
+    INTERMEDIATE = "Intermediate Transformation"
 
 
 class IFunc(metaclass=IFuncIO):

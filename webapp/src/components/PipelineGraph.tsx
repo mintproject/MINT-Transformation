@@ -1,7 +1,7 @@
 import React from "react";
 import { observer, inject } from "mobx-react";
 import { IStore } from "../store";
-import { Button, Dropdown, Menu, Row } from "antd";
+import { Button, Dropdown, Menu, Row, Modal } from "antd";
 import "antd/dist/antd.css";
 import { AdapterType } from "../store/AdapterStore";
 import {
@@ -53,6 +53,7 @@ interface PipelineGraphState {
   currentToNode: string,
   fromNodeOutput: string,
   toNodeInput: string,
+  nameAdapter: boolean,
 }
 
 @inject((stores: IStore) => ({
@@ -77,6 +78,7 @@ export class PipelineGraphComponent extends React.Component<
     currentToNode: "",
     fromNodeOutput: "",
     toNodeInput: "",
+    nameAdapter: false,
   }
 
   componentDidUpdate(prevProps: PipelineGraphProps) {
@@ -88,6 +90,7 @@ export class PipelineGraphComponent extends React.Component<
         currentToNode: "",
         fromNodeOutput: "",
         toNodeInput: "",
+        nameAdapter: false,
       })
     }
   }
@@ -106,14 +109,17 @@ export class PipelineGraphComponent extends React.Component<
       (v, i, a) => a.indexOf(v) === i
     );
     return (<Menu onClick={({ item }) => {
-      this.setState({ currentAdapter: item.props.children });
+      this.setState({
+        currentAdapter: item.props.eventKey,
+        nameAdapter: true
+      });
     }}>
       {currAdapterTypes.map((adt, i) => {
         return (<SubMenu
             key={`adt-${i}`} title={adt}
           >
           {currAdapters.filter(ad => ad.func_type === adt).map((ad, idx) => {
-            return (<Menu.Item key={`ad-${idx}`}>
+            return (<Menu.Item key={ad.id}>
               {_.isEmpty(ad.friendly_name) ? ad.id : ad.friendly_name}
             </Menu.Item>);
           })}
@@ -191,6 +197,7 @@ export class PipelineGraphComponent extends React.Component<
   };
 
   isAlphaNumericUnderscore = (check: string) => {
+    if (check.length === 0) { return true; }
     const subStrings = check.split("_");
     for (var i = 0; i < subStrings.length; i++){
       if (subStrings[i].match(/^[0-9a-zA-Z]+$/g) === null) { return false; }
@@ -251,31 +258,31 @@ export class PipelineGraphComponent extends React.Component<
         <Row style={{ margin: "20px 10px"}}>
           { _.isEmpty(selected) && _.isEmpty(this.state.currentAction) ?
             <p>
-              <b>* Click on node to edit</b> OR <Button
+              <Button
                 style={{ margin: "5px" }}
                 onClick={() => this.setState({ currentAction: "add-a-new-node"})}
-              >Add A New Node</Button>
+              >Add A New Adapter</Button>
             </p>
             : null
           }
           { selected && _.isEmpty(this.state.currentAction) ? <span>
             <p>{`Select an action on ${selected}: `}</p>
-            <Button
+            {/* <Button
               style={{ margin: "5px" }}
               onClick={() => this.setState({ currentAction: "add-a-new-node"})}
-            >Add A New Node</Button>
-            <Button
+            >Add A New Adapter</Button> */}
+            {/* <Button
               style={{ margin: "5px" }}
               onClick={() => this.setState({ currentAction: "add-a-new-edge"})}
-            >Add A New Edge</Button>
+            >Add A New Edge</Button> */}
             <Button
               style={{ margin: "5px" }}
               onClick={() => this.setState({ currentAction: "delete-this-node"})}
             >Delete This Node</Button>
-            <Button
+            {/* <Button
               style={{ margin: "5px" }}
               onClick={() => this.setState({ currentAction: "delete-its-edge"})}
-            >Delete Its Edge</Button>
+            >Delete Its Edge</Button> */}
             <Button
               style={{ margin: "5px" }}
               onClick={() => this.props.setSelectedNode(null)}
@@ -284,27 +291,19 @@ export class PipelineGraphComponent extends React.Component<
           </span> : null}
           { this.state.currentAction === "add-a-new-node"
             ? <span>
-              <p>Add A New Node: </p>
+              <p>Add A New Adapter: </p>
               <Dropdown overlay={this.createAdapterMenu()}>
                 { this.state.currentAdapter
                 ? <b>{`Selected Adapter: ${this.state.currentAdapter}`}</b>
                 : <Button><b>Select An Adapter</b></Button>}
               </Dropdown>
-              { this.state.currentAdapter ? <p>
-                Enter adapter name (Please only use "_" as delimiter):
-                <input
-                  style={{ margin: "10px" }}
-                  value={this.state.currentAdapterName}
-                  onChange={({ target }) => this.setState({ currentAdapterName: target.value })}
-                /> 
-              </p> : null}
-              <Button
-                style={{ float: "right", margin: "5px" }}
-                disabled={_.isEmpty(this.state.currentAdapter) || !this.isAlphaNumericUnderscore(this.state.currentAdapterName)}
-                onClick={() => {
+              <Modal
+                title="Naming new adapter..."
+                visible={this.state.nameAdapter}
+                onOk={() => {
                   console.log("adding a new node to the graph");
                   const { maxX, maxY, minX, minY, maxId } = this.findBoundingBoxGraphNodes();
-                  const customName = this.state.currentAdapterName ? this.state.currentAdapterName : `Node-${maxId + 1}`;
+                  const customName = this.state.currentAdapterName ? this.state.currentAdapterName : `Adapter_${maxId + 1}`;
                   const newNode: INode = {
                     id: customName,
                     title: `${this.state.currentAdapter}`,
@@ -320,15 +319,21 @@ export class PipelineGraphComponent extends React.Component<
                   this.setState({
                     currentAction: "",
                     currentAdapter: "",
-                    currentAdapterName: ""
+                    currentAdapterName: "",
+                    nameAdapter: false
                   });
                 }}
-                type="primary"
-              >OK</Button>
-              <Button
-                style={{ float: "right", margin: "5px" }}
-                onClick={this.onClear}
-              >Clear</Button>
+                okButtonProps={{ disabled: !this.isAlphaNumericUnderscore(this.state.currentAdapterName) }}
+                onCancel={() => this.setState({ nameAdapter: false })}
+              >
+                <p>
+                  Enter adapter name (Please only use "_" as delimiter):
+                  <input
+                    value={this.state.currentAdapterName}
+                    onChange={({ target }) => this.setState({ currentAdapterName: target.value })}
+                  /> 
+                </p>
+              </Modal>
             </span> : null
           }
           { this.state.currentAction === "add-a-new-edge"

@@ -9,7 +9,7 @@ from tqdm import tqdm
 import re
 
 from dtran.argtype import ArgType
-from dtran.ifunc import IFunc
+from dtran.ifunc import IFunc, IFuncType
 from os.path import join
 
 import gdal, osr  ## ogr
@@ -35,6 +35,8 @@ class Topoflow4ClimateWriteFunc(IFunc):
         "DEM_yres_arcsecs": ArgType.String,
     }
     outputs = {"output_file": ArgType.String}
+    friendly_name: str = "Topoflow Climate File Writer"
+    func_type = IFuncType.MODEL_TRANS
 
     def __init__(self, input_dir: str, temp_dir: str, output_file: Union[str, Path], var_name: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str):
         self.DEM = {
@@ -71,6 +73,8 @@ class Topoflow4ClimateWritePerMonthFunc(IFunc):
         "output_file": ArgType.FilePath,
     }
     outputs = {}
+    friendly_name: str = "Topoflow Climate Per Month File Writer"
+    func_type = IFuncType.MODEL_TRANS
 
     def __init__(self, grid_dir: str, date_regex: str, output_file: Union[str, Path]):
         self.grid_dir = str(grid_dir)

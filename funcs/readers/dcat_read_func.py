@@ -20,6 +20,7 @@ class DcatReadFunc(IFunc):
     Fetches a dataset and its metadata from the MINT Data-Catalog.
     '''
     func_type = IFuncType.READER
+    friendly_name: str = "Data Catalog Reader"
     inputs = {"dataset_id": ArgType.String}
     outputs = {"data": ArgType.Graph(None)}
 

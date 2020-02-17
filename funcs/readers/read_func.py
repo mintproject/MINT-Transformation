@@ -16,7 +16,7 @@ class ReadFunc(IFunc):
     Reads an input file and a yml file describing the D-REPR layout of this file.
     The data are representated in a Graph object.
     '''
-    friendly_name: str = ""
+    friendly_name: str = "Local File Reader"
     func_type = IFuncType.READER
     inputs = {"repr_file": ArgType.FilePath, "resources": ArgType.String}
     outputs = {"data": ArgType.Graph(None)}

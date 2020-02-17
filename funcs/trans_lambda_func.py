@@ -4,7 +4,7 @@
 from drepr import Graph
 
 from dtran.argtype import ArgType, Callable, Dict, Any
-from dtran.ifunc import IFunc
+from dtran.ifunc import IFunc, IFuncType
 
 
 class LambdaTransFunc(IFunc):
@@ -15,6 +15,8 @@ class LambdaTransFunc(IFunc):
     inputs = {"graph": ArgType.Graph(None), "transform_func": ArgType.Function,
               "output_label": ArgType.String}
     outputs = {"graph": ArgType.Graph(None)}
+    friendly_name: str = "Lambda Transformation Function"
+    func_type = IFuncType.INTERMEDIATE
 
     def __init__(self, graph: Graph, transform_func: Callable[Dict, Any], input_label: str, output_label: str):
         self.graph = graph
