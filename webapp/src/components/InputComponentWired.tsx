@@ -14,7 +14,7 @@ interface InputWiredProps {
   setGraphEdges: (edges: IEdge[]) => any,
   setSelectedNode: (node: INode | null) => any,
   input: string,
-  wiredEdges: IEdge[]
+  wiredEdges: IEdge[],
 }
 
 interface InputWiredState {}

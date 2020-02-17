@@ -4,13 +4,14 @@ import { IStore } from "../store";
 import {
   INode
 } from "react-digraph";
-import _ from "lodash";
+import { AdapterType } from "../store/AdapterStore";
 
 interface InputFilePathProps {
   selectedNode: INode | null,
   graphNodes: INode[],
   setGraphNodes: (nodes: INode[]) => any,
   input: string,
+  referredAdapter: AdapterType
 }
 
 interface InputFilePathState {
@@ -32,11 +33,14 @@ export class InputFilePathComponent extends React.Component<
   }
 
   render() {
-    const { selectedNode, input, graphNodes, setGraphNodes } = this.props;
+    const { selectedNode, input, graphNodes, setGraphNodes, referredAdapter } = this.props;
     if (selectedNode === null) { return; }
     const selectedAdapter = selectedNode!.adapter;
     return (
-      <React.Fragment>
+      <p
+        onMouseEnter={() => this.setState({ hovered: true })}
+        onMouseLeave={() => this.setState({ hovered: false })}
+      >
         <input
           name={input}
           value={selectedAdapter.inputs[input].val || ""}
@@ -54,13 +58,11 @@ export class InputFilePathComponent extends React.Component<
             borderRadius: "5px",
             width: "100%"
           }}
-          onMouseEnter={() => this.setState({ hovered: true })}
-          onMouseLeave={() => this.setState({ hovered: false })}
         />
         { this.state.hovered ? <span style={{ color: "red" }}>
-          {`Hint: Please enter a valid file path, for instance: "./wfp_food_prices_south-sudan.repr.yml"`}
+          {`Hint: Please enter a valid file path, for instance: "${referredAdapter.example[input]}"`}
         </span> : null}
-      </React.Fragment>
+      </p>
     );
   }
 }

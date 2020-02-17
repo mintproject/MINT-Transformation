@@ -12,6 +12,7 @@ export type AdapterType = {
   outputs: { [key: string]: AdapterInputType; },
   func_type: string,
   friendly_name: string | null,
+  example: { [key: string]: string; },
 };
 
 export type AdapterInputType = {

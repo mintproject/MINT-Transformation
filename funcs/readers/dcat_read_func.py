@@ -23,6 +23,9 @@ class DcatReadFunc(IFunc):
     friendly_name: str = "Data Catalog Reader"
     inputs = {"dataset_id": ArgType.String}
     outputs = {"data": ArgType.Graph(None)}
+    example = {
+        "dataset_id": "05c43c58-ed42-4830-9b1f-f01059c4b96f"
+    }
 
     def __init__(self, dataset_id: str):
         # TODO: move to a diff arch (pointer to Data-Catalog URL)

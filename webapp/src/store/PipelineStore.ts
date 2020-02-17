@@ -5,7 +5,6 @@ import { ErrorStore } from "./ErrorStore";
 import {
   INode, IEdge,
 } from "react-digraph";
-import _ from "lodash";
 
 // FIXME: settle down on the final format of pipeline object:
 // metadata + list of adapters?

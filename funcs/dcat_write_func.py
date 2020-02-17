@@ -24,6 +24,10 @@ class DcatWriteFunc(IFunc):
     outputs = {"data": ArgType.String}
     friendly_name: str = "Data Catalog Writer"
     func_type = IFuncType.WRITER
+    example = {
+        "resource_path": "$.my_graph_write_func.output_file",
+        "metadata": '[{"name": "WFP Food Prices - South Sudan", "description": "Food price dataset for South Sudan (2012-2019)"}]'
+    }
 
     PROVENANCE_ID = "b3e79dc2-8fa1-4203-ac82-b5267925191f"
 

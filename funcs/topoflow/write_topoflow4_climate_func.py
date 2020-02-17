@@ -37,6 +37,15 @@ class Topoflow4ClimateWriteFunc(IFunc):
     outputs = {"output_file": ArgType.String}
     friendly_name: str = "Topoflow Climate File Writer"
     func_type = IFuncType.MODEL_TRANS
+    example = {
+        "input_dir": "$.my_dcat_read_func.data",
+        "temp_dir": "/data/mint/sample_grid_baro",
+        "output_file": "/data/mint/sample_baro/climate_all.rt",
+        "var_name": "HQprecipitation",
+        "DEM_bounds": "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999",
+        "DEM_xres_arcsecs": "30",
+        "DEM_yres_arcsecs": "30"
+    }
 
     def __init__(self, input_dir: str, temp_dir: str, output_file: Union[str, Path], var_name: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str):
         self.DEM = {
@@ -75,6 +84,11 @@ class Topoflow4ClimateWritePerMonthFunc(IFunc):
     outputs = {}
     friendly_name: str = "Topoflow Climate Per Month File Writer"
     func_type = IFuncType.MODEL_TRANS
+    example = {
+        "grid_dir": f"/data/mint/gpm_grid_baro",
+        "date_regex": '3B-HHR-E.MS.MRG.3IMERG.(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})',
+        "output_file": f"/data/mint/baro/climate.rts",
+    }
 
     def __init__(self, grid_dir: str, date_regex: str, output_file: Union[str, Path]):
         self.grid_dir = str(grid_dir)

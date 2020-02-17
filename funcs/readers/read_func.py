@@ -20,6 +20,10 @@ class ReadFunc(IFunc):
     func_type = IFuncType.READER
     inputs = {"repr_file": ArgType.FilePath, "resources": ArgType.String}
     outputs = {"data": ArgType.Graph(None)}
+    example = {
+        "repr_file": "./wfp_food_prices_south-sudan.repr.yml",
+        "resources": "./wfp_food_prices_south-sudan.csv"
+    }
 
     def __init__(self, repr_file: Union[str, Path], resources: Union[str, Path]):
         resources = str(resources)

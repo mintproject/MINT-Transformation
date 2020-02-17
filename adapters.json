@@ -22,7 +22,11 @@
             }
         },
         "func_type": "Reader",
-        "friendly_name": "Local File Reader"
+        "friendly_name": "Local File Reader",
+        "example": {
+            "repr_file": "./wfp_food_prices_south-sudan.repr.yml",
+            "resources": "./wfp_food_prices_south-sudan.csv"
+        }
     },
     {
         "id": "DcatReadFunc",
@@ -42,7 +46,10 @@
             }
         },
         "func_type": "Reader",
-        "friendly_name": "Data Catalog Reader"
+        "friendly_name": "Data Catalog Reader",
+        "example": {
+            "dataset_id": "05c43c58-ed42-4830-9b1f-f01059c4b96f"
+        }
     },
     {
         "id": "DcatReadNoReprFunc",
@@ -62,7 +69,10 @@
             }
         },
         "func_type": "Reader",
-        "friendly_name": " Data Catalog Reader Without repr File"
+        "friendly_name": " Data Catalog Reader Without repr File",
+        "example": {
+            "dataset_id": "05c43c58-ed42-4830-9b1f-f01059c4b96f"
+        }
     },
     {
         "id": "UnitTransFunc",
@@ -102,7 +112,13 @@
             }
         },
         "func_type": "Unit Transformation",
-        "friendly_name": "Unit Transformation Function"
+        "friendly_name": "Unit Transformation Function",
+        "example": {
+            "unit_value": "dcat: measure_1_value",
+            "unit_label": "sdmx-attribute:unitMeasure",
+            "unit_desired": "$/kg",
+            "filter": "@type = 'qb:Observation' and sdmx-attribute:refArea.contains('Aweil (Town)')"
+        }
     },
     {
         "id": "GraphWriteFunc",
@@ -137,7 +153,13 @@
             }
         },
         "func_type": "Writer",
-        "friendly_name": "csv/json Writer"
+        "friendly_name": "Graph to CSV/JSON",
+        "example": {
+            "main_class": "qb:Observation",
+            "output_file": "./price-test.csv",
+            "mapped_columns": "{}",
+            "filter": "@type = 'qb:Observation' and sdmx-attribute:refArea.contains('Aweil (Town)')"
+        }
     },
     {
         "id": "VisJsonWriteFunc",
@@ -177,7 +199,13 @@
             }
         },
         "func_type": "Writer",
-        "friendly_name": "JSON and Visualizer Writer"
+        "friendly_name": "Graph to JSON Converter and Visualizer",
+        "example": {
+            "main_class": "qb:Observation",
+            "output_file": "./price-test.csv",
+            "mapped_columns": "{}",
+            "filter": "@type = 'qb:Observation' and sdmx-attribute:refArea.contains('Aweil (Town)')"
+        }
     },
     {
         "id": "GraphStr2StrFunc",
@@ -201,7 +229,11 @@
         },
         "outputs": {},
         "func_type": "Intermediate Transformation",
-        "friendly_name": "Semantic Attributes Mapper"
+        "friendly_name": "Semantic Attributes Mapper",
+        "example": {
+            "semantic_type": "qb:Observation--dcat-dimension:thing",
+            "str2str": "ujson.dumps(crop_names)"
+        }
     },
     {
         "id": "MergeFunc",
@@ -226,7 +258,8 @@
             }
         },
         "func_type": "Intermediate Transformation",
-        "friendly_name": "Merge Two Graphs Into One"
+        "friendly_name": "Merge Two Graphs Into One",
+        "example": {}
     },
     {
         "id": "Topoflow4ClimateWriteFunc",
@@ -276,7 +309,16 @@
             }
         },
         "func_type": "Model Specific Transformation",
-        "friendly_name": "Topoflow Climate File Writer"
+        "friendly_name": "Topoflow Climate File Writer",
+        "example": {
+            "input_dir": "$.my_dcat_read_func.data",
+            "temp_dir": "/data/mint/sample_grid_baro",
+            "output_file": "/data/mint/sample_baro/climate_all.rt",
+            "var_name": "HQprecipitation",
+            "DEM_bounds": "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999",
+            "DEM_xres_arcsecs": "30",
+            "DEM_yres_arcsecs": "30"
+        }
     },
     {
         "id": "Topoflow4ClimateWritePerMonthFunc",
@@ -300,7 +342,12 @@
         },
         "outputs": {},
         "func_type": "Model Specific Transformation",
-        "friendly_name": "Topoflow Climate Per Month File Writer"
+        "friendly_name": "Topoflow Climate Per Month File Writer",
+        "example": {
+            "grid_dir": "/data/mint/gpm_grid_baro",
+            "date_regex": "3B-HHR-E.MS.MRG.3IMERG.(?P<year>\\d{4})(?P<month>\\d{2})(?P<day>\\d{2})",
+            "output_file": "/data/mint/baro/climate.rts"
+        }
     },
     {
         "id": "Topoflow4SoilWriteFunc",
@@ -339,7 +386,15 @@
         },
         "outputs": {},
         "func_type": "Model Specific Transformation",
-        "friendly_name": "Topoflow Soil File Writer"
+        "friendly_name": "Topoflow Soil File Writer",
+        "example": {
+            "input_dir": "/ws/oct_eval_data/soilGrids/",
+            "output_dir": "/ws/examples/scotts_transformations/tmp/soil_BARO_l1",
+            "layer": "5",
+            "DEM_bounds": "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999",
+            "DEM_xres_arcsecs": "30",
+            "DEM_yres_arcsecs": "30"
+        }
     },
     {
         "id": "NC2GeoTiff",
@@ -368,7 +423,13 @@
         },
         "outputs": {},
         "func_type": "Writer",
-        "friendly_name": "Netcdf to Geotiff Converter"
+        "friendly_name": "Netcdf to Geotiff Converter",
+        "example": {
+            "input_dir": "/path/to/input/file",
+            "output_dir": "/path/to/output/file",
+            "var_name": "some_variable_name",
+            "no_data": "0.0"
+        }
     },
     {
         "id": "DcatWriteFunc",
@@ -393,6 +454,10 @@
             }
         },
         "func_type": "Writer",
-        "friendly_name": "Data Catalog Writer"
+        "friendly_name": "Data Catalog Writer",
+        "example": {
+            "resource_path": "$.my_graph_write_func.output_file",
+            "metadata": "[{\"name\": \"WFP Food Prices - South Sudan\", \"description\": \"Food price dataset for South Sudan (2012-2019)\"}]"
+        }
     }
 ]

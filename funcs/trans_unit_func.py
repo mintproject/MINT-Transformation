@@ -22,6 +22,13 @@ class UnitTransFunc(IFunc):
     outputs = {"graph": ArgType.Graph(None)}
     friendly_name: str = "Unit Transformation Function"
     func_type = IFuncType.UNIT_TRANS
+    example = {
+        "unit_value": "dcat: measure_1_value",
+        "unit_label": "sdmx-attribute:unitMeasure",
+        "unit_desired": "$/kg",
+        # TODO: not sure about this one
+        "filter": "@type = 'qb:Observation' and sdmx-attribute:refArea.contains('Aweil (Town)')",
+    }
 
     def __init__(
         self, graph: Graph, unit_value: str, unit_label: str, unit_desired: str, filter: Optional[str] = None

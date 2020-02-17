@@ -33,6 +33,14 @@ class Topoflow4SoilWriteFunc(IFunc):
     outputs = {}
     friendly_name: str = "Topoflow Soil File Writer"
     func_type = IFuncType.MODEL_TRANS
+    example = {
+        "input_dir": "/ws/oct_eval_data/soilGrids/",
+        "output_dir": "/ws/examples/scotts_transformations/tmp/soil_BARO_l1",
+        "layer": "5",
+        "DEM_bounds": "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999",
+        "DEM_xres_arcsecs": "30",
+        "DEM_yres_arcsecs": "30"
+    }
 
     def __init__(self, input_dir: str, output_dir: Union[str, Path], layer: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str):
         self.DEM = {

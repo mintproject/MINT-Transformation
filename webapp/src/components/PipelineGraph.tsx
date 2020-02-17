@@ -1,7 +1,7 @@
 import React from "react";
 import { observer, inject } from "mobx-react";
 import { IStore } from "../store";
-import { Button, Dropdown, Menu, Row, Modal } from "antd";
+import { Button, Dropdown, Menu, Row, Modal, Input } from "antd";
 import "antd/dist/antd.css";
 import { AdapterType } from "../store/AdapterStore";
 import {
@@ -328,10 +328,11 @@ export class PipelineGraphComponent extends React.Component<
               >
                 <p>
                   Enter adapter name (Please only use "_" as delimiter):
-                  <input
+                  <Input
                     value={this.state.currentAdapterName}
                     onChange={({ target }) => this.setState({ currentAdapterName: target.value })}
                   /> 
+                  <span style={{ color: "gray" }}>{`* Default name to Adapter_#`}</span>
                 </p>
               </Modal>
             </span> : null

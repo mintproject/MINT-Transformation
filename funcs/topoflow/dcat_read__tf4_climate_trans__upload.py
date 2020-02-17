@@ -29,6 +29,13 @@ class DcatReadTopoflow4ClimateUploadFunc(IFunc):
     outputs = {}
     friendly_name: str = "Topoflow Climate File To Data Catalog Writer"
     func_type = IFuncType.WRITER
+    example = {
+        "dataset_id": "05c43c58-ed42-4830-9b1f-f01059c4b96f",
+        "var_name": "some_variable_name",
+        "DEM_bounds": "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999",
+        "DEM_xres_arcsecs": "30",
+        "DEM_yres_arcsecs": "30"
+    }
 
     def __init__(self, dataset_id: str, var_name: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str):
         self.DEM = {

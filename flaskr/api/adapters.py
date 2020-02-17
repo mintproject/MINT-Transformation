@@ -11,6 +11,7 @@ KEY_INPUTS = 'inputs'
 KEY_OUTPUTS = 'outputs'
 KEY_FRIENDLY_NAME = "friendly_name"
 KEY_FUNC_TYPE = "func_type"
+KEY_EXAMPLE = "example"
 
 
 class AdapterElement:
@@ -28,10 +29,17 @@ class AdapterElement:
         outputs = json_object['outputs']
         friendly_name = json_object['friendly_name']
         func_type = json_object['func_type']
+        example = json_object['example']
 
-        return cls(name, module_type, identifier, description, inputs, outputs, friendly_name, func_type)
+        return cls(
+            name, module_type, identifier, description, inputs, outputs,
+            friendly_name, func_type, example
+        )
 
-    def __init__(self, name, module_type, identifier, description, inputs, outputs, friendly_name, func_type):
+    def __init__(
+            self, name, module_type, identifier, description, inputs,
+            outputs, friendly_name, func_type, example
+    ):
         """ Initialize AdapterElement. """
         self.name = name
         self.module_type = module_type
@@ -41,13 +49,15 @@ class AdapterElement:
         self.outputs = outputs
         self.friendly_name = friendly_name
         self.func_type = func_type
+        self.example = example
 
     def __repr__(self):
         """ Print AdapterElement. """
         return f'name={self.name}, module_type={self.module_type}, ' + \
                f'identifier={self.identifier}\ndescription={self.description}\n' + \
                f'inputs={self.inputs}\noutputs={self.outputs}\n\n' + \
-               f'func_type={self.func_type}\nfriendly_name={self.friendly_name}'
+               f'func_type={self.func_type}\nfriendly_name={self.friendly_name}' + \
+               f'example={self.example}'
 
     def get_adapter_identifier(self):
         """ Get AdapterElement identifier. """
@@ -77,6 +87,9 @@ class AdapterElement:
         """ Get AdapterElement friendly_name. """
         return self.friendly_name
 
+    def get_adapter_example(self):
+        return self.example
+
 
 class AdapterDB:
     """ The AdapterDB is the Data Transformation Adapters Catalog.
@@ -101,15 +114,23 @@ class AdapterDB:
                 cls_dict    = a_cls.__dict__
                 module_type = cls_dict[KEY_MODL].split('.')[-1]
                 identifier  = cls_dict[KEY_IDENTIFIER]
+
+                # Get description
                 description = None
                 if KEY_DESC in cls_dict:
                     description = cls_dict[KEY_DESC]
+
+                # Get function type
                 func_type = IFuncType.OTHERS.value
                 if KEY_FUNC_TYPE in cls_dict:
                     func_type = cls_dict[KEY_FUNC_TYPE].value
+
+                # Get friendly name
                 friendly_name = None
                 if KEY_FRIENDLY_NAME in cls_dict:
                     friendly_name = cls_dict[KEY_FRIENDLY_NAME]
+
+                # Get inputs/outputs
                 inputs_dict  = cls_dict[KEY_INPUTS]
                 outputs_dict = cls_dict[KEY_OUTPUTS]
                 inputs, outputs = dict(), dict()
@@ -120,19 +141,23 @@ class AdapterDB:
                     outputs[arg_name] = {'id': arg_attr.__dict__['id'], \
                         'val': arg_attr.__dict__['val'], 'optional': arg_attr.__dict__['optional']}
 
+                # Get example
+                example = {}
+                if KEY_EXAMPLE in cls_dict:
+                    example = cls_dict[KEY_EXAMPLE]
+
                 self.adapters.append(AdapterElement(
-                    a_name, module_type, identifier, description, inputs, outputs, friendly_name, func_type
+                    a_name, module_type, identifier, description, inputs,
+                    outputs, friendly_name, func_type, example
                 ))
                 self.name2object[a_name] = a_cls
 
     def get_list_of_adapters(self):
         """ Get the list of AdapterElements in the AdapterDB. """
-
         return self.adapters
 
     def get_list_of_adapter_names_for_dropdown(self):
         """ Get the list of AdapterElements names (used for dropdown in the main menu). """
-
         adapter_names_list = list()
         for adp_idx, adp_ins in enumerate(self.get_list_of_adapters()):
             adapter_names_list.append(f'{adp_idx} {adp_ins.identifier}/{adp_ins.name}')
@@ -151,7 +176,8 @@ def setup_adapters():
                 "inputs": ad.get_adapter_inputs(),
                 "outputs": ad.get_adapter_outputs(),
                 "func_type": ad.get_adapter_func_type(),
-                "friendly_name": ad.get_adapter_friendly_name()
+                "friendly_name": ad.get_adapter_friendly_name(),
+                "example": ad.get_adapter_example()
             } for ad in adapter_list], f, indent=4)
     else:
         print("adapters.json already exists!")

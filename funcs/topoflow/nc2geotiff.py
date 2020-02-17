@@ -25,6 +25,12 @@ class NC2GeoTiff(IFunc):
     outputs = {}
     friendly_name: str = "Netcdf to Geotiff Converter"
     func_type = IFuncType.WRITER
+    example = {
+        "input_dir": "/path/to/input/file",
+        "output_dir": "/path/to/output/file",
+        "var_name": "some_variable_name",
+        "no_data": "0.0"
+    }
 
     def __init__(self, input_dir, output_dir, var_name, no_data: float):
         self.input_dir = input_dir

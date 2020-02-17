@@ -18,7 +18,7 @@ class GraphWriteFunc(IFunc):
     Generates a csv/json file.
     """
     func_type = IFuncType.WRITER
-    friendly_name: str = "csv/json Writer"
+    friendly_name: str = "Graph to CSV/JSON"
     inputs = {
         "graph": ArgType.Graph(None),
         "main_class": ArgType.String,
@@ -26,6 +26,13 @@ class GraphWriteFunc(IFunc):
         "filter": ArgType.String(optional=True),
     }
     outputs = {"output_file": ArgType.String}
+    example = {
+        "main_class": "qb:Observation",
+        "output_file": "./price-test.csv",
+        # TODO: shorter example?
+        "mapped_columns": "{}",
+        "filter": "@type = 'qb:Observation' and sdmx-attribute:refArea.contains('Aweil (Town)')",
+    }
 
     def __init__(
         self,
@@ -150,7 +157,14 @@ class VisJsonWriteFunc(GraphWriteFunc):
     }
     outputs = {"data": ArgType.String}
     func_type = IFuncType.WRITER
-    friendly_name: str = "JSON and Visualizer Writer"
+    friendly_name: str = "Graph to JSON Converter and Visualizer"
+    example = {
+        "main_class": "qb:Observation",
+        "output_file": "./price-test.csv",
+        # TODO: shorter example?
+        "mapped_columns": "{}",
+        "filter": "@type = 'qb:Observation' and sdmx-attribute:refArea.contains('Aweil (Town)')",
+    }
 
     @staticmethod
     def _dump_to_json(tabular_rows, attr_names, file_path):
