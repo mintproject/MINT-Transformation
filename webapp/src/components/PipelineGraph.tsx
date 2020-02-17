@@ -108,13 +108,15 @@ export class PipelineGraphComponent extends React.Component<
     const currAdapterTypes = currAdapters.map(ad => ad.func_type).filter(
       (v, i, a) => a.indexOf(v) === i
     );
+    const nonTransAdapters = currAdapterTypes.filter(adt => !adt.includes("Transformation"));
+    const transAdapters = currAdapterTypes.filter(adt => adt.includes("Transformation"));
     return (<Menu onClick={({ item }) => {
       this.setState({
         currentAdapter: item.props.eventKey,
         nameAdapter: true
       });
     }}>
-      {currAdapterTypes.map((adt, i) => {
+      {nonTransAdapters.map((adt, i) => {
         return (<SubMenu
             key={`adt-${i}`} title={adt}
           >
@@ -125,6 +127,19 @@ export class PipelineGraphComponent extends React.Component<
           })}
         </SubMenu>)
       })}
+      <Menu.ItemGroup title="Transformations">
+        {transAdapters.map((adt, i) => {
+          return (<SubMenu
+              key={`trans-adt-${i}`} title={adt}
+            >
+            {currAdapters.filter(ad => ad.func_type === adt).map((ad, idx) => {
+              return (<Menu.Item key={ad.id}>
+                {_.isEmpty(ad.friendly_name) ? ad.id : ad.friendly_name}
+              </Menu.Item>);
+            })}
+          </SubMenu>)
+        })}
+      </Menu.ItemGroup>
     </Menu>);
   };
 

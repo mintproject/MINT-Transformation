@@ -228,11 +228,11 @@
             }
         },
         "outputs": {},
-        "func_type": "Intermediate Transformation",
+        "func_type": "Other Transformation",
         "friendly_name": "Semantic Attributes Mapper",
         "example": {
             "semantic_type": "qb:Observation--dcat-dimension:thing",
-            "str2str": "ujson.dumps(crop_names)"
+            "str2str": "ujson.dumps({\"Maize (white) - Retail\": \"maize\"})"
         }
     },
     {
@@ -257,7 +257,7 @@
                 "optional": false
             }
         },
-        "func_type": "Intermediate Transformation",
+        "func_type": "Other Transformation",
         "friendly_name": "Merge Two Graphs Into One",
         "example": {}
     },

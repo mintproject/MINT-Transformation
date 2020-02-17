@@ -21,7 +21,7 @@ class GraphStr2StrFunc(IFunc):
     friendly_name: str = "Semantic Attributes Mapper"
     example = {
         "semantic_type": "qb:Observation--dcat-dimension:thing",
-        "str2str": "ujson.dumps(crop_names)"
+        "str2str": 'ujson.dumps({"Maize (white) - Retail": "maize"})'
     }
 
     def __init__(self, graph: Graph, semantic_type: str, str2str: Dict[str, str]):

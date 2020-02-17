@@ -27,7 +27,7 @@ class IFuncType(Enum):
     SPATIAL_TRANS = "Spatial Transformation"
     UNIT_TRANS = "Unit Transformation"
     MODEL_TRANS = "Model Specific Transformation"
-    INTERMEDIATE = "Intermediate Transformation"
+    INTERMEDIATE = "Other Transformation"
 
 
 class IFunc(metaclass=IFuncIO):
