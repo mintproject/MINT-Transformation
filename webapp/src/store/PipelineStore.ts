@@ -2,6 +2,10 @@ import { observable, action } from "mobx";
 import axios from "axios";
 import { AdapterType, flaskUrl, AdapterInputType } from "./AdapterStore";
 import { ErrorStore } from "./ErrorStore";
+import {
+  INode, IEdge,
+} from "react-digraph";
+import _ from "lodash";
 
 // FIXME: settle down on the final format of pipeline object:
 // metadata + list of adapters?
@@ -48,6 +52,9 @@ export class PipelineStore {
   @observable currentPipeline: PipelineType | null = null;
   @observable uploadedPipelineData: UploadedPipelineDataType | null = null;
   @observable graphCreated: boolean = false;
+  @observable selectedNode: INode | null = null;
+  @observable graphNodes: INode[] = [];
+  @observable graphEdges: IEdge[] = [];
 
   @action.bound startFetch = () => {
     this.errorStore.isLoading = true;
@@ -151,5 +158,17 @@ export class PipelineStore {
         error => {
           this.failedFetch(error);
     }));
+  }
+
+  @action.bound setGraphNodes = (nodes: INode[]) => {
+    this.graphNodes = nodes;
+  }
+
+  @action.bound setGraphEdges = (edges: IEdge[]) => {
+    this.graphEdges = edges;
+  }
+
+  @action.bound setSelectedNode = (node: INode | null) => {
+    this.selectedNode = node;
   }
 };

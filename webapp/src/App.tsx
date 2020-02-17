@@ -12,7 +12,7 @@ import Adapters from "./components/Adapters";
 // import LoadingComponent from "./components/Loading";
 import PipelineTimeline from "./components/PipelineTimeline";
 import PipelineDetail from "./components/PipelineDetail";
-import CreatePipeline from "./components/CreatePipeline";
+import PipelineEditor from "./components/PipelineEditor";
 import "./App.css";
 
 interface Props {}
@@ -32,7 +32,7 @@ export default class App extends React.Component<Props> {
           <Route exact path="/adapters" component={Adapters} />
           <Route exact path="/pipelines" component={PipelineTimeline} />
           <Route path='/pipelines/:pipelineId' component={PipelineDetail}/>
-          <Route exact path="/pipeline/create" component={CreatePipeline} />
+          <Route exact path="/pipeline/create" component={PipelineEditor} />
           <Route component={NotFound404} />
         </Switch>
       </BrowserRouter>
