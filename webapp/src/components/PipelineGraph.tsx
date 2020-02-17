@@ -116,10 +116,31 @@ export class PipelineGraphComponent extends React.Component<
       return a > b ? 1 : -1;
     });
     return (<Menu onClick={({ item }) => {
+      const currentAdapter = item.props.eventKey;
+      const { maxX, maxY, minX, minY, maxId } = this.findBoundingBoxGraphNodes();
+      const customName = `Adapter_${maxId + 1}`;
+      const newNode: INode = {
+        id: customName,
+        title: `${currentAdapter}`,
+        // type: "empty",
+        x: 300 + (maxX + minX)/2,
+        y: (maxY + minY)/2,
+        adapter: this.props.adapters.filter(ad => ad.id === currentAdapter)[0]
+      };
+      const newNodes = this.props.graphNodes;
+      newNodes.push(newNode);
+      this.props.setGraphNodes(newNodes);
+      this.props.setSelectedNode(null);
       this.setState({
-        currentAdapter: item.props.eventKey,
-        nameAdapter: true
+        currentAction: "",
+        currentAdapter: "",
+        // currentAdapterName: "",
+        // nameAdapter: false
       });
+      // this.setState({
+      //   currentAdapter: item.props.eventKey,
+      //   // nameAdapter: true
+      // });
     }}>
       {nonTransAdapters.map((adt, i) => {
         return (<SubMenu
@@ -317,6 +338,7 @@ export class PipelineGraphComponent extends React.Component<
                 ? <b>{`Selected Adapter: ${this.state.currentAdapter}`}</b>
                 : <Button><b>Select An Adapter</b></Button>}
               </Dropdown>
+              {/* FIXME: no more naming adapters*/}
               <Modal
                 title="Naming new adapter..."
                 visible={this.state.nameAdapter}

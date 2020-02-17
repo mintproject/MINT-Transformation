@@ -101,7 +101,7 @@ def create_pipeline():
     if pipeline_description == "":
         pipeline_description = "No Description"
     if pipeline_name == "":
-        pipeline_name = "Unnamed"
+        pipeline_name = str(uuid4())
     pipeline_nodes = request.json.get("nodes", [])
     pipeline_edges = request.json.get("edges", [])
     try:

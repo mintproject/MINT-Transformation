@@ -120,7 +120,7 @@ export class PipelineEditorComponent extends React.Component<
     );
     this.props.setUploadedPipelineData(null);
     this.props.setGraphCreated(false);
-    this.props.history.push('/pipelines');
+    setTimeout(() => {this.props.history.push('/pipelines');}, 1000);
   }
 
   handleCancel = () => {
@@ -261,7 +261,7 @@ export class PipelineEditorComponent extends React.Component<
                       <Input
                         value={this.state.pipelineName}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => this.setState({ pipelineName: event.target.value})}
-                        placeholder="Enter Pipeline Name"
+                        placeholder="Enter Pipeline Name: (Optional)"
                       />
                     </Row>
                     <Row style={{ margin: "20px 10px"}}>
@@ -269,7 +269,7 @@ export class PipelineEditorComponent extends React.Component<
                         rows={16}
                         value={this.state.pipelineDescription}
                         onChange={({ target }) => this.setState({ pipelineDescription: target.value})}
-                        placeholder="Enter Pipeline Description"
+                        placeholder="Enter Pipeline Description: (Optional)"
                       />
                     </Row>
                   </Modal>

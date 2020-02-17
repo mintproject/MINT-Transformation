@@ -44,8 +44,6 @@ export class InputWiredComponent extends React.Component<
       menuList.push(...outputsMenuList);
     }
     return <Menu onClick={({ item }) => {
-      console.log("AM I HERE?")
-      console.log(item.props);
       const { eventKey } = item.props;
       const data = eventKey.split("-");
       var newEdges = graphEdges
