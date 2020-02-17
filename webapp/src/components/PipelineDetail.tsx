@@ -4,8 +4,9 @@ import { IStore } from "../store";
 import { PipelineType } from "../store/PipelineStore";
 import { RouteComponentProps } from "react-router";
 import MyLayout from "./Layout";
-import { Card, Alert, Spin, Button, Modal } from "antd";
+import { Card, Alert, Spin, Button, Modal, Col, Row, Input } from "antd";
 import _ from "lodash";
+const { TextArea } = Input;
 
 
 type PipelineProps = {
@@ -50,56 +51,75 @@ export class PipelineComponent extends React.Component<
               description="Right now is really slow :/"
               type="info"
             />
-          </Spin> : <Card
-            title={currentPipeline.name}
-            bordered={true}
-            style={{ margin: "5px 5px", height: "100%" }}
-          >
-            <pre>
-              • <b><u>Pipeline ID</u></b>: {currentPipeline.id}<br/><br/>
-              • <b><u>Pipeline Name</u></b>: {currentPipeline.name}<br/><br/>
-              • <b><u>Description</u></b>: {currentPipeline.description}<br/><br/>
-              • <b><u>Start Timestamp</u></b>: {currentPipeline.start_timestamp}<br/><br/>
-              • <b><u>End Timestamp</u></b>: {currentPipeline.end_timestamp}<br/><br/>
-              • <b><u>Status</u></b>: {currentPipeline.status}<br/><br/>
-              • <b><u>Config</u></b>: <React.Fragment>
-                <Button
-                  type="primary" size="small"
-                  onClick={() => this.setState({ openConfig: true })}>
-                  Click Me To View
-                </Button>
-                <Modal
-                  title="Config"
-                  visible={this.state.openConfig}
-                  onOk={() => this.setState({ openConfig: false })}
-                  onCancel={() => this.setState({ openConfig: false })}
+          </Spin> :
+          <React.Fragment>
+            <Col span={12}>
+              <Card
+                title={currentPipeline.name}
+                bordered={true}
+                style={{ margin: "5px 5px", height: "100%" }}
+              >
+                <pre>
+                  • <b><u>Pipeline ID</u></b>: {currentPipeline.id}<br/><br/>
+                  • <b><u>Pipeline Name</u></b>: {currentPipeline.name}<br/><br/>
+                  • <b><u>Description</u></b>: {currentPipeline.description}<br/><br/>
+                  • <b><u>Start Timestamp</u></b>: {currentPipeline.start_timestamp}<br/><br/>
+                  • <b><u>End Timestamp</u></b>: {currentPipeline.end_timestamp}<br/><br/>
+                  • <b><u>Status</u></b>: {currentPipeline.status}<br/><br/>
+                  • <b><u>Config</u></b>: <React.Fragment>
+                    <Button
+                      type="primary" size="small"
+                      onClick={() => this.setState({ openConfig: true, openOutput: false })}>
+                      Click Me To View
+                    </Button>
+                    </React.Fragment><br/><br/>
+                  • <b><u>Output</u></b>: {currentPipeline.output ? <React.Fragment>
+                    <Button
+                      type="primary" size="small"
+                      onClick={() => this.setState({ openOutput: true, openConfig: false })}>
+                      Click Me To View
+                    </Button>
+                    </React.Fragment> : `None`}<br/><br/>
+                </pre>
+              </Card>
+            </Col>
+          <Col span={12}>
+            {this.state.openConfig ? <React.Fragment>
+                <Row>
+                <TextArea
+                  autosize
+                  title="Config" wrap="hard"
+                  value={JSON.stringify(currentPipeline.config, null, 2)}
                 >
-                  <pre>
-                    {JSON.stringify(currentPipeline.config, null, 2)}
-                  </pre>
-                </Modal>
-                </React.Fragment><br/><br/>
-              • <b><u>Output</u></b>: {currentPipeline.output ? <React.Fragment>
+                </TextArea>
+              </Row>
+              <Row>
                 <Button
-                  type="primary" size="small"
-                  onClick={() => this.setState({ openOutput: true })}>
-                  Click Me To View
+                  style={{ margin: "10px", float: "right" }}
+                  onClick={() => this.setState({ openConfig: false })}>
+                  Cancel
                 </Button>
-                <Modal
-                  title="Output"
-                  visible={this.state.openOutput}
-                  onOk={() => this.setState({ openOutput: false })}
-                  onCancel={() => this.setState({ openOutput: false })}
+              </Row>
+            </React.Fragment> : null}
+            {this.state.openOutput ? <React.Fragment>
+                <Row>
+                <TextArea
+                  autosize
+                  title="Output" wrap="hard"
+                  value={currentPipeline.output ? currentPipeline.output.replace("\n", "&#10;") : ""}
                 >
-                  <pre>
-                    {currentPipeline.output.split("\n").map((op, idx) => (<p key={`output-${idx}`}>
-                      {op.trim()}
-                    </p>))}
-                  </pre>
-                </Modal>
-                </React.Fragment> : `None`}<br/><br/>
-            </pre>
-          </Card>
+                </TextArea>
+              </Row>
+              <Row>
+                <Button
+                  style={{ margin: "10px", float: "right" }}
+                  onClick={() => this.setState({ openOutput: false })}>
+                  Cancel
+                </Button>
+              </Row>
+            </React.Fragment> : null}
+          </Col>
+          </React.Fragment>
         }
       </MyLayout>
     );
