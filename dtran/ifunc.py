@@ -62,3 +62,9 @@ class IFunc(metaclass=IFuncIO):
                 raise NotImplementedError(f"Doesn't handle {and_expr} yet")
 
         return eval(f"lambda n: " + " and ".join(conditions))
+
+    def set_preferences(self, preferences: Dict[str, str]) -> None:
+        self.preferences = preferences
+
+    def get_preference(self, output: str) -> str:
+        return self.preferences[output]

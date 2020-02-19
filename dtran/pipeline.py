@@ -3,9 +3,10 @@
 from pathlib import Path
 from typing import *
 from dtran.ifunc import IFunc
+from collections import Counter
 from dtran.wireio import WiredIOArg
 from marshmallow import Schema, fields, ValidationError
-from networkx import DiGraph, lexicographical_topological_sort, NetworkXUnfeasible
+from networkx import DiGraph, lexicographical_topological_sort, bfs_edges, NetworkXUnfeasible
 
 
 class Pipeline(object):
@@ -18,12 +19,15 @@ class Pipeline(object):
         self.id2order = {}
         # map from idx of function to its order
         idx2order = {}
+        # map from tuple (id, order) of function to its dataset preference
+        self.preferences = {}
 
         for i, func_cls in enumerate(func_classes):
             if func_cls.id not in self.id2order:
                 self.id2order[func_cls.id] = []
             self.id2order[func_cls.id].append((i, len(self.id2order[func_cls.id]) + 1))
             idx2order[i] = len(self.id2order[func_cls.id])
+            self.preferences[(func_cls.id, idx2order[i])] = {}
 
         wired = wired or []
         for input, output in wired:
@@ -36,13 +40,30 @@ class Pipeline(object):
         # applying topological sort on func_classes to determine execution order based on wiring
         graph = DiGraph()
         graph.add_nodes_from(range(len(func_classes)))
+        # mapping preferences of argtype "dataset" to determine backend for "dataset" outputs
+        preference_roots, preference_graph = [], DiGraph()
         for i, o in wired:
             input_arg = func_classes[self.id2order[i[0]][i[1] - 1][0]].inputs[i[2]]
             output_arg = func_classes[self.id2order[o[0]][o[1] - 1][0]].outputs[o[2]]
             if input_arg != output_arg:
-                raise ValidationError(f"Incompatible ArgType while wiring {input_arg} to {output_arg}")
+                raise ValidationError(f"Incompatible ArgType while wiring {WiredIOArg.get_arg_name(i[0], i[1], i[2])} to {WiredIOArg.get_arg_name(o[0], o[1], o[2])}")
             self.wired[WiredIOArg.get_arg_name(i[0], i[1], i[2])] = WiredIOArg.get_arg_name(o[0], o[1], o[2])
             graph.add_edge(self.id2order[o[0]][o[1] - 1][0], self.id2order[i[0]][i[1] - 1][0])
+
+            if output_arg.id == 'dataset':
+                self.preferences[(o[0], o[1])][o[2]] = None
+                node = (o[0], o[1], 'o', o[2])
+                # if input_ref of "dataset" output is None, we take it as a new "dataset"
+                if output_arg.input_ref is None:
+                    preference_roots.append(node)
+                elif output_arg.input_ref not in func_classes[self.id2order[o[0]][o[1] - 1][0]].inputs:
+                    raise ValidationError(f"Invalid value for input_ref {output_arg.input_ref} of {WiredIOArg.get_arg_name(o[0], o[1], o[2])} output dataset")
+                elif func_classes[self.id2order[o[0]][o[1] - 1][0]].inputs[output_arg.input_ref] != output_arg:
+                    raise ValidationError(f"Invalid ArgType for input_ref {output_arg.input_ref} of {WiredIOArg.get_arg_name(o[0], o[1], o[2])} output dataset")
+                else:
+                    # adding dummy "internal" edges within the same adapter to link "dataset" output to its input_ref
+                    preference_graph.add_edge((o[0], o[1], 'i', output_arg.input_ref), node, preference='n/a')
+                preference_graph.add_edge(node, (i[0], i[1], 'i', i[2]), preference=input_arg.preference)
 
         self.func_classes = []
         self.idx2order = {}
@@ -66,6 +87,19 @@ class Pipeline(object):
                 self.schema[gname] = fields.Raw(required=not argtype.optional, validate=argtype.is_valid,
                                                 error_messages={'validator_failed': f"Invalid Argument type. Expected {argtype.id}"})
         self.schema = Schema.from_dict(self.schema)
+
+        # setting preferences for new "dataset" outputs
+        for root in preference_roots:
+            counter = Counter()
+            # traversing subgraph from every new "dataset" as root and counting preferences
+            for edge in bfs_edges(preference_graph, root):
+                counter[preference_graph[edge[0]][edge[1]]['preference']] += 1
+            preference = None
+            if counter['graph'] > counter['array']:
+                preference = 'graph'
+            elif counter['array'] > counter['graph']:
+                preference = 'array'
+            self.preferences[(root[0], root[1])][root[3]] = preference
 
     def exec(self, inputs: dict) -> dict:
         inputs_copy = {}
@@ -102,7 +136,7 @@ class Pipeline(object):
             except TypeError:
                 print(f"Cannot initialize cls: {func_cls}")
                 raise
-
+            func.set_preferences(self.preferences[(func_cls.id, self.idx2order[i])])
             result = func.exec()
             for argname in func_cls.outputs.keys():
                 try:

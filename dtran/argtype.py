@@ -6,23 +6,29 @@ from datetime import datetime
 from dateutil import parser
 
 
+def dataset(val: Any, preference: str = None, input_ref: str = None) -> 'ArgType':
+    assert preference is None or preference == 'graph' or preference == 'array', 'preference only accepts values "graph" or "array"'
+    return ArgType("dataset", val=val, preference=preference, input_ref=input_ref)
+
+
 class ArgType(object):
     FilePath: 'ArgType' = None
-    Graph: Callable[[Any], 'ArgType'] = lambda val: ArgType("graph", val=val)
+    DataSet: Callable[[Any, str, str], 'ArgType'] = dataset
     OrderedDict: 'ArgType' = None
-    NDimArray: 'ArgType' = None
     String: 'ArgType' = None
     Number: 'ArgType' = None
     Boolean: 'ArgType' = None
     DateTime: 'ArgType' = None
 
     def __init__(self, id: str, optional: bool = False, val: Any = None,
-                 validate: Callable[[Any], bool] = lambda val: True, from_str: Callable[[str], Any] = lambda val: val):
+                 validate: Callable[[Any], bool] = lambda val: True, from_str: Callable[[str], Any] = lambda val: val,
+                 **kwargs):
         self.id = id
         self.val = val
         self.optional = optional
         self.validate = validate
         self.from_str = from_str
+        vars(self).update(kwargs)
 
     def __eq__(self, other):
         if other is None or not isinstance(other, ArgType):
@@ -52,7 +58,6 @@ class ArgType(object):
 
 ArgType.FilePath = ArgType("file_path", validate=lambda val: Path(val).parent.exists(), from_str=lambda val: str(Path(val)))
 ArgType.OrderedDict = ArgType("ordered_dict", validate=lambda val: isinstance(val, dict))
-ArgType.NDimArray = ArgType("ndim_array")
 ArgType.String = ArgType("string", validate=lambda val: isinstance(val, str))
 ArgType.Number = ArgType("number", validate=lambda val: isinstance(val, int) or isinstance(val, float),
                          from_str=lambda val: ('.' in val and float(val)) or int(val))
