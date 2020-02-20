@@ -165,22 +165,22 @@ class AdapterDB:
 
 
 def setup_adapters():
-    if not os.path.isfile('./adapters.json'):
-        # generate adapter.json on the fly
-        adapterdb = AdapterDB()
-        with open("./adapters.json", "w") as f:
-            adapter_list = adapterdb.get_list_of_adapters()
-            json.dump([{
-                "id": ad.get_adapter_name(),
-                "description": ad.get_adapter_description(),
-                "inputs": ad.get_adapter_inputs(),
-                "outputs": ad.get_adapter_outputs(),
-                "func_type": ad.get_adapter_func_type(),
-                "friendly_name": ad.get_adapter_friendly_name(),
-                "example": ad.get_adapter_example()
-            } for ad in adapter_list], f, indent=4)
-    else:
-        print("adapters.json already exists!")
+    if os.path.isfile('./adapters.json'):
+        print("adapters.json already exists! Removing it...")
+        os.system("rm adapters.json")
+    adapterdb = AdapterDB()
+    with open("./adapters.json", "w") as f:
+        adapter_list = adapterdb.get_list_of_adapters()
+        json.dump([{
+            "id": ad.get_adapter_name(),
+            "description": ad.get_adapter_description(),
+            "inputs": ad.get_adapter_inputs(),
+            "outputs": ad.get_adapter_outputs(),
+            "func_type": ad.get_adapter_func_type(),
+            "friendly_name": ad.get_adapter_friendly_name(),
+            "example": ad.get_adapter_example()
+        } for ad in adapter_list], f, indent=4)
+    print("Finish loading in all adapters!")
 
 
 setup_adapters()
