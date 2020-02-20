@@ -51,13 +51,15 @@ class PipelineSchema(Schema):
             mod, *cls = adapter['adapter'].rsplit('.', 1)
             try:
                 mod = import_module(mod)
+            except Exception as e:
+                raise ValidationError([str(e), f"could not import adapter {adapter['adapter']} for {name}"])
+            try:
                 cls = getattr(mod, cls[0])
-                assert issubclass(cls, IFunc)
-            except (ModuleNotFoundError, AttributeError, ValueError) as e:
+            except AttributeError as e:
                 raise ValidationError([str(e), f"could not import adapter {adapter['adapter']} for {name}"])
             except IndexError:
                 raise ValidationError(f"missing adapter class in {adapter['adapter']} for {name}")
-            except AssertionError:
+            if not issubclass(cls, IFunc):
                 raise ValidationError(f"invalid adapter class {adapter['adapter']} for {name}")
             adapter_count[adapter['adapter']] += 1
             mappings[name] = (cls, adapter_count[adapter['adapter']])
