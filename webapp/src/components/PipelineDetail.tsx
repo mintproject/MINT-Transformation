@@ -4,7 +4,7 @@ import { IStore } from "../store";
 import { PipelineType } from "../store/PipelineStore";
 import { RouteComponentProps } from "react-router";
 import MyLayout from "./Layout";
-import { Card, Alert, Spin, Button, Modal, Col, Row, Input } from "antd";
+import { Card, Alert, Spin, Button, Col, Row, Input } from "antd";
 import _ from "lodash";
 const { TextArea } = Input;
 

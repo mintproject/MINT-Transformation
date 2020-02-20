@@ -43,6 +43,7 @@ interface PipelineGraphProps {
   setGraphNodes: (nodes: INode[]) => any,
   setGraphEdges: (edges: IEdge[]) => any,
   setSelectedNode: (node: INode | null) => any,
+  setSelectedEdge: (edge: IEdge | null) => any,
   adapters: AdapterType[],
   graphCreated: boolean,
 }
@@ -63,6 +64,7 @@ interface PipelineGraphState {
   setGraphNodes: stores.pipelineStore.setGraphNodes,
   setGraphEdges: stores.pipelineStore.setGraphEdges,
   setSelectedNode: stores.pipelineStore.setSelectedNode,
+  setSelectedEdge: stores.pipelineStore.setSelectedEdge,
   adapters: stores.adapterStore.adapters,
   graphCreated: stores.pipelineStore.graphCreated,
 }))
@@ -291,8 +293,16 @@ export class PipelineGraphComponent extends React.Component<
     });
   }
 
+  onSelectEdge = (selectedEdge: IEdge) => {
+    // const { target, source, input, output } = selectedEdge;
+    this.props.setSelectedNode(null);
+    this.props.setSelectedEdge(selectedEdge);
+  }
+
   render() {
     const { graphNodes, graphEdges, selectedNode } = this.props;
+    // FIXME: forced rerendering?
+    console.log(`Number of edges is: ${graphEdges.length}`);
     const selected = selectedNode ? selectedNode.id : "";
     return (
       <React.Fragment>
@@ -366,7 +376,12 @@ export class PipelineGraphComponent extends React.Component<
                   });
                 }}
                 okButtonProps={{ disabled: !this.isAlphaNumericUnderscore(this.state.currentAdapterName) }}
-                onCancel={() => this.setState({ nameAdapter: false })}
+                onCancel={() => this.setState({
+                  currentAction: "",
+                  currentAdapter: "",
+                  currentAdapterName: "",
+                  nameAdapter: false
+                })}
               >
                 <p>
                   Enter adapter name (Please only use "_" as delimiter):
@@ -515,7 +530,8 @@ export class PipelineGraphComponent extends React.Component<
             onSelectNode={() => console.log("does nothing")}
             onCreateNode={() => console.log("does nothing")}
             onDeleteNode={() => console.log("does nothing")}
-            onSelectEdge={() => console.log("does nothing")}
+            // onSelectEdge={() => console.log("does nothing")}
+            onSelectEdge={this.onSelectEdge}
             onCreateEdge={() => console.log("does nothing")}
             onSwapEdge={() => console.log("does nothing")}
             onDeleteEdge={() => console.log("does nothing")}

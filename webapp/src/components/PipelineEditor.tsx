@@ -14,6 +14,7 @@ import {
 } from "react-digraph";
 import PipelineGraph from "./PipelineGraph";
 import AdapterInputs from "./AdapterInputs";
+import EdgeDetail from "./EdgeDetail";
 
 const { TextArea } = Input;
 const { TabPane } = Tabs;
@@ -29,11 +30,13 @@ interface PipelineEditorProps extends RouterProps {
   adapters: AdapterType[],
   getAdapters: () => any,
   selectedNode: INode | null,
+  selectedEdge: IEdge | null,
   graphNodes: INode[],
   graphEdges: IEdge[],
   setGraphNodes: (nodes: INode[]) => any,
   setGraphEdges: (edges: IEdge[]) => any,
   setSelectedNode: (node: INode | null) => any,
+  setSelectedEdge: (edge: IEdge | null) => any,
 }
 interface PipelineEditorState {
   currentFileList: UploadFile[],
@@ -53,11 +56,13 @@ interface PipelineEditorState {
   adapters: stores.adapterStore.adapters,
   getAdapters: stores.adapterStore.getAdapters,
   selectedNode: stores.pipelineStore.selectedNode,
+  selectedEdge: stores.pipelineStore.selectedEdge,
   graphNodes: stores.pipelineStore.graphNodes,
   graphEdges: stores.pipelineStore.graphEdges,
   setGraphNodes: stores.pipelineStore.setGraphNodes,
   setGraphEdges: stores.pipelineStore.setGraphEdges,
   setSelectedNode: stores.pipelineStore.setSelectedNode,
+  setSelectedEdge: stores.pipelineStore.setSelectedEdge,
 }))
 @observer
 export class PipelineEditorComponent extends React.Component<
@@ -229,6 +234,7 @@ export class PipelineEditorComponent extends React.Component<
                   setGraphNodes={this.props.setGraphNodes}
                   setGraphEdges={this.props.setGraphEdges}
                   setSelectedNode={this.props.setSelectedNode}
+                  setSelectedEdge={this.props.setSelectedEdge}
                   adapters={this.props.adapters}
                   graphCreated={this.props.graphCreated}
                 />
@@ -275,7 +281,7 @@ export class PipelineEditorComponent extends React.Component<
                   </Modal>
                 </Row>
                 <Row style={{ margin: "20px 0px"}}>
-                  <AdapterInputs
+                  {this.props.selectedNode === null ? null : <AdapterInputs
                     selectedNode={selectedNode}
                     graphNodes={this.props.graphNodes}
                     graphEdges={this.props.graphEdges}
@@ -284,7 +290,12 @@ export class PipelineEditorComponent extends React.Component<
                     setSelectedNode={this.props.setSelectedNode}
                     adapters={this.props.adapters}
                     graphCreated={this.props.graphCreated}
-                  />
+                  />}
+                  {this.props.selectedEdge === null ? null : <EdgeDetail
+                    selectedEdge={this.props.selectedEdge}
+                    graphNodes={this.props.graphNodes}
+                    adapters={this.props.adapters}
+                  />}
                 </Row>
               </Col>
             </TabPane>

@@ -52,6 +52,7 @@ export class PipelineStore {
   @observable uploadedPipelineData: UploadedPipelineDataType | null = null;
   @observable graphCreated: boolean = false;
   @observable selectedNode: INode | null = null;
+  @observable selectedEdge: IEdge | null = null;
   @observable graphNodes: INode[] = [];
   @observable graphEdges: IEdge[] = [];
 
@@ -169,5 +170,11 @@ export class PipelineStore {
 
   @action.bound setSelectedNode = (node: INode | null) => {
     this.selectedNode = node;
+    this.selectedEdge = null;
+  }
+
+  @action.bound setSelectedEdge = (edge: IEdge | null) => {
+    this.selectedEdge = edge;
+    this.selectedNode = null;
   }
 };
