@@ -11,39 +11,34 @@ class CroppingTransFunc(IFunc):
     id = "cropping trans"
 
     inputs = {
-        "data_file": ArgType.String,
-        "drepr": ArgType.String,
+        "variable_name": ArgType.String,
+        "dataset": ArgType.DataSet,
         "xmin": ArgType.Number,
         "ymin": ArgType.Number,
         "xmax": ArgType.Number,
-        "ymax": ArgType.Number,
-        "filter": ArgType.String(True)
+        "ymax": ArgType.Number
     }
 
     outputs = {"array": ArgType.NDimArray(None)}
 
     def __init__(
-        self, data_file: str, drepr: str, xmin: int, ymin: int, xmax: int, ymax: int, filter: Optional[str] = None
+        self, variable_name: str, dataset: str, xmin: int, ymin: int, xmax: int, ymax: int
     ):
-
-        self.data_file = data_file
-        self.drepr = drepr
+        self.variable_name = variable_name
+        self.dataset = dataset
         self.xmin = xmin
         self.ymin = ymin
         self.xmax = xmax
         self.ymax = ymax
-        self.filter_func = IFunc.filter_func(filter)
 
-        self.sm = outputs.ArrayBackend.from_drepr(self.drepr, self.data_file)
+        self.sm = self.dataset
         # Namespaces
         self.mint_ns = self.sm.ns("https://mint.isi.edu/")
         self.mint_geo_ns = self.sm.ns("https://mint.isi.edu/geo")
         self.rdf_ns = self.sm.ns(outputs.Namespace.RDF)
 
-        #self.filter_drepr = outputs.FCondition(self.mint.standardName, "==", self.fiter)  # TODO Handle filter function correctly
-
     def exec(self):
-        for c in self.sm.c(self.mint_ns.Variable): # TODO Add filter
+        for c in self.sm.c(self.mint_ns.Variable).filter(outputs.FCondition(self.mint_ns.standardName, "==", self.variable_name)):
             for raster_id, sc in c.group_by(self.mint_geo_ns.raster):
                 data = sc.p(self.rdf_ns.value).as_ndarray([sc.p(self.mint_geo_ns.lat), sc.p(self.mint_geo_ns.long)])
                 gt_info = self.sm.get_record_by_id(raster_id)
@@ -62,5 +57,4 @@ class CroppingTransFunc(IFunc):
 
                 cropped_raster = raster.crop(bounds=BoundingBox)
 
-                # TODO Is the variable unique per dataset?
                 return cropped_raster.data
