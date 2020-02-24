@@ -58,7 +58,7 @@ export class AdapterInputsComponent extends React.Component<
     const { graphEdges } = this.props;
     const selectedAdapter = selectedNode.adapter;
     if (selectedAdapter.inputs[ip].id === "graph") {
-      const wiredEdges = graphEdges.filter(e => e.target === selectedNode.id && e.input === "graph");
+      const wiredEdges = graphEdges.filter(e => e.target === selectedNode.id && e.input === ip);
       // this should be a dropdown to select from
       return <div key={`input-${idx}`} style={{ margin: "20px 20px"}}>
         {`${ip}: `}
