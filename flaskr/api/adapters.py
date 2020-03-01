@@ -14,6 +14,99 @@ KEY_FUNC_TYPE = "func_type"
 KEY_EXAMPLE = "example"
 
 
+FAKE_ADAPTERS = [
+    {
+        "id": "MosaickTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Mosaick Transformation",
+        "friendly_name": "Generate tiles to cover larger bounding box (WIP)",
+        "example": {},
+        "is_fake": True
+    },
+    {
+        "id": "ClippingTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Clipping Transformation",
+        "friendly_name": "Clip to a smaller bounding box (WIP)",
+        "example": {},
+        "is_fake": True
+    },
+    {
+        "id": "ResampleTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Resampling Transformation",
+        "friendly_name": "Resample to change spatial resolution (WIP)",
+        "example": {},
+        "is_fake": True
+    },
+    {
+        "id": "StackTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Stacking Transformation",
+        "friendly_name": "Stack grids for different times into a single file (WIP)",
+        "example": {},
+        "is_fake": True
+    },
+    {
+        "id": "ExtractTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Extraction Transformation",
+        "friendly_name": "Extract derived grid from grids (WIP)",
+        "example": {},
+        "is_fake": True
+    },
+    {
+        "id": "RegridTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Regridding Transformation",
+        "friendly_name": "Wrap values to different computational grid (WIP)",
+        "example": {},
+        "is_fake": True
+    },
+    {
+        "id": "ReprojectTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Reprojection Transformation",
+        "friendly_name": "Reproject to a different map (WIP)",
+        "example": {},
+        "is_fake": True
+    },
+    {
+        "id": "RescaleTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Rescaling Transformation",
+        "friendly_name": "Change all values by one factor (WIP)",
+        "example": {},
+        "is_fake": True
+    },
+    {
+        "id": "VoidFillingTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Void Filling Transformation",
+        "friendly_name": "Replace all nodata values (WIP)",
+        "example": {},
+        "is_fake": True
+    },
+]
+
 class AdapterElement:
     """ An adapter element includes attributes needed to contrcut a pipeline.
     Also used for browsing the Data Transformation Adapters Catalog. """
@@ -171,7 +264,8 @@ def setup_adapters():
     adapterdb = AdapterDB()
     with open("./adapters.json", "w") as f:
         adapter_list = adapterdb.get_list_of_adapters()
-        json.dump([{
+        # TODO: dump in fake adapters as well
+        results = [{
             "id": ad.get_adapter_name(),
             "description": ad.get_adapter_description(),
             "inputs": ad.get_adapter_inputs(),
@@ -179,7 +273,9 @@ def setup_adapters():
             "func_type": ad.get_adapter_func_type(),
             "friendly_name": ad.get_adapter_friendly_name(),
             "example": ad.get_adapter_example()
-        } for ad in adapter_list], f, indent=4)
+        } for ad in adapter_list]
+        results = results + FAKE_ADAPTERS
+        json.dump(results, f, indent=4)
     print("Finish loading in all adapters!")
 
 

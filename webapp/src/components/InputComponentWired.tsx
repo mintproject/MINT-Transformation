@@ -35,9 +35,9 @@ export class InputWiredComponent extends React.Component<
     const { graphNodes, graphEdges, selectedNode, setGraphEdges, input, wiredEdges } = this.props;
     const possibleNodes = graphNodes.filter(n => n.id !== selectedNode!.id);
     var menuList = [];
-    for (var i = 0; i < possibleNodes.length; i ++) {
-      var outputs = possibleNodes[i].adapter.outputs;
-      var outputsMenuList = Object.keys(outputs).map(o => ({
+    for (let i = 0; i < possibleNodes.length; i ++) {
+      let outputs = possibleNodes[i].adapter.outputs;
+      let outputsMenuList = Object.keys(outputs).map(o => ({
         node: possibleNodes[i].id,
         output: o
       }))

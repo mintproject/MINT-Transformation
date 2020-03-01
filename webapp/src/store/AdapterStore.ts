@@ -13,6 +13,7 @@ export type AdapterType = {
   func_type: string,
   friendly_name: string | null,
   example: { [key: string]: string; },
+  is_fake?: boolean
 };
 
 export type AdapterInputType = {

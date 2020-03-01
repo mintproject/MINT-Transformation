@@ -1,7 +1,7 @@
 import React from "react";
 import { observer, inject } from "mobx-react";
 import { IStore } from "../store";
-import { Button, Modal } from "antd";
+// import { Button, Modal } from "antd";
 import {
   INode, IEdge,
 } from "react-digraph";

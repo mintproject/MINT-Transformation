@@ -459,5 +459,95 @@
             "resource_path": "$.my_graph_write_func.output_file",
             "metadata": "[{\"name\": \"WFP Food Prices - South Sudan\", \"description\": \"Food price dataset for South Sudan (2012-2019)\"}]"
         }
+    },
+    {
+        "id": "MosaickTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Mosaick Transformation",
+        "friendly_name": "Generate tiles to cover larger bounding box (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "ClippingTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Clipping Transformation",
+        "friendly_name": "Clip to a smaller bounding box (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "ResampleTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Resampling Transformation",
+        "friendly_name": "Resample to change spatial resolution (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "StackTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Stacking Transformation",
+        "friendly_name": "Stack grids for different times into a single file (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "ExtractTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Extraction Transformation",
+        "friendly_name": "Extract derived grid from grids (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "RegridTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Regridding Transformation",
+        "friendly_name": "Wrap values to different computational grid (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "ReprojectTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Reprojection Transformation",
+        "friendly_name": "Reproject to a different map (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "RescaleTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Rescaling Transformation",
+        "friendly_name": "Change all values by one factor (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "VoidFillingTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Void Filling Transformation",
+        "friendly_name": "Replace all nodata values (WIP)",
+        "example": {},
+        "is_fake": true
     }
 ]

@@ -161,7 +161,7 @@ export class PipelineGraphComponent extends React.Component<
               key={`trans-adt-${i}`} title={adt.split(" Transformation")[0]}
             >
             {currAdapters.filter(ad => ad.func_type === adt).map((ad, idx) => {
-              return (<Menu.Item key={ad.id}>
+              return (<Menu.Item key={ad.id} disabled={ad.is_fake === true}>
                 {_.isEmpty(ad.friendly_name) ? ad.id : ad.friendly_name}
               </Menu.Item>);
             })}
