@@ -5,7 +5,7 @@ import subprocess
 
 from dcatreg.dataset_registration import register_dataset
 from dtran.argtype import ArgType
-from dtran.ifunc import IFunc
+from dtran.ifunc import IFunc, IFuncType
 from os import listdir
 
 from funcs.topoflow.write_topoflow4_climate_func import create_rts_from_nc_files
@@ -27,6 +27,15 @@ class DcatReadTopoflow4ClimateUploadFunc(IFunc):
         "DEM_yres_arcsecs": ArgType.String,
     }
     outputs = {}
+    friendly_name: str = "Topoflow Climate File To Data Catalog Writer"
+    func_type = IFuncType.WRITER
+    example = {
+        "dataset_id": "05c43c58-ed42-4830-9b1f-f01059c4b96f",
+        "var_name": "some_variable_name",
+        "DEM_bounds": "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999",
+        "DEM_xres_arcsecs": "30",
+        "DEM_yres_arcsecs": "30"
+    }
 
     def __init__(self, dataset_id: str, var_name: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str):
         self.DEM = {
@@ -39,7 +48,7 @@ class DcatReadTopoflow4ClimateUploadFunc(IFunc):
 
         self.var_name = var_name
 
-        results = DCatAPI.get_instance(DCAT_URL).find_dataset_by_id(dataset_id)
+        results = DCatAPI.get_instance(DCAT_URL).find_resources_by_dataset_id(dataset_id)
         assert len(results) == 1
 
         resource_ids = {"default": results[0]['resource_data_url']}

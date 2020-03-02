@@ -21,11 +21,16 @@ pip install -r requirements.txt
 See the first revision of a demo notebook in file `demo.ipynb`.
 
 ### General Users:
+#### Start Server
 Run the following command from the root folder:
 ```
-python ui/app.py
+PYTHONPATH=$(pwd):$(pwd)/extra_libs:$PYTHONPATH python flaskr/app.py
 ```
-Open URL `http://0.0.0.0:5000` on your browser
+Run the following command from the /webapp:
+```
+npm start
+```
+Open URL `http://0.0.0.0:3000` on your browser
 
 ## Running using Docker
 Build image

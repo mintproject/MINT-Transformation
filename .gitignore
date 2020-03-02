@@ -107,3 +107,6 @@ venv.bak/
 .ipynb_checkpoints
 .DS_Store
 data
+
+# node modules
+*node_modules*

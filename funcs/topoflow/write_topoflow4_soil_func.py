@@ -12,6 +12,7 @@ import numpy as np
 from scipy.special import gamma
 
 from dtran import IFunc, ArgType
+from dtran.ifunc import IFuncType
 from funcs.topoflow.rti_files import generate_rti_file
 from funcs.topoflow.write_topoflow4_climate_func import gdal_regrid_to_dem_grid
 
@@ -30,6 +31,16 @@ class Topoflow4SoilWriteFunc(IFunc):
         "DEM_yres_arcsecs": ArgType.String,
     }
     outputs = {}
+    friendly_name: str = "Topoflow Soil"
+    func_type = IFuncType.MODEL_TRANS
+    example = {
+        "input_dir": "/ws/oct_eval_data/soilGrids/",
+        "output_dir": "/ws/examples/scotts_transformations/tmp/soil_BARO_l1",
+        "layer": "5",
+        "DEM_bounds": "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999",
+        "DEM_xres_arcsecs": "30",
+        "DEM_yres_arcsecs": "30"
+    }
 
     def __init__(self, input_dir: str, output_dir: Union[str, Path], layer: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str):
         self.DEM = {

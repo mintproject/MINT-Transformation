@@ -7,7 +7,7 @@ from pathlib import Path
 from drepr import Graph, DRepr
 
 from dtran.argtype import ArgType
-from dtran.ifunc import IFunc
+from dtran.ifunc import IFunc, IFuncType
 
 
 class ReadFunc(IFunc):
@@ -16,8 +16,14 @@ class ReadFunc(IFunc):
     Reads an input file and a yml file describing the D-REPR layout of this file.
     The data are representated in a Graph object.
     '''
+    friendly_name: str = "Local File Reader"
+    func_type = IFuncType.READER
     inputs = {"repr_file": ArgType.FilePath, "resources": ArgType.String}
     outputs = {"data": ArgType.Graph(None)}
+    example = {
+        "repr_file": "./wfp_food_prices_south-sudan.repr.yml",
+        "resources": "./wfp_food_prices_south-sudan.csv"
+    }
 
     def __init__(self, repr_file: Union[str, Path], resources: Union[str, Path]):
         resources = str(resources)

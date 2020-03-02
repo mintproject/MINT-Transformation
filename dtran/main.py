@@ -34,7 +34,7 @@ def exec_pipeline(ctx, config=None):
             return
 
     parser = ConfigParser(user_inputs)
-    parsed_pipeline, parsed_inputs = parser.parse(config)
+    parsed_pipeline, parsed_inputs = parser.parse(path=config)
 
     # Execute the pipeline
     parsed_pipeline.exec(parsed_inputs)

@@ -4,35 +4,43 @@ import subprocess
 from pathlib import Path
 from typing import Union, Dict
 
+import ujson as json
+
 from dcatreg.dcat_api import DCatAPI
 from dtran.argtype import ArgType
-from dtran.ifunc import IFunc
+from dtran.ifunc import IFunc, IFuncType
 
 
-class GraphWriteFunc(IFunc):
-    id = "graph_write_func"
+class DcatWriteFunc(IFunc):
+    id = "dcat_write_func"
     description = """ A writer adapter.
-    Generates a csv/json file.
+    Write files to DCAT.
     """
+    func_type = IFuncType.WRITER
     inputs = {
-        "resource_path": ArgType.FilePath,
-        "metadata": ArgType.OrderedDict,
-        "provenance_id": ArgType.String,
-        "name": ArgType.String,
+        "resource_path": ArgType.String,
+        "metadata": ArgType.String,
     }
     outputs = {"data": ArgType.String}
+    friendly_name: str = "Data Catalog Writer"
+    func_type = IFuncType.WRITER
+    example = {
+        "resource_path": "$.my_graph_write_func.output_file",
+        "metadata": '[{"name": "WFP Food Prices - South Sudan", "description": "Food price dataset for South Sudan (2012-2019)"}]'
+    }
 
-    def __init__(self, resource_path: Union[str, Path], metadata: Dict, provenance_id: str, name: str):
+    PROVENANCE_ID = "b3e79dc2-8fa1-4203-ac82-b5267925191f"
+
+    def __init__(
+        self, resource_path: Union[str, Path], metadata: str,
+    ):
         self.resource_path = Path(resource_path)
-        self.metadata = metadata
+        print(metadata)
+        self.metadata = json.loads(metadata)
 
         self.dcat = DCatAPI.get_instance()
 
-        self.provenance_id = provenance_id
-        self.name = name
-
     def exec(self) -> dict:
-        response = "success"
         upload_output = subprocess.check_output(
             f"curl -sD - --user upload:HVmyqAPWDNuk5SmkLOK2 --upload-file {self.resource_path.absolute()} https://publisher.mint.isi.edu",
             shell=True,
@@ -42,9 +50,10 @@ class GraphWriteFunc(IFunc):
 
         self.metadata[0]["url"] = upload_url
 
-        self.dcat.register_datasets(self.provenance_id, self.metadata)
+        response = self.dcat.register_datasets(self.PROVENANCE_ID, self.metadata)
 
-        return {"response": response}
+        print(response)
+        return {"data": response}
 
     def validate(self) -> bool:
         return True

@@ -1,0 +1,32 @@
+version: '1'
+adapters:
+  my_read_func:
+    inputs:
+      dataset_id: f6025d61-3dfd-4d7d-9e2c-a8c22f2ed2ec
+    adapter: funcs.DcatReadFunc
+    comment: My read func adapter
+  dcat_write_func:
+    inputs:
+      metadata: '[{"name": "WFP Food Prices - South Sudan", "description": "Food price
+        dataset for South Sudan (2012-2019)", "start_time": "2012-01-01T00:00:00",
+        "end_time": "2019-12-31T23:59:59", "bounding_box": [3.48898, 12.236389, 23.447778,
+        35.948997], "standard_variables": [{"ontology": "ScientificVariablesOntology",
+        "name": "farmer_crop__received_price-per-mass", "uri": "http://www.geoscienceontology.org/svo/svl/variable#farmer%40role%7Esink_crop%40role%7Eexchange__received_price-per-mass"}]}]'
+      resource_path: "$.my_graph_write_func.output_file"
+    adapter: funcs.DcatWriteFunc
+    comment: My dcat write func adapter
+  my_unit_trans_func:
+    inputs:
+      graph: "$.my_read_func.data"
+      unit_label: sdmx-attribute:unitMeasure
+      unit_value: dcat:measure_1_value
+      unit_desired: "$/kg"
+    adapter: funcs.UnitTransFunc
+    comment: My unit transform func adapter
+  my_graph_write_func:
+    inputs:
+      graph: "$.my_unit_trans_func.graph"
+      main_class: qb:Observation
+      output_file: "./price-test.csv"
+    adapter: funcs.GraphWriteFunc
+    comment: My graph write func adapter

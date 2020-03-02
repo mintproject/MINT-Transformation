@@ -17,6 +17,7 @@ dependencies:
     - arpeggio
     - rdflib
     - flask
+    - flask_cors
     - requests
     - tqdm
     - marshmallow

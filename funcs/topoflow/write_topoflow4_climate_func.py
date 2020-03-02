@@ -9,7 +9,7 @@ from tqdm import tqdm
 import re
 
 from dtran.argtype import ArgType
-from dtran.ifunc import IFunc
+from dtran.ifunc import IFunc, IFuncType
 from os.path import join
 
 import gdal, osr  ## ogr
@@ -27,16 +27,27 @@ class Topoflow4ClimateWriteFunc(IFunc):
     '''
     inputs = {
         "input_dir": ArgType.String,
-        "crop_region_dir": ArgType.String,
-        "output_file": ArgType.FilePath,
+        "temp_dir": ArgType.String,
+        "output_file": ArgType.String,
         "var_name": ArgType.String,
         "DEM_bounds": ArgType.String,
         "DEM_xres_arcsecs": ArgType.String,
         "DEM_yres_arcsecs": ArgType.String,
     }
-    outputs = {}
+    outputs = {"output_file": ArgType.String}
+    friendly_name: str = "Topoflow Climate"
+    func_type = IFuncType.MODEL_TRANS
+    example = {
+        "input_dir": "$.my_dcat_read_func.data",
+        "temp_dir": "/data/mint/sample_grid_baro",
+        "output_file": "/data/mint/sample_baro/climate_all.rt",
+        "var_name": "HQprecipitation",
+        "DEM_bounds": "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999",
+        "DEM_xres_arcsecs": "30",
+        "DEM_yres_arcsecs": "30"
+    }
 
-    def __init__(self, input_dir: str, crop_region_dir: str, output_file: Union[str, Path], var_name: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str):
+    def __init__(self, input_dir: str, temp_dir: str, output_file: Union[str, Path], var_name: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str):
         self.DEM = {
             "bounds": [float(x.strip()) for x in DEM_bounds.split(",")],
             "xres": float(DEM_xres_arcsecs) / 3600.0,
@@ -44,12 +55,17 @@ class Topoflow4ClimateWriteFunc(IFunc):
         }
         self.var_name = var_name
         self.input_dir = str(input_dir)
-        self.crop_region_dir = str(crop_region_dir)
+        self.crop_region_dir = str(temp_dir)
         self.output_file = str(output_file)
 
     def exec(self) -> dict:
+        for path in [self.input_dir, self.crop_region_dir]:
+            Path(path).mkdir(exist_ok=True, parents=True)
+
+        Path(self.output_file).parent.mkdir(exist_ok=True, parents=True)
+
         create_rts_from_nc_files(self.input_dir, self.crop_region_dir, self.output_file, self.DEM, self.var_name, IN_MEMORY=True)
-        return {}
+        return {"output_file": self.output_file}
 
     def validate(self) -> bool:
         return True
@@ -66,6 +82,13 @@ class Topoflow4ClimateWritePerMonthFunc(IFunc):
         "output_file": ArgType.FilePath,
     }
     outputs = {}
+    friendly_name: str = "Topoflow Climate Per Month"
+    func_type = IFuncType.MODEL_TRANS
+    example = {
+        "grid_dir": f"/data/mint/gpm_grid_baro",
+        "date_regex": '3B-HHR-E.MS.MRG.3IMERG.(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})',
+        "output_file": f"/data/mint/baro/climate.rts",
+    }
 
     def __init__(self, grid_dir: str, date_regex: str, output_file: Union[str, Path]):
         self.grid_dir = str(grid_dir)

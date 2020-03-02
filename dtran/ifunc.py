@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import abc
-from typing import Dict, Optional
+from enum import Enum
+from typing import Dict, Any
 from dtran.argtype import ArgType
 from dtran.wireio import WiredIO
 
@@ -17,6 +18,16 @@ class IFuncIO(type):
     @property
     def O(cls):
         return WiredIO("o", cls.id, cls.outputs)
+
+
+class IFuncType(Enum):
+    READER = "Reader"
+    WRITER = "Writer"
+    OTHERS = "Others"
+    SPATIAL_TRANS = "Spatial Transformation"
+    UNIT_TRANS = "Unit Conversion Transformation"
+    MODEL_TRANS = "Model-specific Transformation"
+    INTERMEDIATE = "Other Transformation"
 
 
 class IFunc(metaclass=IFuncIO):
