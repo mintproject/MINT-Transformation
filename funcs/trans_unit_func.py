@@ -13,13 +13,14 @@ class UnitTransFunc(IFunc):
     Alters the graph by performing unit conversion on some values in the graph.
     '''
     inputs = {
-        "graph": ArgType.Graph(None),
+        "data": ArgType.DataSet,
         "unit_value": ArgType.String,
         "unit_label": ArgType.String,
         "unit_desired": ArgType.String,
         "filter": ArgType.String(True),
     }
-    outputs = {"graph": ArgType.Graph(None)}
+    outputs = {"data": ArgType.DataSet}
+
     friendly_name: str = "Unit Transformation Function"
     func_type = IFuncType.UNIT_TRANS
     example = {
@@ -50,4 +51,4 @@ class UnitTransFunc(IFunc):
                 new_obs_value = float(node.data[self.unit_value]) * conversion_value
                 node.data[self.unit_value] = str(new_obs_value)
                 node.data[self.unit_label] = self.unit_desired
-        return {"graph": self.graph}
+        return {"data": self.graph}

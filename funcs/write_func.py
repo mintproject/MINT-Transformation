@@ -20,7 +20,7 @@ class GraphWriteFunc(IFunc):
     func_type = IFuncType.WRITER
     friendly_name: str = "Graph to CSV/JSON"
     inputs = {
-        "graph": ArgType.Graph(None),
+        "data": ArgType.DataSet,
         "main_class": ArgType.String,
         "output_file": ArgType.String,
         "filter": ArgType.String(optional=True),
@@ -149,7 +149,7 @@ class VisJsonWriteFunc(GraphWriteFunc):
     Generates a json file following the format of the MINT-Data-Catalog Visualizer.
     """
     inputs = {
-        "graph": ArgType.Graph(None),
+        "data": ArgType.Dataset(None),
         "main_class": ArgType.String,
         "output_file": ArgType.FilePath,
         "mapped_columns": ArgType.OrderedDict(None),

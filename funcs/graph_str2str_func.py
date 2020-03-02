@@ -15,7 +15,7 @@ class GraphStr2StrFunc(IFunc):
     description = ''' A transformation adapter.
     Maps an existing set of strings (semantic attributes) to a new desired set of strings.
     '''
-    inputs = {"graph": ArgType.Graph(None), "semantic_type": ArgType.String, "str2str": ArgType.String}
+    inputs = {"data": ArgType.DataSet, "semantic_type": ArgType.String, "str2str": ArgType.String}
     outputs = {}
     func_type = IFuncType.INTERMEDIATE
     friendly_name: str = "Semantic Attributes Mapper"

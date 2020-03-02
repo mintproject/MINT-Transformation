@@ -19,7 +19,7 @@ class ReadFunc(IFunc):
     friendly_name: str = "Local File Reader"
     func_type = IFuncType.READER
     inputs = {"repr_file": ArgType.FilePath, "resources": ArgType.String}
-    outputs = {"data": ArgType.Graph(None)}
+    outputs = {"data": ArgType.DataSet}
     example = {
         "repr_file": "./wfp_food_prices_south-sudan.repr.yml",
         "resources": "./wfp_food_prices_south-sudan.csv"
