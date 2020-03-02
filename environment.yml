@@ -11,17 +11,18 @@ dependencies:
   - numpy
   - dask
   - pip:
-    - drepr
-    - ujson
-    - netCDF4
-    - arpeggio
-    - rdflib
-    - flask
-    - flask_cors
-    - requests
-    - tqdm
-    - marshmallow
-    - xarray
-    - networkx
-    - python-dateutil
-    - click
+      - drepr
+      - ujson
+      - netCDF4
+      - arpeggio
+      - rdflib
+      - flask
+      - flask_cors
+      - requests
+      - tqdm
+      - marshmallow
+      - xarray
+      - networkx
+      - python-dateutil
+      - click
+      - ccut
