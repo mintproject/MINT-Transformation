@@ -16,7 +16,7 @@
         },
         "outputs": {
             "data": {
-                "id": "graph",
+                "id": "dataset",
                 "val": null,
                 "optional": false
             }
@@ -36,11 +36,26 @@
                 "id": "string",
                 "val": null,
                 "optional": false
+            },
+            "start_time": {
+                "id": "datetime",
+                "val": null,
+                "optional": true
+            },
+            "end_time": {
+                "id": "datetime",
+                "val": null,
+                "optional": true
+            },
+            "use_cache": {
+                "id": "boolean",
+                "val": null,
+                "optional": true
             }
         },
         "outputs": {
             "data": {
-                "id": "graph",
+                "id": "dataset",
                 "val": null,
                 "optional": false
             }
@@ -48,7 +63,10 @@
         "func_type": "Reader",
         "friendly_name": "Data Catalog Reader",
         "example": {
-            "dataset_id": "05c43c58-ed42-4830-9b1f-f01059c4b96f"
+            "dataset_id": "05c43c58-ed42-4830-9b1f-f01059c4b96f",
+            "start_time": "2020-03-02T12:30:55",
+            "end_time": "2020-03-02T12:30:55",
+            "use_cache": "True"
         }
     },
     {
@@ -78,8 +96,8 @@
         "id": "UnitTransFunc",
         "description": " A transformation adapter.\n    Alters the graph by performing unit conversion on some values in the graph.\n    ",
         "inputs": {
-            "graph": {
-                "id": "graph",
+            "data": {
+                "id": "dataset",
                 "val": null,
                 "optional": false
             },
@@ -105,8 +123,8 @@
             }
         },
         "outputs": {
-            "graph": {
-                "id": "graph",
+            "data": {
+                "id": "dataset",
                 "val": null,
                 "optional": false
             }
@@ -124,8 +142,8 @@
         "id": "GraphWriteFunc",
         "description": " A writer adapter.\n    Generates a csv/json file.\n    ",
         "inputs": {
-            "graph": {
-                "id": "graph",
+            "data": {
+                "id": "dataset",
                 "val": null,
                 "optional": false
             },
@@ -165,8 +183,8 @@
         "id": "VisJsonWriteFunc",
         "description": " A writer adapter.\n    Generates a json file following the format of the MINT-Data-Catalog Visualizer.\n    ",
         "inputs": {
-            "graph": {
-                "id": "graph",
+            "data": {
+                "id": "dataset",
                 "val": null,
                 "optional": false
             },
@@ -211,8 +229,8 @@
         "id": "GraphStr2StrFunc",
         "description": " A transformation adapter.\n    Maps an existing set of strings (semantic attributes) to a new desired set of strings.\n    ",
         "inputs": {
-            "graph": {
-                "id": "graph",
+            "data": {
+                "id": "dataset",
                 "val": null,
                 "optional": false
             },
@@ -239,20 +257,20 @@
         "id": "MergeFunc",
         "description": " A transformation adapter.\n    Merges two graphs into one.\n    ",
         "inputs": {
-            "graph1": {
-                "id": "graph",
+            "data1": {
+                "id": "dataset",
                 "val": null,
                 "optional": false
             },
-            "graph2": {
-                "id": "graph",
+            "data2": {
+                "id": "dataset",
                 "val": null,
                 "optional": false
             }
         },
         "outputs": {
             "data": {
-                "id": "graph",
+                "id": "dataset",
                 "val": null,
                 "optional": false
             }

@@ -222,7 +222,7 @@ def run_pipeline(name: str, description: str, config: object, id=""):
 
     # TODO: modify the command to mount directory or add environment variables if needed
     subprocess.Popen(
-        f"docker run --name {id} -d -v /tmp:/tmp -v $(pwd):/ws mint_dt bash /ws/scripts/run_pipeline_from_ui.sh {sess_id}",
+        f"docker run --name {id} -d -v /tmp:/tmp -v $(pwd):/ws mint_dt bash /ws/webapp/scripts/run_pipeline_from_ui.sh {sess_id}",
         shell=True
     )
     return

@@ -260,11 +260,11 @@ class AdapterDB:
 
 
 def setup_adapters():
-    if os.path.isfile('./adapters.json'):
+    if os.path.isfile('./webapp/adapters.json'):
         print("adapters.json already exists! Removing it...")
-        os.system("rm adapters.json")
+        os.system("rm ./webapp/adapters.json")
     adapterdb = AdapterDB()
-    with open("./adapters.json", "w") as f:
+    with open("./webapp/adapters.json", "w") as f:
         adapter_list = adapterdb.get_list_of_adapters()
         # TODO: dump in fake adapters as well
         results = [{
@@ -289,7 +289,7 @@ adapters_blueprint = Blueprint("adapters", "adapters", url_prefix="/api")
 @adapters_blueprint.route('/adapters', methods=["GET"])
 def list_adapters():
     # TODO: put adapters in db?
-    with open("./adapters.json", "r") as f:
+    with open("./webapp/adapters.json", "r") as f:
         adapters = json.load(f)
     return jsonify(adapters)
 
