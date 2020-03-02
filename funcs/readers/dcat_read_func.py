@@ -1,14 +1,23 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import ujson, logging, time
-
+import logging
+import time
 import requests
-import datetime
-from typing import Union, List, Dict
+from datetime import datetime
+from dateutil import parser
+from typing import Union, List, Dict, Iterable
 from pathlib import Path
-from drepr import Graph, DRepr
+from drepr import DRepr
+from drepr.models import SemanticModel
+from drepr.outputs import ArrayBackend, GraphBackend
+from drepr.outputs.base_lst_output_class import BaseLstOutputClass
+from drepr.outputs.base_output_class import BaseOutputClass
+from drepr.outputs.base_output_sm import BaseOutputSM
 import subprocess
+
+from drepr.outputs.base_record import BaseRecord
+from drepr.outputs.record_id import RecordID
 
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc, IFuncType
@@ -21,40 +30,134 @@ class DcatReadFunc(IFunc):
     '''
     func_type = IFuncType.READER
     friendly_name: str = "Data Catalog Reader"
-    inputs = {"dataset_id": ArgType.String}
-    outputs = {"data": ArgType.Graph(None)}
+    inputs = {
+        "dataset_id": ArgType.String,
+        "start_time": ArgType.DateTime(optional=True),
+        "end_time": ArgType.DateTime(optional=True),
+        "use_cache": ArgType.Boolean(optional=True)
+    }
+    outputs = {"data": ArgType.DataSet(None)}
     example = {
         "dataset_id": "05c43c58-ed42-4830-9b1f-f01059c4b96f"
     }
 
-    def __init__(self, dataset_id: str):
+    def __init__(self, dataset_id: str, start_time: datetime = None, end_time: datetime = None, use_cache: bool = True):
         # TODO: move to a diff arch (pointer to Data-Catalog URL)
         DCAT_URL = "https://api.mint-data-catalog.org"
 
-        self.dataset_id  = dataset_id
+        self.dataset_id = dataset_id
+        self.logger = logging.getLogger(DcatReadFunc.id)
+
+        dataset_result = DCatAPI.get_instance(DCAT_URL).find_dataset_by_id(dataset_id)
+
+        assert ('resource_repr' in dataset_result['metadata']) or ('dataset_repr' in dataset_result['metadata']), \
+            "Dataset is missing both 'resource_repr' and 'dataset_repr'"
+        assert not (('resource_repr' in dataset_result['metadata']) and ('dataset_repr' in dataset_result['metadata'])), \
+            "Dataset has both 'resource_repr' and 'dataset_repr'"
 
         resource_results = DCatAPI.get_instance(DCAT_URL).find_resources_by_dataset_id(dataset_id)
-        # TODO: fix me!!
-        assert len(resource_results) == 1
-        resource_ids = {"default": resource_results[0]['resource_data_url']}
+        resource_ids = {}
+        if 'resource_repr' in dataset_result['metadata']:
+            self.repr = DRepr.parse(dataset_result['metadata']['resource_repr'])
+            for resource in resource_results:
+                if start_time or end_time:
+                    temporal_coverage = resource['resource_metadata']['temporal_coverage']
+                    temporal_coverage['start_time'] = parser.parse(temporal_coverage['start_time'])
+                    temporal_coverage['end_time'] = parser.parse(temporal_coverage['end_time'])
+                    if (start_time and start_time > temporal_coverage['end_time']) or \
+                            (end_time and end_time < temporal_coverage['start_time']):
+                        continue
+
+                resource_ids[resource['resource_id']] = resource['resource_data_url']
+            self.repr_type = 'resource_repr'
+        else:
+            # TODO: fix me!!
+            assert len(resource_results) == 1
+            resource_ids[resource_results[0]['resource_id']] = resource_results[0]['resource_data_url']
+            self.repr = DRepr.parse(dataset_result['metadata']['dataset_repr'])
+            self.repr_type = 'dataset_repr'
+
+        self.logger.debug(f"Found key '{self.repr_type}'")
         Path("/tmp/dcat_read_func").mkdir(exist_ok=True, parents=True)
 
+        self.logger.debug(f"Downloading {len(resource_ids)} resources ...")
         self.resources = {}
         for resource_id, resource_url in resource_ids.items():
             file_full_path = f'/tmp/dcat_read_func/{resource_id}.dat'
-            subprocess.check_call(f'wget {resource_url} -O {file_full_path}', shell=True)
             self.resources[resource_id] = file_full_path
+            if use_cache and Path(file_full_path).exists():
+                self.logger.debug(f"Skipping resource {resource_id}, found in cache")
+                continue
+            self.logger.debug(f"Downloading resource {resource_id} ...")
+            subprocess.check_call(f'wget {resource_url} -O {file_full_path}', shell=True)
 
-        dataset_result = DCatAPI.get_instance(DCAT_URL).find_dataset_by_id(dataset_id)
-        self.repr = DRepr.parse(dataset_result['metadata']['layout'])
-
+        self.logger.debug(f"Download Complete")
 
     def exec(self) -> dict:
-            g = Graph.from_drepr(self.repr, self.resources)
-            return {"data": g}
+        if self.get_preference("data") is None or self.get_preference("data") == 'array':
+            backend = ArrayBackend
+        else:
+            backend = GraphBackend
+
+        if self.repr_type == 'dataset_repr':
+            return {"data": backend.from_drepr(self.repr, list(self.resources.values())[0])}
+        else:
+            datasets = [None] * len(self.resources)
+            for i, resource in enumerate(self.resources.values()):
+                datasets[len(datasets) - i - 1] = backend.from_drepr(self.repr, resource)
+            return {"data": ShardedBackend(datasets)}
 
     def validate(self) -> bool:
         return True
+
+
+class ShardedClassID(str):
+    def __new__(cls, index: int, class_id: str):
+        return super().__new__(cls, class_id)
+
+    def __init__(self, index: int, class_id: str):
+        self.index = index
+        self.class_id = class_id
+
+
+class ShardedBackend(BaseOutputSM):
+    def __init__(self, datasets: List[BaseOutputSM]):
+        # list of datasets
+        self.datasets = datasets
+        '''
+        for i, dataset in enumerate(self.datasets):
+            for output_class in dataset.iter_classes():
+                output_class.id = ShardedClassID(i, output_class.id)
+        '''
+
+    @classmethod
+    def from_drepr(cls, ds_model: Union[DRepr, str], resources: Union[str, Dict[str, str]]) -> BaseOutputSM:
+        raise NotImplementedError("This method should never be called")
+
+    def iter_classes(self) -> Iterable[BaseOutputClass]:
+        pass
+
+    def get_record_by_id(self, rid: RecordID) -> BaseRecord:
+        pass
+        '''
+        return self.datasets[rid.class_id.index].get_record_by_id(rid)
+        '''
+
+    def c(self, class_uri: str) -> BaseLstOutputClass:
+        pass
+
+    def cid(self, class_id: str) -> BaseOutputClass:
+        pass
+
+    def _get_sm(self) -> SemanticModel:
+        pass
+
+    def drain(self):
+        """
+        Iterate and remove the dataset out of the list. After this function, the list of datasets should be empty
+        """
+        for i in range(len(self.datasets)):
+            yield self.datasets.pop()
 
 
 class DCatAPI:
@@ -77,7 +180,7 @@ class DCatAPI:
         resp = requests.post(f"{self.dcat_url}/datasets/dataset_resources",
                              headers=request_headers,
                              json={
-                                "dataset_id": dataset_id
+                                 "dataset_id": dataset_id
                              })
         assert resp.status_code == 200, resp.text
         return resp.json()['resources']
@@ -121,7 +224,7 @@ class DCatAPI:
             msg = "Please make sure your request headers include X-Api-Key and that you are using correct url"
             raise Exception(msg)
         else:
-            now = datetime.datetime.utcnow().replace(microsecond=0).isoformat()
+            now = datetime.utcnow().replace(microsecond=0).isoformat()
             msg = f"""\n\n
             ------------------------------------- BEGIN ERROR MESSAGE -----------------------------------------
             It seems our server encountered an error which it doesn't know how to handle yet. 
@@ -130,26 +233,21 @@ class DCatAPI:
             danf@usc.edu:
             1) URL of notebook (of using the one from https://hub.mybinder.org/...): [*****PLEASE INSERT ONE HERE*****]
             2) Snapshot/picture of the cell that resulted in this error: [*****PLEASE INSERT ONE HERE*****]
-    
+
             Thank you and we apologize for any inconvenience. We'll get back to you as soon as possible!
-    
+
             Sincerely, 
             Dan Feldman
-    
+
             Automatically generated summary:
             - Time of occurrence: {now}
             - Request method + url: {response.request.method} - {response.request.url}
             - Request headers: {response.request.headers}
             - Request body: {response.request.body}
             - Response: {parsed_response}
-    
+
             --------------------------------------- END ERROR MESSAGE ------------------------------------------
             \n\n
             """
 
             raise Exception(msg)
-
-
-# if __name__ == "__main__":
-#     dcat = DCatAPI.get_instance("https://api.mint-data-catalog.org")
-#     print(dcat.find_dataset_by_id("f6025d61-3dfd-4d7d-9e2c-a8c22f2ed2ec"))
