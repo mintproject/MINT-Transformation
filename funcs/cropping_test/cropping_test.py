@@ -8,7 +8,7 @@ varname = "precipitation_flux"
 drepr_file = curr_dir + "gpm.yml"
 
 shape_file = curr_dir + "south-west-shewa-alem-gena.shp"
-shape_drepr = ""
+shape_drepr = curr_dir + "woreda_shapefile.yml"
 #shape_dataset = curr_dir + "shape_file.csv" # TODO Wait for Binh for model
 
 # bounds
@@ -32,9 +32,10 @@ def use_shp_model(variable_name, dataset, shape_dataset):
 if __name__ == "__main__":
     dataset = outputs.ArrayBackend.from_drepr(drepr_file, dataset_file)
 
-    shape_dataset = outputs.ArrayBackend.from_drepr(shape_drepr, shape_file)
+    shape_model = DRepr.parse_from_file(shape_drepr)
+    shape_dataset = outputs.ArrayBackend.from_drepr(shape_model, shape_file)
 
-    result = use_bb(varname, dataset, x_min, y_min, x_max, y_max)
+    result = use_bb(varname, dataset)
 
     #result = use_shp_direct(varname, dataset, shape_file)
 

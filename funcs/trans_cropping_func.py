@@ -12,15 +12,31 @@ from fiona.crs import from_epsg
 tempfile_name = "temp_shape.shp"
 
 def shape_array_to_shapefile(data, fname):
-    with fiona.open(fname, 'w', crs=crs) as shapefile:
-        epsg = from_epsg(data[1])
-        schema = {
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': data[0]
-            },
-            'properties': {} # Do we need any other metadata for a tempfile?
+    if data[0].shape[0] == 2:
+        type = 'Polygon'
+    else:
+        type = 'MultiPolygon'
+
+    epsg = from_epsg(data[1])
+    driver = "ESRI Shapefile"
+    polygon = {
+        'geometry': {
+            'type': type,
+            'coordinates': data[0]
+        },
+        'properties': {
+            'name': 'TempCroppingPolygon'
+        } # Do we need any other metadata for a tempfile?
+    }
+    schema = {
+        'geometry': type,
+        'properties': {
+            'name': 'str'
         }
+    }
+    with fiona.open(fname, 'w', crs=epsg, driver=driver, schema=schema) as shapefile:
+        shapefile.write(polygon)
+
 
 def get_namespaces(sm: ArgType.DataSet):
     mint_ns = sm.ns("https://mint.isi.edu/")
@@ -32,7 +48,7 @@ def extract_raster(sm: ArgType.DataSet, variable_name: str):
     mint_ns, mint_geo_ns, rdf_ns = get_namespaces(sm)
 
     rasters = []
-    for c in sm.c(mint_ns.Variable).fitlter(outputs.FCondition(mint_ns.standardName, "==", variable_name)):
+    for c in sm.c(mint_ns.Variable).filter(outputs.FCondition(mint_ns.standardName, "==", variable_name)):
         for raster_id, sc in c.group_by(mint_geo_ns.raster):
             data = sc.p(rdf_ns.value).as_ndarray([sc.p(mint_geo_ns.lat), sc.p(mint_geo_ns.long)])
             gt_info = sm.get_record_by_id(raster_id)
@@ -40,11 +56,9 @@ def extract_raster(sm: ArgType.DataSet, variable_name: str):
             if data.index_props[0].size > 1 and data.index_props[0][1] > data.index_props[0][0]:
                 data.data = data.data[::-1]
                 data.index_props[0] = data.index_props[0][::-1]
-
             gt = GeoTransform(x_min=gt_info.s(mint_geo_ns.x_min),
-                              y_max=gt_info.s(mint_geo_ns.y_min) + gt_info.s(mint_geo_ns.y) * data.data.shape[
-                                  0],
-                              dx=gt_info.s(mint_geo_ns.dx), dy=-gt_info.s(mint_geo_ns.y))
+                              y_max=gt_info.s(mint_geo_ns.y_min) + gt_info.s(mint_geo_ns.dy) * data.data.shape[0],
+                              dx=gt_info.s(mint_geo_ns.dx), dy=-gt_info.s(mint_geo_ns.dy))
 
             rasters.append(Raster(data.data, gt, int(gt_info.s(mint_geo_ns.epsg))))
 
@@ -54,12 +68,11 @@ def extract_shape(sm: ArgType.DataSet):
     mint_ns, mint_geo_ns, rdf_ns = get_namespaces(sm)
 
     shapes = []
-    for c in sm.c(mint_ns.Polygon):
-        for _id, sc in c.group_by(mint_geo_ns.raster):
-
-            polygon = sc.p(rdf_ns.value).as_ndarray([sc.p(mint_geo_ns.lat), sc.p(mint_geo_ns.long)])
-            record = sm.get_record_by_id(_id)
-            epsg = int(record.s(mint_geo_ns.epsg))
+    for c in sm.c(mint_ns.Place):
+        for r in c.iter_records():
+            polygon = sm.get_record_by_id(r.s(mint_geo_ns.bounding)).s(rdf_ns.value)
+            # epsg = int(record.s(mint_geo_ns.epsg))
+            epsg = 4326
 
             shapes.append([polygon, epsg])
 
@@ -92,10 +105,11 @@ class CroppingTransFunc(IFunc):
         self.ymax = ymax
 
         self.use_temp = True
-        if self.shape is None:
+        if self.shape_sm is None:
             self.use_bbox = True
         else:
-            if isinstance(self.shape, str):
+            self.use_bbox = False
+            if isinstance(self.shape_sm, str):
                 self.use_temp = False
 
 
@@ -118,7 +132,7 @@ class CroppingTransFunc(IFunc):
                 shape_array_to_shapefile(s, tempfile_name)
                 cropped_raster= r.crop(vector_file=tempfile_name)
 
-                self.results.append(cropped_raster)
+                self.results.append(cropped_raster.data)
 
     def crop_shape_sharedbackend(self):
         pass
