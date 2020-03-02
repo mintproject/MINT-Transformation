@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-#rm -r ../flaskr/static/css
-#rm -r ../flaskr/static/js/*.js
-#rm ../flaskr/static/precache-manifest*
+rm -r ../flaskr/static/css
+rm -r ../flaskr/static/js/*.js
+rm ../flaskr/static/precache-manifest*
 
 cp -a build/static/css ../flaskr/static/
 cp -a build/static/js ../flaskr/static/
