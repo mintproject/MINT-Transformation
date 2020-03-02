@@ -1,8 +1,0 @@
-version: "1"
-adapters:
-  my_read_func:
-    comment: My read func adapter
-    adapter: funcs.ReadFunc
-    inputs:
-      repr_file: ./wfp_food_prices_south-sudan.repr.yml
-      resources: ./wfp_food_prices_south-sudan.csv
