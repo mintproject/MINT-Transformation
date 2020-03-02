@@ -6,16 +6,21 @@ from dtran.ifunc import IFunc
 from numpy import array
 from drepr import DRepr, outputs
 from extra_libs.raster import Raster, GeoTransform, EPSG, BoundingBox, ReSample
-import shapefile
+import fiona
+from fiona.crs import from_epsg
 
 tempfile_name = "temp_shape.shp"
 
-def shape_array_to_shapefile(array, fname):
-    w = shapefile.Writer(fname)
-    w.poly(parts=array) # Does this need anything else?
-    w.record('Polygon')
-    w.save()
-    w.close()
+def shape_array_to_shapefile(data, fname):
+    with fiona.open(fname, 'w', crs=crs) as shapefile:
+        epsg = from_epsg(data[1])
+        schema = {
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': data[0]
+            },
+            'properties': {} # Do we need any other metadata for a tempfile?
+        }
 
 def get_namespaces(sm: ArgType.DataSet):
     mint_ns = sm.ns("https://mint.isi.edu/")
@@ -50,9 +55,13 @@ def extract_shape(sm: ArgType.DataSet):
 
     shapes = []
     for c in sm.c(mint_ns.Polygon):
-        polygon = c.p(rdf_ns.value).as_ndarray([])
+        for _id, sc in c.group_by(mint_geo_ns.raster):
 
-        shapes.append(polygon)
+            polygon = sc.p(rdf_ns.value).as_ndarray([sc.p(mint_geo_ns.lat), sc.p(mint_geo_ns.long)])
+            record = sm.get_record_by_id(_id)
+            epsg = int(record.s(mint_geo_ns.epsg))
+
+            shapes.append([polygon, epsg])
 
     return shapes
 
@@ -69,10 +78,10 @@ class CroppingTransFunc(IFunc):
         "ymax": ArgType.Number
     }
 
-    outputs = {"array": ArgType.NDimArray(None)}
+    outputs = {"array": ArgType.DataSet}
 
     def __init__(
-        self, variable_name: str, dataset, shape, xmin: int, ymin: int, xmax: int, ymax: int # TODO Determine datatype for Dataset inputs
+        self, variable_name: str, dataset, shape, xmin: int, ymin: int, xmax: int, ymax: int
     ):
         self.variable_name = variable_name
         self.dataset = dataset
@@ -82,8 +91,13 @@ class CroppingTransFunc(IFunc):
         self.xmax = xmax
         self.ymax = ymax
 
+        self.use_temp = True
         if self.shape is None:
             self.use_bbox = True
+        else:
+            if isinstance(self.shape, str):
+                self.use_temp = False
+
 
     def _crop_boundbox(self):
         self.rasters = extract_raster(self.dataset, self.variable_name)
