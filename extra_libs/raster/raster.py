@@ -1,10 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-# Copied from Binh's code in drepr cropping example
-
 import datetime
 import os
+from uuid import uuid4
 
 import numpy as np
 from pathlib import Path
@@ -19,9 +17,9 @@ from netCDF4 import Dataset
 class GeoTransform:
     # https://gdal.org/user/raster_data_model.html#affine-geotransform
     # x = longitude, y = latitude
-    # (x_min, y_max) represent the top-left pixel of the raster (not center) (north-up image!)
-    x_min: float = -180
-    y_max: float = 90.0
+    # (x_0, y_0) represent the top-left pixel of the raster (not center) (north-up image!)
+    x_0: float = -180
+    y_0: float = 90.0
 
     dx: float = 0.1
     dy: float = -0.1  # north-up image, so the latitude is in descending order (need to be negative)
@@ -30,10 +28,10 @@ class GeoTransform:
 
     @staticmethod
     def from_gdal(t):
-        return GeoTransform(x_min=t[0], dx=t[1], x_slope=t[2], y_max=t[3], y_slope=t[4], dy=t[5])
+        return GeoTransform(x_0=t[0], dx=t[1], x_slope=t[2], y_0=t[3], y_slope=t[4], dy=t[5])
 
     def to_gdal(self):
-        return self.x_min, self.dx, self.x_slope, self.y_max, self.y_slope, self.dy
+        return self.x_0, self.dx, self.x_slope, self.y_0, self.y_slope, self.dy
 
 
 class EPSG(IntEnum):
@@ -60,7 +58,7 @@ class ReSample(Enum):
 
 
 class Raster:
-    def __init__(self, array: np.ndarray, geotransform: GeoTransform, epsg: Union[int, EPSG], nodata: float=None):
+    def __init__(self, array: np.ndarray, geotransform: GeoTransform, epsg: Union[int, EPSG], nodata: float = None):
         """
         @param nodata: which value should be no data
         """
@@ -86,47 +84,19 @@ class Raster:
         proj = osr.SpatialReference(wkt=ds.GetProjection())
         epsg = int(proj.GetAttrValue('AUTHORITY', 1) or '4326')
         data = ds.ReadAsArray()
-        nodata = set(ds.GetRasterBand(i).GetNoDataValue() for i in range(1, data.shape[0] + 1 if len(data.shape) > 2 else 2))
+        nodata = set(
+            ds.GetRasterBand(i).GetNoDataValue() for i in range(1, data.shape[0] + 1 if len(data.shape) > 2 else 2))
         assert len(nodata) == 1, "Do not support multiple no data value by now"
         nodata = list(nodata)[0]
         return Raster(data, GeoTransform.from_gdal(ds.GetGeoTransform()), epsg, nodata)
 
-    @staticmethod
-    def from_netcdf4(infile: str, varname: str):
-        ds = Dataset(infile)
-        gdal_ds = gdal.Open("NETCDF:{0}:{1}".format(infile, varname), gdal.GA_ReadOnly)
-
-        variable = ds.variables[varname]
-        data = np.asarray(variable)
-        data = data[:, ::-1]
-        print(data.shape)
-
-        # the coordinate is totally mess up, don't know about other datasets
-        # re-arrange the geotransform because gdal netcdf geo-transformation is wrong
-        gt = GeoTransform.from_gdal(gdal_ds.GetGeoTransform())
-        x_max = gt.x_min + gt.dx * data.shape[1]
-        y_max = gt.y_max + gt.dy * data.shape[0]
-        gt = GeoTransform(y_min=x_max, y_angle=gt.x_angle, y_res=-gt.dx, x_min=y_max, x_angle=gt.y_angle,
-                          x_res=-gt.dy)
-        data = np.rot90(data)  # counter clockwise
-
-        nodata = gdal_ds.GetRasterBand(1).GetNoDataValue()
-        if gdal_ds.GetProjection() != '':
-            proj = osr.SpatialReference(wkt=gdal_ds.GetProjection())
-            print(proj)
-            print(">>>")
-            epsg = int(proj.GetAttrValue('AUTHORITY', 1))
-        else:
-            epsg = EPSG.WGS_84
-
-        return Raster(data, gt, epsg, nodata)
-
     def crop(self, bounds: BoundingBox = None, vector_file: Union[Path, str] = None, use_vector_bounds: bool = True,
-             x_res: float = None, y_res: float = None, resampling_algo: ReSample = None) -> 'Raster':
+             x_res: float = None, y_res: float = None, resampling_algo: ReSample = None,
+             touch_cutline: bool = True) -> 'Raster':
         """
         @param x_res, y_res None will use original resolution
         """
-        tmp_file = f"/vsimem/{datetime.datetime.now().strftime('%Y%m%d-%H%M%S.%f')}.tif"
+        tmp_file = f"/vsimem/{str(uuid4())}.tif"
         warp_options = {'format': 'GTiff'}
         if vector_file is not None:
             warp_options['cutlineDSName'] = vector_file
@@ -140,7 +110,11 @@ class Raster:
         warp_options['yRes'] = y_res
         warp_options['srcNodata'] = self.nodata
         warp_options['resampleAlg'] = resampling_algo.value if resampling_algo is not None else None
+
+        if touch_cutline:
+            warp_options['warpOptions'] = ['CUTLINE_ALL_TOUCHED=TRUE']
         tmp_ds = gdal.Warp(tmp_file, self.raster, **warp_options)
+
         cropped_array, cropped_geotransform = tmp_ds.ReadAsArray(), GeoTransform.from_gdal(tmp_ds.GetGeoTransform())
         gdal.Unlink(tmp_file)
 
@@ -190,9 +164,65 @@ class Raster:
         else:
             raise NotImplementedError(np_dtype)
 
+drepr_model = {
+    "version": "2",
+    "resources": "container",
+    "attributes": {
+        "variable": "$.variable[:][:]",
+        "nodata": "$.nodata",
+        "gt_x_0": "$.gt_x_0",
+        "gt_y_0": "$.gt_y_0",
+        "gt_dx": "$.gt_dx",
+        "gt_dy": "$.gt_dy",
+        "gt_epsg": "$.gt_epsg",
+        "gt_x_slope": "$.gt_x_slope",
+        "gt_y_shope": "$.gt_y_shope",
+        "place_region": "$.place_region",
+        "place_zone": "$.place_zone",
+        "place_district": "$.place_district",
+    },
+    "alignments": [
+        {"type": "dimension", "source": "variable", "target": x, "aligned_dims": []}
+        for x in ["nodata", "gt_x_0", "gt_y_0", "gt_dx", "gt_dy", "gt_epsg", "gt_x_slope", "gt_y_shope", "place_region", "place_zone", "place_district"]
+    ],
+    "semantic_model": {
+        "mint:Variable:1": {
+            "properties": [
+                ("rdf:value", "variable")
+            ],
+            "links": [
+                ("mint:place", "mint:Place:1"),
+                ("mint-geo:raster", "mint-geo:Raster:1")
+            ]
+        },
+        "mint-geo:Raster:1": {
+            "properties": [
+                ("mint-geo:x_0", "gt_x_0"),
+                ("mint-geo:y_0", "gt_y_0"),
+                ("mint-geo:dx", "gt_dx"),
+                ("mint-geo:dy", "gt_dy"),
+                ("mint-geo:epsg", "gt_epsg"),
+                ("mint-geo:x_slope", "gt_x_slope"),
+                ("mint-geo:y_shope", "gt_y_shope"),
+            ]
+        },
+        "mint:Place:1": {
+            "properties": [
+                ("mint:region", "place_region"),
+                ("mint:zone", "place_zone"),
+                ("mint:district", "place_district"),
+            ]
+        },
+        "prefixes": {
+            "mint": "https://mint.isi.edu/",
+            "mint-geo": "https://mint.isi.edu/geo"
+        }
+    }
+}
 
 if __name__ == '__main__':
-    raster = Raster.from_netcdf4("/data/mint/gpm/3B-HHR-E.MS.MRG.3IMERG.20140101-S000000-E002959.0000.V06B.HDF5.nc4", "HQprecipitation")
+    raster = Raster.from_netcdf4("/data/mint/gpm/3B-HHR-E.MS.MRG.3IMERG.20140101-S000000-E002959.0000.V06B.HDF5.nc4",
+                                 "HQprecipitation")
     raster = Raster.from_geotiff("/data/Sample/world.tif")
     print(raster.geotransform)
     # ethiopia = BoundingBox(32.75418, 3.22206, 47.98942, 15.15943)
