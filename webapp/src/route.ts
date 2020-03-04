@@ -1,5 +1,5 @@
-import { Location } from "history";
-import { matchPath } from "react-router";
+import {Location} from "history";
+import {matchPath} from "react-router";
 
 class Path<URLArgs, QueryArgs> {
   // definition of a path in react-router styles. e.g., /accounts/:id

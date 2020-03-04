@@ -99,21 +99,17 @@
 #-----------------------------------------------------------------------
 
 import numpy as np
-import os
-
-from topoflow.utils import cfg_files as cfg
+# -------------------------------------------------------
+# NOTE:  Do not import "d8_base" itself, it won't work
+# -------------------------------------------------------
+from topoflow.components import d8_global as d8_base  # (11/16/16)
+## from topoflow.utils import BMI_base
+from topoflow.components import infil_base  # (for build_layered_var())
 from topoflow.utils import model_input
 from topoflow.utils import model_output
-from topoflow.utils import tf_utils
 from topoflow.utils import rti_files
 
-## from topoflow.utils import BMI_base
-from topoflow.components import infil_base   # (for build_layered_var())
 
-#-------------------------------------------------------
-# NOTE:  Do not import "d8_base" itself, it won't work
-#-------------------------------------------------------
-from topoflow.components import d8_global as d8_base    # (11/16/16)
 ## from topoflow.utils import tf_d8_base as d8_base
 
 #-----------------------------------------------------------------------

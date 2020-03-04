@@ -92,7 +92,6 @@
 #-----------------------------------------------------------------------
 
 import numpy as np
-import os
 
 from topoflow.components import solar_funcs as solar
 

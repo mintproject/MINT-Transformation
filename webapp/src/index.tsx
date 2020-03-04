@@ -1,9 +1,9 @@
 import "antd/dist/antd.css";
 import React from "react";
 import ReactDOM from "react-dom";
-import { Provider } from "mobx-react";
-import { Router } from "react-router";
-import { stores, history } from "./store";
+import {Provider} from "mobx-react";
+import {Router} from "react-router";
+import {history, stores} from "./store";
 import * as serviceWorker from "./serviceWorker";
 import App from "./App";
 

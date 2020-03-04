@@ -1,12 +1,10 @@
 import React from "react";
-import { observer, inject } from "mobx-react";
-import { IStore } from "../store";
-import { Button, Modal } from "antd";
+import {inject, observer} from "mobx-react";
+import {IStore} from "../store";
+import {Button, Modal} from "antd";
 import "antd/dist/antd.css";
-import { AdapterType } from "../store/AdapterStore";
-import {
-  INode, IEdge,
-} from "react-digraph";
+import {AdapterType} from "../store/AdapterStore";
+import {IEdge, INode,} from "react-digraph";
 import _ from "lodash";
 import InputWiredComponent from "./InputComponentWired";
 import InputTextComponent from "./InputComponentText";

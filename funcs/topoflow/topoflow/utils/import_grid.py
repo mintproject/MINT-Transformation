@@ -19,11 +19,14 @@
 
 #-------------------------------------------------------------------
 
-import gdal, osr  ## ogr
 import os.path
-# import glob
+
+import gdal  ## ogr
 
 from . import rtg_files, rti_files
+
+
+# import glob
 
 #-------------------------------------------------------------------
 def test1():

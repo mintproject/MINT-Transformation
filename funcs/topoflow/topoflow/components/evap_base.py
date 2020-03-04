@@ -59,11 +59,8 @@
 #-----------------------------------------------------------------------
 
 import numpy as np
-import os
 
 from topoflow.utils import BMI_base
-from topoflow.utils import cfg_files as cfg
-from topoflow.utils import model_input
 from topoflow.utils import model_output
 
 #-----------------------------------------------------------------------

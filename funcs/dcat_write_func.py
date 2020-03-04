@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 import subprocess
 from pathlib import Path
-from typing import Union, Dict
+from typing import Union
 
 import ujson as json
-
 from dcatreg.dcat_api import DCatAPI
+
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc, IFuncType
 

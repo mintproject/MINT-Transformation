@@ -86,7 +86,6 @@ import numpy as np
 #                   log,exp,arctan,logical_or,where,sum, \
 #                   size,flipud,outer,ones,arange
 #
-import os
 
 #------------------------------------------------------------------------
 def Current_Year():

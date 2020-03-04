@@ -2,23 +2,24 @@
 ## Copyright (c) 2001-2009, Scott D. Peckham
 ## November 2009 (converted from IDL)
 
-#-----------------------------------------------------------------------
+import numpy
+# -----------------------------------------------------------------------
 #  Notes: Use the random midpoint displacement method to create
 #         a fractal surface/landscape (due to Mandelbrot).
 #         This can be used as initial surface for landscape
 #         evolution models and is used by Alan Howard's
 #         MARSSIM model.
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 #
 #  unit_test()
 #  make_fractal_surface()
 #
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 from numpy import *
-import numpy
 
 from . import rtg_files
 from . import rti_files
+
 
 #-----------------------------------------------------------------------
 def unit_test():

@@ -3,7 +3,6 @@
 # See:
 # https://csdms.colorado.edu/wiki/Model_help:TopoFlow-Soil_Properties_Page
 
-import os
 from pathlib import Path
 from typing import Union
 

@@ -59,12 +59,13 @@
 
 #-----------------------------------------------------------------------
 
-import numpy as np
-import os, sys
+import sys
 
+import numpy as np
 from topoflow.utils import BMI_base
 from topoflow.utils import model_input
 from topoflow.utils import model_output
+
 
 #-----------------------------------------------------
 # Moved these imports to: "embed_child_components()"

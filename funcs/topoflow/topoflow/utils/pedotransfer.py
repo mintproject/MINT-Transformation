@@ -30,18 +30,21 @@
 #  get_tBC_from_vG_vars()
 #  save_soil_hydraulic_vars()
 
-#-------------------------------------------------------------------
+import glob
+import os
+
+import gdal  ## ogr
+# -------------------------------------------------------------------
 import numpy as np
-import gdal, osr  ## ogr
 from scipy.special import gamma
-from . import regrid as rg
+
 from . import import_grid as ig
-from . import rti_files
+from . import regrid as rg
 from . import rtg_files
+from . import rti_files
+
 
 ## from . import soil_trans_BC as soil
-
-import glob, os
 
 # import os.path
 

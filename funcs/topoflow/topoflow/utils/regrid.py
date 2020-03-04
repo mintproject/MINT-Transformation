@@ -33,11 +33,14 @@
 #  regrid_geotiff_to_dem()    # (special case of regrid_geotiff())
 #  resave_grid_to_geotiff()
 
-#-------------------------------------------------------------------
-import numpy as np
-import gdal, osr  ## ogr
 import glob
 import os.path
+
+import gdal  # # ogr
+# -------------------------------------------------------------------
+import numpy as np
+import osr
+
 
 ## from . import rts_files   # (avoid this extra dependency)
 

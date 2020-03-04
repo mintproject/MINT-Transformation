@@ -3,7 +3,6 @@ from flask_cors import CORS
 
 from flaskr.api.adapters import adapters_blueprint
 from flaskr.api.pipelines import pipelines_blueprint
-import os
 
 app = Flask(__name__)
 CORS(app)

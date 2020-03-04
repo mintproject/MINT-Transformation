@@ -1,10 +1,8 @@
 import React from "react";
-import { observer, inject } from "mobx-react";
-import { IStore } from "../store";
-import {
-  INode
-} from "react-digraph";
-import { AdapterType } from "../store/AdapterStore";
+import {inject, observer} from "mobx-react";
+import {IStore} from "../store";
+import {INode} from "react-digraph";
+import {AdapterType} from "../store/AdapterStore";
 
 interface InputTextProps {
   selectedNode: INode | null,

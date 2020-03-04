@@ -1,4 +1,4 @@
-import { message } from "antd";
+import {message} from "antd";
 
 export function copyText(text: string, itemName?: string) {
   const textArea = document.createElement("textarea");

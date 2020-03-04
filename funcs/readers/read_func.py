@@ -1,9 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import ujson
-from typing import Union
 from pathlib import Path
+from typing import Union
+
+import ujson
 from drepr import Graph, DRepr
 
 from dtran.argtype import ArgType

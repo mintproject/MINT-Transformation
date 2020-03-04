@@ -46,7 +46,6 @@ Water Resources Monograph 15, AGU.
 #-----------------------------------------------------------------------
 
 import numpy as np
-import os
 
 from topoflow.components import infil_base
 

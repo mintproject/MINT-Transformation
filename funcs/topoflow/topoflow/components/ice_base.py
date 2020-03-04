@@ -50,12 +50,10 @@
 #-----------------------------------------------------------------------
 
 import numpy as np
-import os      # (will be needed later for os.chdir)
 
 from topoflow.components import gc2d
 
 from topoflow.utils import BMI_base
-from topoflow.utils import model_input
 from topoflow.utils import model_output
 from topoflow.utils import rtg_files
 

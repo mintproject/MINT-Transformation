@@ -17,19 +17,18 @@
 ##        (e.g. d8_code_list, d8_code_map, d8_width_grid)
 #############################################################
 
-from numpy import *
-import numpy
-
-import os, os.path
+import os
+import os.path
 import time
+
+from numpy import *
 
 from . import BMI_base
 from . import cfg_files as cfg
 from . import pixels
 from . import rtg_files
-from . import tf_utils
-
 from .model_output import *
+
 
 #---------------------------------------------------------------------
 #

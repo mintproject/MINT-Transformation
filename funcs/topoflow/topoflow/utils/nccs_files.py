@@ -100,16 +100,13 @@ True
 
 """
 
-import os
-import sys
 import time
 
-import numpy as np
-from . import bov_files
-from . import file_utils
-from . import rti_files
-
 import netCDF4 as nc
+import numpy as np
+
+from . import file_utils
+
 
 #---------------------------------------------------------------------
 # This class is for I/O of time-indexed 3D arrays to netCDF files.

@@ -1,12 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from collections import Counter
 from pathlib import Path
 from typing import *
-from dtran.ifunc import IFunc
-from collections import Counter
-from dtran.wireio import WiredIOArg
+
 from marshmallow import Schema, fields, ValidationError
 from networkx import DiGraph, lexicographical_topological_sort, bfs_edges, NetworkXUnfeasible
+
+from dtran.ifunc import IFunc
+from dtran.wireio import WiredIOArg
 
 
 class Pipeline(object):

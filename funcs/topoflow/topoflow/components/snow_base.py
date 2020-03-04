@@ -54,7 +54,6 @@
 #-----------------------------------------------------------------------
 
 import numpy as np
-import os
 
 from topoflow.utils import BMI_base
 # from topoflow.utils import model_input  # (not used here)

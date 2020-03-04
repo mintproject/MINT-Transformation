@@ -1,8 +1,8 @@
 import React from "react";
-import { withStyles, WithStyles } from "@material-ui/styles";
-import { observer } from "mobx-react";
-import { Row, Col, Form, Icon, Input, Button } from "antd";
-import { FormComponentProps } from "antd/lib/form";
+import {withStyles, WithStyles} from "@material-ui/styles";
+import {observer} from "mobx-react";
+import {Button, Col, Form, Icon, Input, Row} from "antd";
+import {FormComponentProps} from "antd/lib/form";
 import _ from "lodash";
 
 const styles = {};

@@ -1,18 +1,18 @@
-from flask import Blueprint, jsonify, request
-import json
-import yaml
-from dcatreg.dcat_api import DCatAPI
-from flaskr.config_graph_parser import DiGraphSchema
 import glob
+import json
 import os
-
+import subprocess
+from collections import OrderedDict
+from dataclasses import dataclass, asdict
+from datetime import datetime
 from typing import *
 from uuid import uuid4
-import subprocess
-from dataclasses import dataclass, asdict
+
 import ujson
-from datetime import datetime
-from collections import OrderedDict
+import yaml
+from dcatreg.dcat_api import DCatAPI
+from flask import Blueprint, jsonify, request
+from flaskr.config_graph_parser import DiGraphSchema
 
 TMP_DIR = "/tmp/mintdt"
 

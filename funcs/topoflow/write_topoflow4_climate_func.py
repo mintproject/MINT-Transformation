@@ -1,22 +1,20 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from pathlib import Path
-from netCDF4 import Dataset
-from datetime import datetime
-import numpy as np, os, time
-from typing import Union, List
-from tqdm import tqdm
+import glob
 import re
+from os.path import join
+from pathlib import Path
+from typing import Union, List
+
+import gdal  # # ogr
+import numpy as np
+import os
+import osr
+from funcs.topoflow.nc2geotiff import nc2geotiff
+from tqdm import tqdm
 
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc, IFuncType
-from os.path import join
-
-import gdal, osr  ## ogr
-import glob
-from scipy.special import gamma
-
-from funcs.topoflow.nc2geotiff import nc2geotiff
 from funcs.topoflow.rti_files import generate_rti_file
 
 

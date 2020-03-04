@@ -157,24 +157,24 @@
 #
 #-----------------------------------------------------------------------
 
-import numpy as np
 import os
-import sys
 import time
-import traceback        # (10/10/10)
+import traceback  # (10/10/10)
 
-#--------------------------------------------
+import numpy as np
+
+from . import outlets  ## (9/19/14)
+from . import pixels
+from . import rti_files
+
+
+# --------------------------------------------
 # (5/14/10. Can't be here because basins.py
 # has import BMI_base at top (circular).
 # See initialize_basin_vars() below.
-#--------------------------------------------
+# --------------------------------------------
 # import basins
-   
 ## import cfg_files as cfg   # (not used)
-
-from . import outlets          ## (9/19/14)
-from . import pixels
-from . import rti_files
 
 #---------------------------------------------
 # Experiment.  9/19/14

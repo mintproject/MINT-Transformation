@@ -4,7 +4,9 @@
 ## Unit tests for "template_file.py" in "utils" folder.
 
 import os
+
 from topoflow.utils import template_files
+
 
 #-------------------------------------------------------------------------
 #

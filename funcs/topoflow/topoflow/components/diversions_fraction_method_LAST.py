@@ -73,9 +73,6 @@
 
 import numpy as np
 
-import glob
-import os
-
 from topoflow.components import diversions_base
 
 from topoflow.utils import cfg_files as cfg

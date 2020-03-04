@@ -1,8 +1,10 @@
 import re
-from marshmallow import Schema, fields, validate, ValidationError, post_load, pre_dump
 from collections import OrderedDict
-from dtran.config_parser import PipelineSchema
 from importlib import import_module
+
+from marshmallow import Schema, fields, validate, ValidationError, post_load, pre_dump
+
+from dtran.config_parser import PipelineSchema
 
 wired_pattern = re.compile(r'^\$\.\w+\.\w+$')
 keys_pattern = re.compile(r'^\w+$')

@@ -3,9 +3,11 @@
 ## January 2009  (converted from IDL)
 ## Nov 2019  get_utm_zone().
 
-import glob   # (for exists())
-import sys    # (for sys.byteorder)
+import glob  # (for exists())
+import sys  # (for sys.byteorder)
+
 import numpy as np  # (for things like uint8(), int16(), float64())
+
 
 #-------------------------------------------------------------------------
 #

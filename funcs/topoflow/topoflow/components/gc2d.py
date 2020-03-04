@@ -26,15 +26,16 @@
 #
 ################################################################
 
-import numpy
-import time
-import sys
 import logging
-# import getopt
+import sys
 
-import scipy    # scipy.signal.convolve, scipy.io.loadmat
+import numpy
+import scipy  # scipy.signal.convolve, scipy.io.loadmat
 from scipy import interpolate
 from scipy import signal
+
+
+# import getopt
 
 # SDP. 10/24/11.  No longer available.  Deprecated?
 # from scipy.io.numpyio import fwrite  # used by print_watch_point()

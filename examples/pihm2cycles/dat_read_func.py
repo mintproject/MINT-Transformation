@@ -1,17 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import datetime
-
-import ujson
-from typing import Union
 from pathlib import Path
-from drepr import Graph, DRepr
+from typing import Union
+
+import numpy as np
+import pandas as pd
+from drepr import Graph
 from drepr.graph import Node
 
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc
-import numpy as np
-import pandas as pd
 
 
 class ReadDatFunc(IFunc):

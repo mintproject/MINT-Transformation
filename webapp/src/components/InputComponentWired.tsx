@@ -1,10 +1,8 @@
 import React from "react";
-import { observer, inject } from "mobx-react";
-import { IStore } from "../store";
-import { Menu, Dropdown, Input } from "antd";
-import {
-  INode, IEdge,
-} from "react-digraph";
+import {inject, observer} from "mobx-react";
+import {IStore} from "../store";
+import {Dropdown, Input, Menu} from "antd";
+import {IEdge, INode,} from "react-digraph";
 import _ from "lodash";
 
 interface InputWiredProps {

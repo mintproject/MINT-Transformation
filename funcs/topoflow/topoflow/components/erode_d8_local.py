@@ -207,19 +207,19 @@
 #-----------------------------------------------------------------------
 
 import heapq
-import numpy as np
-import os          # for os.chdir in get_neighbors_test().
-import os.path
 import sys
 import time
-#----------------------
-# Could also do this.
-#----------------------
-# from numpy import where, logical_and, logical_or
 
+import numpy as np
 from topoflow.components import d8_local
 from topoflow.components import erode_base
-from topoflow.utils      import rtg_files
+from topoflow.utils import rtg_files
+
+
+# ----------------------
+# Could also do this.
+# ----------------------
+# from numpy import where, logical_and, logical_or
 
 #-------------------------------------------
 # For use outside of the TopoFlow package.

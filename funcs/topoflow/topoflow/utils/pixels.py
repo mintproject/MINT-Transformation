@@ -27,6 +27,7 @@ import numpy as np
 
 from .tf_utils import TF_Print
 
+
 #-------------------------------------------------------------------
 def unit_test():
 

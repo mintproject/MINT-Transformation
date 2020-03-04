@@ -1,7 +1,7 @@
 ## Copyright (c) 2001-2013, Scott D. Peckham
 
 from topoflow.components import HIS_base
-from topoflow.utils import tf_utils
+
 
 #-----------------------------------------------------------------------
 def test_instantiate():

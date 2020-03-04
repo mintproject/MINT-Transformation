@@ -2,15 +2,15 @@
 # S.D. Peckham
 # May 2010
 
-import os
-import sys
 import time
 
-import numpy as np
-from . import file_utils
-# import rti_files   # (not used)
-
 import netCDF4 as nc
+import numpy as np
+
+from . import file_utils
+
+
+# import rti_files   # (not used)
 
 #---------------------------------------------------------------------
 # This class is for I/O of time-indexed 1D profiles to netCDF files.

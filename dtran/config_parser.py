@@ -1,14 +1,16 @@
 import re
-import ujson
-from ruamel.yaml import YAML
-from pathlib import Path
-from typing import Union, Tuple, Dict
-from marshmallow import Schema, fields, validate, ValidationError, post_load
 from collections import OrderedDict, defaultdict
 from importlib import import_module
-from dtran.wireio import WiredIOArg
-from dtran.ifunc import IFunc
+from pathlib import Path
+from typing import Union, Tuple, Dict
+
+import ujson
+from marshmallow import Schema, fields, validate, ValidationError, post_load
+from ruamel.yaml import YAML
+
 from dtran import Pipeline
+from dtran.ifunc import IFunc
+from dtran.wireio import WiredIOArg
 
 wired_pattern = re.compile(r'^\$\.\w+\.\w+$')
 keys_pattern = re.compile(r'^\w+$')

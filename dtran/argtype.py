@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from typing import *
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+from typing import *
+
 from dateutil import parser
 
 

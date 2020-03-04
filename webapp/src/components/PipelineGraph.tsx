@@ -1,12 +1,10 @@
 import React from "react";
-import { observer, inject } from "mobx-react";
-import { IStore } from "../store";
-import { Button, Dropdown, Menu, Row, Modal, Input } from "antd";
+import {inject, observer} from "mobx-react";
+import {IStore} from "../store";
+import {Button, Dropdown, Input, Menu, Modal, Row} from "antd";
 import "antd/dist/antd.css";
-import { AdapterType } from "../store/AdapterStore";
-import {
-  GraphView, INode, IEdge,
-} from "react-digraph";
+import {AdapterType} from "../store/AdapterStore";
+import {GraphView, IEdge, INode,} from "react-digraph";
 import _ from "lodash";
 import SubMenu from "antd/lib/menu/SubMenu";
 

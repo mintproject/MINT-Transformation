@@ -1,4 +1,5 @@
-import { observable, action } from "mobx";
+import {action, observable} from "mobx";
+
 // import axios from "axios";
 
 export class ErrorStore {
