@@ -155,4 +155,4 @@ class CroppingTransFunc(IFunc):
         else:
             self._crop_shape_dataset()
 
-        return array(self.cropped_rasters)
+        return self.cropped_rasters
