@@ -63,7 +63,7 @@
         "func_type": "Reader",
         "friendly_name": "Data Catalog Reader",
         "example": {
-            "dataset_id": "05c43c58-ed42-4830-9b1f-f01059c4b96f",
+            "dataset_id": "ea0e86f3-9470-4e7e-a581-df85b4a7075d",
             "start_time": "2020-03-02T12:30:55",
             "end_time": "2020-03-02T12:30:55",
             "use_cache": "True"
@@ -90,52 +90,6 @@
         "friendly_name": " Data Catalog Reader Without repr File",
         "example": {
             "dataset_id": "05c43c58-ed42-4830-9b1f-f01059c4b96f"
-        }
-    },
-    {
-        "id": "UnitTransFunc",
-        "description": " A transformation adapter.\n    Alters the graph by performing unit conversion on some values in the graph.\n    ",
-        "inputs": {
-            "data": {
-                "id": "dataset",
-                "val": null,
-                "optional": false
-            },
-            "unit_value": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            },
-            "unit_label": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            },
-            "unit_desired": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            },
-            "filter": {
-                "id": "string",
-                "val": null,
-                "optional": true
-            }
-        },
-        "outputs": {
-            "data": {
-                "id": "dataset",
-                "val": null,
-                "optional": false
-            }
-        },
-        "func_type": "Unit Conversion Transformation",
-        "friendly_name": "Unit Transformation Function",
-        "example": {
-            "unit_value": "dcat: measure_1_value",
-            "unit_label": "sdmx-attribute:unitMeasure",
-            "unit_desired": "$/kg",
-            "filter": "@type = 'qb:Observation' and sdmx-attribute:refArea.contains('Aweil (Town)')"
         }
     },
     {
