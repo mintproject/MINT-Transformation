@@ -4,12 +4,11 @@ from drepr import DRepr, outputs
 curr_dir = "./"
 
 dataset_file = curr_dir + "3B-MO.MS.MRG.3IMERG.20080101-S000000-E235959.01.V06B.HDF5.nc4"
-varname = "precipitation_flux"
+varname = "atmosphere_water__precipitation_mass_flux"
 drepr_file = curr_dir + "gpm.yml"
 
 shape_file = curr_dir + "south-west-shewa-alem-gena.shp"
 shape_drepr = curr_dir + "woreda_shapefile.yml"
-#shape_dataset = curr_dir + "shape_file.csv" # TODO Wait for Binh for model
 
 # bounds
 x_min = -78.56
@@ -19,10 +18,6 @@ y_max = -65.96
 
 def use_bb(variable_name, dataset):
     func = CroppingTransFunc(variable_name, dataset, None, x_min, y_min, x_max, y_max)
-    return func.exec()
-
-def use_shp_direct(variable_name, dataset, shape_file):
-    func = CroppingTransFunc(variable_name, dataset, shape_file, 0, 0, 0 , 0)
     return func.exec()
 
 def use_shp_model(variable_name, dataset, shape_dataset):
@@ -36,8 +31,6 @@ if __name__ == "__main__":
     shape_dataset = outputs.ArrayBackend.from_drepr(shape_model, shape_file)
 
     result = use_bb(varname, dataset)
-
-    #result = use_shp_direct(varname, dataset, shape_file)
 
     #result = use_shp_model(varname, dataset, shape_dataset)
 

@@ -164,62 +164,6 @@ class Raster:
         else:
             raise NotImplementedError(np_dtype)
 
-drepr_model = {
-    "version": "2",
-    "resources": "container",
-    "attributes": {
-        "variable": "$.variable[:][:]",
-        "nodata": "$.nodata",
-        "gt_x_0": "$.gt_x_0",
-        "gt_y_0": "$.gt_y_0",
-        "gt_dx": "$.gt_dx",
-        "gt_dy": "$.gt_dy",
-        "gt_epsg": "$.gt_epsg",
-        "gt_x_slope": "$.gt_x_slope",
-        "gt_y_shope": "$.gt_y_shope",
-        "place_region": "$.place_region",
-        "place_zone": "$.place_zone",
-        "place_district": "$.place_district",
-    },
-    "alignments": [
-        {"type": "dimension", "source": "variable", "target": x, "aligned_dims": []}
-        for x in ["nodata", "gt_x_0", "gt_y_0", "gt_dx", "gt_dy", "gt_epsg", "gt_x_slope", "gt_y_shope", "place_region", "place_zone", "place_district"]
-    ],
-    "semantic_model": {
-        "mint:Variable:1": {
-            "properties": [
-                ("rdf:value", "variable")
-            ],
-            "links": [
-                ("mint:place", "mint:Place:1"),
-                ("mint-geo:raster", "mint-geo:Raster:1")
-            ]
-        },
-        "mint-geo:Raster:1": {
-            "properties": [
-                ("mint-geo:x_0", "gt_x_0"),
-                ("mint-geo:y_0", "gt_y_0"),
-                ("mint-geo:dx", "gt_dx"),
-                ("mint-geo:dy", "gt_dy"),
-                ("mint-geo:epsg", "gt_epsg"),
-                ("mint-geo:x_slope", "gt_x_slope"),
-                ("mint-geo:y_shope", "gt_y_shope"),
-            ]
-        },
-        "mint:Place:1": {
-            "properties": [
-                ("mint:region", "place_region"),
-                ("mint:zone", "place_zone"),
-                ("mint:district", "place_district"),
-            ]
-        },
-        "prefixes": {
-            "mint": "https://mint.isi.edu/",
-            "mint-geo": "https://mint.isi.edu/geo"
-        }
-    }
-}
-
 if __name__ == '__main__':
     raster = Raster.from_netcdf4("/data/mint/gpm/3B-HHR-E.MS.MRG.3IMERG.20140101-S000000-E002959.0000.V06B.HDF5.nc4",
                                  "HQprecipitation")

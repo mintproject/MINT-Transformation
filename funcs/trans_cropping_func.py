@@ -67,7 +67,7 @@ class CroppingTransFunc(IFunc):
             }
         }
         schema = {
-            'geometry': type,
+            'geometry': shape_type,
             'properties': {
                 'name': 'str'
             }
@@ -136,7 +136,8 @@ class CroppingTransFunc(IFunc):
             for s in self.shapes:
                 CroppingTransFunc.shape_array_to_shapefile(s, tempfile_name)
                 cropped_raster = r.crop(vector_file=tempfile_name, resampling_algo=ReSample.BILINEAR)
-                self.cropped_rasters.append(cropped_raster.data)
+                self.cropped_rasters.append(cropped_raster)
+
         self.results = ShardedBackend(rasters_to_datasets(self.cropped_rasters))
 
     def crop_shape_sharedbackend(self):

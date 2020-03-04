@@ -28,7 +28,6 @@ drepr_model = {
                 ("rdf:value", "variable")
             ],
             "links": [
-                ("mint:place", "mint:Place:1"),
                 ("mint-geo:raster", "mint-geo:Raster:1")
             ]
         },
