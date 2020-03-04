@@ -7,7 +7,7 @@ from dtran.ifunc import IFunc
 from numpy import array
 from drepr import DRepr, outputs
 from extra_libs.raster.raster import Raster, GeoTransform, EPSG, BoundingBox, ReSample
-from extra_libs.raster.raster_drepr import rasters_to_datasets
+from extra_libs.raster.raster_to_dataset import raster_to_dataset
 import fiona
 from fiona.crs import from_epsg
 
@@ -109,12 +109,12 @@ class CroppingTransFunc(IFunc):
 
         shapes = []
         for c in sm.c(mint_ns.Place):
-            for r in c.iter_records():
-                polygon = sm.get_record_by_id(r.s(mint_geo_ns.bounding)).s(rdf_ns.value)
+            for place in c.iter_records():
+                polygon = sm.get_record_by_id(place.s(mint_geo_ns.bounding)).s(rdf_ns.value)
                 # epsg = int(record.s(mint_geo_ns.epsg))
                 epsg = 4326
 
-                shapes.append([polygon, epsg])
+                shapes.append([polygon, epsg, place])
 
         return shapes
 
@@ -122,24 +122,24 @@ class CroppingTransFunc(IFunc):
         self.rasters = CroppingTransFunc.extract_raster(self.dataset, self.variable_name)
         bb = BoundingBox(x_min=self.xmin, y_min=self.ymin, x_max=self.xmax, y_max=self.ymax)
 
-        self.cropped_rasters = []
+        self.results = []
         for r in self.rasters:
             cropped_raster = r.crop(bounds=bb, resampling_algo=ReSample.BILINEAR)
-            self.cropped_rasters.append(cropped_raster)
-        self.results = rasters_to_datasets(self.cropped_rasters)
+            self.results.append(raster_to_dataset(cropped_raster))
 
     def _crop_shape_dataset(self):
         self.rasters = CroppingTransFunc.extract_raster(self.dataset, self.variable_name)
         self.shapes = CroppingTransFunc.extract_shape(self.shape_sm)
 
-        self.cropped_rasters = []
+        self.results = []
         for r in self.rasters:
             for s in self.shapes:
                 CroppingTransFunc.shape_array_to_shapefile(s, tempfile_name)
                 cropped_raster = r.crop(vector_file=tempfile_name, resampling_algo=ReSample.BILINEAR)
-                self.cropped_rasters.append(cropped_raster)
+                place = s[2]
+                self.results.append(raster_to_dataset(cropped_raster, place))
 
-        self.results = ShardedBackend(rasters_to_datasets(self.cropped_rasters))
+        self.results = ShardedBackend(self.results)
 
     def crop_shape_sharedbackend(self):
         # TODO Stub for shared backend later
@@ -155,4 +155,4 @@ class CroppingTransFunc(IFunc):
         else:
             self._crop_shape_dataset()
 
-        return self.cropped_rasters
+        return self.results

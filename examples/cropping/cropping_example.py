@@ -33,8 +33,8 @@ if __name__ == "__main__":
     shape_model = DRepr.parse_from_file(shape_drepr)
     shape_dataset = outputs.ArrayBackend.from_drepr(shape_model, shape_file)
 
-    result = use_bb(varname, dataset)
+    # result = use_bb(varname, dataset)
 
-    # result = use_shp_model(varname, dataset, shape_dataset)
+    result = use_shp_model(varname, dataset, shape_dataset)
 
     print(result)
