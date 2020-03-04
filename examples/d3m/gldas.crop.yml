@@ -1,0 +1,46 @@
+version: "2"
+resources: netcdf4
+attributes:
+  variable:
+    path: $.land_surface_air__temperature.data[0][:][:]
+    missing_values: [-9999]
+  latitude: $.lat.data[:]
+  longitude: $.long.data[:]
+  timestamp: $.time.data[0]
+  standard_name: $.land_surface_air__temperature.@.standard_name
+alignments:
+  - type: dimension
+    value: variable:3 <-> latitude:2
+  - type: dimension
+    value: variable:4 <-> longitude:2
+  - type: dimension
+    source: variable
+    target: timestamp
+    aligned_dims: []
+  - type: dimension
+    source: variable
+    target: standard_name
+    aligned_dims: []
+semantic_model:
+  mint:Variable:1:
+    properties:
+      - [rdf:value, variable]
+      - [mint-geo:lat, latitude]
+      - [mint-geo:long, longitude]
+      - [mint:timestamp, timestamp]
+      - [mint:standardName, standard_name]
+    links:
+      - [mint-geo:raster, mint-geo:Raster:1]
+  mint-geo:Raster:1:
+    static_properties:
+      - [mint-geo:epsg, 4326]
+      - [mint-geo:x_slope, 0]
+      - [mint-geo:y_slope, 0]
+      - [mint-geo:x_0, -180]
+      - [mint-geo:y_0, -90]
+      - [mint-geo:dx, 0.1]
+      - [mint-geo:dy, 0.1]
+  prefixes:
+    mint: https://mint.isi.edu/
+    # do we need this? our latitude/longitude don't have CRS
+    mint-geo: https://mint.isi.edu/geo
