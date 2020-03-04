@@ -19,6 +19,6 @@ handlers:
     backupCount: 3
 loggers:
   funcs.readers.dcat_read_func:
-    level: DEBUG
+    level: INFO
     handlers: [console]
     propagate: no

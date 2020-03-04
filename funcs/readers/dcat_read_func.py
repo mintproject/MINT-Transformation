@@ -93,19 +93,23 @@ class DcatReadFunc(IFunc):
             self.repr = DRepr.parse_from_file(os.environ['HOME_DIR'] + "/examples/d3m/gldas.yml")
             self.logger.info("Overwrite GLDAS")
 
-        self.logger.debug(f"Found key '{self.repr_type}'")
-        self.logger.debug(f"Downloading {len(resource_ids)} resources ...")
+        self.logger.info(f"Found key '{self.repr_type}'")
+        self.logger.info(f"Downloading {len(resource_ids)} resources ...")
         self.resources = OrderedDict()
+        n_skip = 0
+        n_download = 0
         for resource_id, resource_url in resource_ids.items():
             file_full_path = os.path.join(DATA_CATALOG_DOWNLOAD_DIR, f'{resource_id}.dat')
             self.resources[resource_id] = file_full_path
             if use_cache and Path(file_full_path).exists():
                 self.logger.debug(f"Skipping resource {resource_id}, found in cache")
+                n_skip += 1
                 continue
             self.logger.debug(f"Downloading resource {resource_id} ...")
             subprocess.check_call(f'wget {resource_url} -O {file_full_path}', shell=True)
+            n_download += 1
 
-        self.logger.debug(f"Download Complete")
+        self.logger.info(f"Download Complete. Skip {n_skip} and download {n_download} resources")
 
     def exec(self) -> dict:
         if self.get_preference("data") is None or self.get_preference("data") == 'array':
@@ -199,7 +203,7 @@ class DCatAPI:
                                      dataset_id: str,
                                      start_time: datetime = None,
                                      end_time: datetime = None,
-                                     limit: int = 100):
+                                     limit: int = 100000):
         """start_time and end_time is inclusive"""
         request_headers = {'Content-Type': "application/json", 'X-Api-Key': self.get_api_key()}
         query = {
