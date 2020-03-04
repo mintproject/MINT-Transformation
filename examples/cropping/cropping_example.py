@@ -16,13 +16,16 @@ x_max = 82.96
 y_min = -164.36
 y_max = -65.96
 
+
 def use_bb(variable_name, dataset):
     func = CroppingTransFunc(variable_name, dataset, None, x_min, y_min, x_max, y_max)
     return func.exec()
 
+
 def use_shp_model(variable_name, dataset, shape_dataset):
-    func = CroppingTransFunc(variable_name, dataset, shape_dataset, 0, 0 , 0, 0)
+    func = CroppingTransFunc(variable_name, dataset, shape_dataset, 0, 0, 0, 0)
     return func.exec()
+
 
 if __name__ == "__main__":
     dataset = outputs.ArrayBackend.from_drepr(drepr_file, dataset_file)
@@ -32,10 +35,6 @@ if __name__ == "__main__":
 
     result = use_bb(varname, dataset)
 
-    #result = use_shp_model(varname, dataset, shape_dataset)
+    # result = use_shp_model(varname, dataset, shape_dataset)
 
     print(result)
-
-
-
-

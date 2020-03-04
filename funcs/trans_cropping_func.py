@@ -14,6 +14,7 @@ from fiona.crs import from_epsg
 # TODO Inelegant solution to temp files, should probably clean them up after execution
 tempfile_name = "temp_shape.shp"
 
+
 class CroppingTransFunc(IFunc):
     id = "cropping trans"
 
@@ -30,7 +31,7 @@ class CroppingTransFunc(IFunc):
     outputs = {"array": ArgType.DataSet(None)}
 
     def __init__(
-        self, variable_name: str, dataset, shape, xmin: int, ymin: int, xmax: int, ymax: int
+            self, variable_name: str, dataset, shape, xmin: int, ymin: int, xmax: int, ymax: int
     ):
         self.variable_name = variable_name
         self.dataset = dataset

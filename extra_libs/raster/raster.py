@@ -164,6 +164,7 @@ class Raster:
         else:
             raise NotImplementedError(np_dtype)
 
+
 if __name__ == '__main__':
     raster = Raster.from_netcdf4("/data/mint/gpm/3B-HHR-E.MS.MRG.3IMERG.20140101-S000000-E002959.0000.V06B.HDF5.nc4",
                                  "HQprecipitation")
