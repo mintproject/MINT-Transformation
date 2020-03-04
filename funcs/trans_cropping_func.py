@@ -139,10 +139,8 @@ class CroppingTransFunc(IFunc):
                 place = s[2]
                 self.results.append(raster_to_dataset(cropped_raster, place))
 
-        self.results = ShardedBackend(self.results)
-
-    def crop_shape_sharedbackend(self):
-        # TODO Stub for shared backend later
+    def crop_shape_shardedbackend(self):
+        # TODO Stub for sharded backend later
         pass
 
     def validate(self):
@@ -155,4 +153,4 @@ class CroppingTransFunc(IFunc):
         else:
             self._crop_shape_dataset()
 
-        return self.results
+        return ShardedBackend(self.results)
