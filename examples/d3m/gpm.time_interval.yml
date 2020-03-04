@@ -1,0 +1,59 @@
+version: "2"
+resources: netcdf4
+preprocessing:
+  - type: pmap
+    path: $.time.@
+    code: |
+      from datetime import datetime
+      from dateutil.relativedelta import relativedelta
+      
+      start_time = context.get_value(["time", "data"])[0]
+      value['start_time'] = start_time
+      value['end_time'] = (datetime.fromtimestamp(start_time) + relativedelta(months=1, seconds=-1)).timestamp()
+      return value 
+attributes:
+  precipitation:
+    path: $.precipitation.data[0][:][:]
+    missing_values: [-9999.9]
+  latitude: $.lat.data[:]
+  longitude: $.lon.data[:]
+  timestamp: $.time.@.start_time
+  end_timestamp: $.time.@.end_time
+alignments:
+  - type: dimension
+    value: precipitation:4 <-> latitude:2
+  - type: dimension
+    value: precipitation:3 <-> longitude:2
+  - type: dimension
+    source: precipitation
+    target: start_timestamp
+    aligned_dims: []
+  - type: dimension
+    source: precipitation
+    target: end_timestamp
+    aligned_dims: []
+semantic_model:
+  mint:Variable:1:
+    properties:
+      - [rdf:value, precipitation]
+      - [mint-geo:lat, latitude]
+      - [mint-geo:long, longitude]
+      - [mint:start_timestamp, start_timestamp]
+      - [mint:end_timestamp, end_timestamp]
+    static_properties:
+      - [mint:standardName, atmosphere_water__precipitation_mass_flux]
+    links:
+      - [mint-geo:raster, mint-geo:Raster:1]
+  mint-geo:Raster:1:
+    static_properties:
+      - [mint-geo:epsg, 4326]
+      - [mint-geo:x_slope, 0]
+      - [mint-geo:y_slope, 0]
+      - [mint-geo:x_0, -180]
+      - [mint-geo:y_0, -90]
+      - [mint-geo:dx, 0.1]
+      - [mint-geo:dy, 0.1]
+  prefixes:
+    mint: https://mint.isi.edu/
+    # do we need this? our latitude/longitude don't have CRS
+    mint-geo: https://mint.isi.edu/geo

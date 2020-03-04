@@ -84,7 +84,6 @@ class Raster:
     @staticmethod
     def from_geotiff(infile: str) -> 'Raster':
         ds = gdal.Open(infile)
-        print('reader', ds.GetGeoTransform())
         proj = osr.SpatialReference(wkt=ds.GetProjection())
         epsg = int(proj.GetAttrValue('AUTHORITY', 1) or '4326')
         data = ds.ReadAsArray()
@@ -94,6 +93,19 @@ class Raster:
         assert len(nodata) == 1, "Do not support multiple no data value by now"
         nodata = list(nodata)[0]
         return Raster(data, GeoTransform.from_gdal(ds.GetGeoTransform()), epsg, nodata)
+
+    def get_center_latitude(self):
+        # np.linspace won't work
+        return np.asarray([
+            self.geotransform.y_0 + self.geotransform.dy / 2 + self.geotransform.dy * i
+            for i in range(self.data.shape[0])
+        ])
+
+    def get_center_longitude(self):
+        return np.asarray([
+            self.geotransform.x_0 + self.geotransform.dx / 2 + self.geotransform.dx * i
+            for i in range(self.data.shape[1])
+        ])
 
     def crop(self,
              bounds: BoundingBox = None,

@@ -12,11 +12,13 @@ from pathlib import Path
 from drepr import DRepr
 from drepr.models import SemanticModel
 from drepr.outputs import ArrayBackend, GraphBackend
+from drepr.outputs.array_backend.lst_array_class import LstArrayClass
+from drepr.outputs.graph_backend.lst_graph_class import LstGraphClass
 from drepr.outputs.base_lst_output_class import BaseLstOutputClass
 from drepr.outputs.base_output_class import BaseOutputClass
 from drepr.outputs.base_output_sm import BaseOutputSM
 import subprocess
-
+from collections import OrderedDict
 from drepr.outputs.base_record import BaseRecord
 from drepr.outputs.record_id import RecordID
 
@@ -84,9 +86,16 @@ class DcatReadFunc(IFunc):
             self.repr = DRepr.parse(dataset_result['metadata']['dataset_repr'])
             self.repr_type = 'dataset_repr'
 
+        if dataset_id == "ea0e86f3-9470-4e7e-a581-df85b4a7075d":
+            self.repr = DRepr.parse_from_file(os.environ['HOME_DIR'] + "/examples/d3m/gpm.yml")
+            self.logger.info("Overwrite GPM")
+        elif dataset_id == "5babae3f-c468-4e01-862e-8b201468e3b5":
+            self.repr = DRepr.parse_from_file(os.environ['HOME_DIR'] + "/examples/d3m/gldas.yml")
+            self.logger.info("Overwrite GLDAS")
+
         self.logger.debug(f"Found key '{self.repr_type}'")
         self.logger.debug(f"Downloading {len(resource_ids)} resources ...")
-        self.resources = {}
+        self.resources = OrderedDict()
         for resource_id, resource_url in resource_ids.items():
             file_full_path = os.path.join(DATA_CATALOG_DOWNLOAD_DIR, f'{resource_id}.dat')
             self.resources[resource_id] = file_full_path
@@ -107,56 +116,61 @@ class DcatReadFunc(IFunc):
         if self.repr_type == 'dataset_repr':
             return {"data": backend.from_drepr(self.repr, list(self.resources.values())[0])}
         else:
-            datasets = [None] * len(self.resources)
-            for i, resource in enumerate(self.resources.values()):
-                datasets[len(datasets) - i - 1] = backend.from_drepr(self.repr, resource)
-            return {"data": ShardedBackend(datasets)}
+            dataset = ShardedBackend(len(self.resources))
+            for resource in self.resources.values():
+                dataset.add(backend.from_drepr(self.repr, resource, dataset.inject_class_id))
+            return {"data": dataset}
 
     def validate(self) -> bool:
         return True
 
 
 class ShardedClassID(str):
-    def __new__(cls, index: int, class_id: str):
+    def __new__(cls, idx: int, class_id: str):
         return super().__new__(cls, class_id)
 
-    def __init__(self, index: int, class_id: str):
-        self.index = index
-        self.class_id = class_id
+    def __init__(self, idx: int, class_id: str):
+        self.idx = idx
 
 
 class ShardedBackend(BaseOutputSM):
-    def __init__(self, datasets: List[BaseOutputSM]):
-        # list of datasets
-        self.datasets = datasets
-        '''
-        for i, dataset in enumerate(self.datasets):
-            for output_class in dataset.iter_classes():
-                output_class.id = ShardedClassID(i, output_class.id)
-        '''
+    def __init__(self, n_chunks: int):
+        # list of datasets in the reverse order
+        self.n_chunks = n_chunks
+        self.datasets: List[BaseOutputSM] = [None] * n_chunks
+        self.count = 0
 
     @classmethod
     def from_drepr(cls, ds_model: Union[DRepr, str],
                    resources: Union[str, Dict[str, str]]) -> BaseOutputSM:
         raise NotImplementedError("This method should never be called")
 
+    def add(self, dataset):
+        self.datasets[self.n_chunks - self.count - 1] = dataset
+        self.count += 1
+
+    def inject_class_id(self, class_id: str) -> ShardedClassID:
+        return ShardedClassID(self.count, class_id)
+
     def iter_classes(self) -> Iterable[BaseOutputClass]:
-        pass
+        return (c for d in reversed(self.datasets) for c in d.iter_classes())
 
     def get_record_by_id(self, rid: RecordID) -> BaseRecord:
-        pass
-        '''
-        return self.datasets[rid.class_id.index].get_record_by_id(rid)
-        '''
+        return self.datasets[rid.class_id.idx].get_record_by_id(rid)
 
     def c(self, class_uri: str) -> BaseLstOutputClass:
-        pass
+        if isinstance(self.datasets[0], ArrayBackend):
+            return LstArrayClass(
+                [c for d in reversed(self.datasets) for c in d.c(class_uri).classes])
+        else:
+            return LstGraphClass(
+                [c for d in reversed(self.datasets) for c in d.c(class_uri).classes])
 
     def cid(self, class_id: str) -> BaseOutputClass:
-        pass
+        return self.datasets[class_id.idx].cid(class_id)
 
     def get_sm(self) -> SemanticModel:
-        pass
+        return self.datasets[0].get_sm()
 
     def drain(self):
         """
