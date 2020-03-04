@@ -8,7 +8,7 @@ from netCDF4 import Dataset
 from tqdm.auto import tqdm
 from dtran import IFunc, ArgType
 from dtran.ifunc import IFuncType
-from topoflow.utils import regrid
+from funcs.topoflow.topoflow.utils import regrid
 from multiprocessing import Pool
 
 

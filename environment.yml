@@ -26,3 +26,6 @@ dependencies:
       - python-dateutil
       - click
       - ccut
+      - matplotlib
+      - fiona
+      - python-dotenv

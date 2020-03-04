@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 from typing import List, Union, Dict, Optional
 import ujson as json
-from drepr.graph import Node, Graph
+from drepr.graph_deprecated import Node, Graph
 
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc, IFuncType
@@ -149,7 +149,7 @@ class VisJsonWriteFunc(GraphWriteFunc):
     Generates a json file following the format of the MINT-Data-Catalog Visualizer.
     """
     inputs = {
-        "data": ArgType.Dataset(None),
+        "data": ArgType.DataSet(None),
         "main_class": ArgType.String,
         "output_file": ArgType.FilePath,
         "mapped_columns": ArgType.OrderedDict(None),

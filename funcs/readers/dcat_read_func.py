@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import os
 import logging
 import time
 import requests
@@ -22,6 +23,10 @@ from drepr.outputs.record_id import RecordID
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc, IFuncType
 
+DCAT_URL = os.environ['DCAT_URL']
+DATA_CATALOG_DOWNLOAD_DIR = os.path.abspath(os.environ['DATA_CATALOG_DOWNLOAD_DIR'])
+Path(DATA_CATALOG_DOWNLOAD_DIR).mkdir(exist_ok=True, parents=True)
+
 
 class DcatReadFunc(IFunc):
     id = "dcat_read_func"
@@ -37,17 +42,15 @@ class DcatReadFunc(IFunc):
         "use_cache": ArgType.Boolean(optional=True)
     }
     outputs = {"data": ArgType.DataSet(None)}
-    example = {
-        "dataset_id": "05c43c58-ed42-4830-9b1f-f01059c4b96f"
-    }
+    example = {"dataset_id": "05c43c58-ed42-4830-9b1f-f01059c4b96f"}
+    logger = logging.getLogger(__name__)
 
-    def __init__(self, dataset_id: str, start_time: datetime = None, end_time: datetime = None, use_cache: bool = True):
-        # TODO: move to a diff arch (pointer to Data-Catalog URL)
-        DCAT_URL = "https://api.mint-data-catalog.org"
-
+    def __init__(self,
+                 dataset_id: str,
+                 start_time: datetime = None,
+                 end_time: datetime = None,
+                 use_cache: bool = True):
         self.dataset_id = dataset_id
-        self.logger = logging.getLogger(DcatReadFunc.id)
-
         dataset_result = DCatAPI.get_instance(DCAT_URL).find_dataset_by_id(dataset_id)
 
         assert ('resource_repr' in dataset_result['metadata']) or ('dataset_repr' in dataset_result['metadata']), \
@@ -55,7 +58,10 @@ class DcatReadFunc(IFunc):
         assert not (('resource_repr' in dataset_result['metadata']) and ('dataset_repr' in dataset_result['metadata'])), \
             "Dataset has both 'resource_repr' and 'dataset_repr'"
 
-        resource_results = DCatAPI.get_instance(DCAT_URL).find_resources_by_dataset_id(dataset_id)
+        resource_results = DCatAPI.get_instance(DCAT_URL).find_resources_by_dataset_id(
+            dataset_id, start_time, end_time)
+        # self.resource_results = resource_results
+        # print(len(resource_results))
         resource_ids = {}
         if 'resource_repr' in dataset_result['metadata']:
             self.repr = DRepr.parse(dataset_result['metadata']['resource_repr'])
@@ -73,17 +79,16 @@ class DcatReadFunc(IFunc):
         else:
             # TODO: fix me!!
             assert len(resource_results) == 1
-            resource_ids[resource_results[0]['resource_id']] = resource_results[0]['resource_data_url']
+            resource_ids[resource_results[0]
+                         ['resource_id']] = resource_results[0]['resource_data_url']
             self.repr = DRepr.parse(dataset_result['metadata']['dataset_repr'])
             self.repr_type = 'dataset_repr'
 
         self.logger.debug(f"Found key '{self.repr_type}'")
-        Path("/tmp/dcat_read_func").mkdir(exist_ok=True, parents=True)
-
         self.logger.debug(f"Downloading {len(resource_ids)} resources ...")
         self.resources = {}
         for resource_id, resource_url in resource_ids.items():
-            file_full_path = f'/tmp/dcat_read_func/{resource_id}.dat'
+            file_full_path = os.path.join(DATA_CATALOG_DOWNLOAD_DIR, f'{resource_id}.dat')
             self.resources[resource_id] = file_full_path
             if use_cache and Path(file_full_path).exists():
                 self.logger.debug(f"Skipping resource {resource_id}, found in cache")
@@ -131,7 +136,8 @@ class ShardedBackend(BaseOutputSM):
         '''
 
     @classmethod
-    def from_drepr(cls, ds_model: Union[DRepr, str], resources: Union[str, Dict[str, str]]) -> BaseOutputSM:
+    def from_drepr(cls, ds_model: Union[DRepr, str],
+                   resources: Union[str, Dict[str, str]]) -> BaseOutputSM:
         raise NotImplementedError("This method should never be called")
 
     def iter_classes(self) -> Iterable[BaseOutputClass]:
@@ -149,7 +155,7 @@ class ShardedBackend(BaseOutputSM):
     def cid(self, class_id: str) -> BaseOutputClass:
         pass
 
-    def _get_sm(self) -> SemanticModel:
+    def get_sm(self) -> SemanticModel:
         pass
 
     def drain(self):
@@ -175,13 +181,27 @@ class DCatAPI:
             DCatAPI.instance = DCatAPI(dcat_url)
         return DCatAPI.instance
 
-    def find_resources_by_dataset_id(self, dataset_id: str):
+    def find_resources_by_dataset_id(self,
+                                     dataset_id: str,
+                                     start_time: datetime = None,
+                                     end_time: datetime = None,
+                                     limit: int = 100):
+        """start_time and end_time is inclusive"""
         request_headers = {'Content-Type': "application/json", 'X-Api-Key': self.get_api_key()}
+        query = {
+            "dataset_id": dataset_id,
+            "limit": limit,
+        }
+        if start_time is not None or end_time is not None:
+            query['filter'] = {}
+            if start_time is not None:
+                query['filter']['start_time__gte'] = start_time.isoformat()
+            if end_time is not None:
+                query['filter']['end_time__lte'] = end_time.isoformat()
+
         resp = requests.post(f"{self.dcat_url}/datasets/dataset_resources",
                              headers=request_headers,
-                             json={
-                                 "dataset_id": dataset_id
-                             })
+                             json=query)
         assert resp.status_code == 200, resp.text
         return resp.json()['resources']
 
@@ -189,9 +209,7 @@ class DCatAPI:
         request_headers = {'Content-Type': "application/json", 'X-Api-Key': self.get_api_key()}
         resp = requests.post(f"{self.dcat_url}/datasets/get_dataset_info",
                              headers=request_headers,
-                             json={
-                                 "dataset_id": dataset_id
-                             })
+                             json={"dataset_id": dataset_id})
         assert resp.status_code == 200, resp.text
         return resp.json()
 

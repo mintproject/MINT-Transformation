@@ -135,7 +135,7 @@ import time
 # import wx
 import xml.dom.minidom
 
-from topoflow.framework import time_interpolation    # (time_interpolator class)
+from funcs.topoflow.topoflow.framework import time_interpolation    # (time_interpolator class)
 # from topoflow.framework import unit_conversion  # (unit_convertor class)
 # from topoflow.framework import grid_remapping
 

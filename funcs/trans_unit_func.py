@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from ccut.app.ccut_lib import CCUT, RET_VAL_OK, RET_STR_MAP
+# from ccut.app.ccut_lib import CCUT, RET_VAL_OK, RET_STR_MAP
 from dtran.argtype import ArgType, Optional
 from dtran.ifunc import IFunc, IFuncType
 from drepr import Graph

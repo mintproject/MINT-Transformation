@@ -11,5 +11,5 @@ RUN sed -i '$ d' ~/.bashrc && \
     echo "conda activate mintdt" >> ~/.bashrc
 
 RUN bash -c 'source ~/.bashrc && conda activate mintdt'
-ADD entrypoint.sh /
+ADD .docker/entrypoint.sh /
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
