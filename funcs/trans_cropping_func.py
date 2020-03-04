@@ -4,10 +4,9 @@
 from dtran.argtype import ArgType
 from funcs.readers.dcat_read_func import ShardedBackend
 from dtran.ifunc import IFunc
-from numpy import array
-from drepr import DRepr, outputs
-from extra_libs.raster.raster import Raster, GeoTransform, EPSG, BoundingBox, ReSample
-from extra_libs.raster.raster_to_dataset import raster_to_dataset
+from drepr import outputs
+from funcs.gdal.raster import Raster, GeoTransform, BoundingBox, ReSample
+from funcs.gdal.raster_to_dataset import raster_to_dataset
 import fiona
 from fiona.crs import from_epsg
 
@@ -151,4 +150,7 @@ class CroppingTransFunc(IFunc):
         else:
             self._crop_shape_dataset()
 
-        return ShardedBackend(self.results)
+        self.output = ShardedBackend(len(self.results))
+        for d in self.results:
+            self.output.add(d)
+        return self.output
