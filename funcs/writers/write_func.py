@@ -7,6 +7,7 @@ from typing import List, Union, Dict, Optional
 
 import ujson as json
 from drepr.models import SemanticModel, Node, LiteralNode, DataNode
+from drepr.outputs.base_output_sm import BaseOutputSM
 
 from dtran.argtype import ArgType
 from dtran.backend import ShardedBackend
@@ -30,7 +31,7 @@ class CSVWriteFunc(IFunc):
         "output_file": "example.csv",
     }
 
-    def __init__(self, data: ShardedBackend, output_file: Union[str, Path]):
+    def __init__(self, data: Union[BaseOutputSM, ShardedBackend], output_file: Union[str, Path]):
 
         self.data = data
         self.output_file = Path(output_file)
@@ -39,6 +40,7 @@ class CSVWriteFunc(IFunc):
 
     def exec(self) -> dict:
         data_tuples, attr_names = self.tabularize_data()
+        print("Finish tabularizing")
         if self.output_file.suffix == ".csv":
             CSVWriteFunc._dump_to_csv(data_tuples, attr_names, self.output_file)
         elif self.output_file.suffix == ".json":
@@ -63,22 +65,45 @@ class CSVWriteFunc(IFunc):
     def tabularize_data(self) -> (list, set):
         main_class_node = self._find_main_class()
 
-        id2attrs, attrs = self._sm_traverse(main_class_node, [])
-
         data_tuples = []
-        for rid, attr2vals in id2attrs.items():
-            rtuples = [[]]
-            for attr in attrs:
-                if attr in attr2vals:
-                    attr_vals = [attr2vals[attr]] * len(rtuples)
-                else:
-                    attr_vals = [None] * len(rtuples)
-                rtuples = rtuples * len(attr2vals[attr])
-                rtuples = [x[0] + x[1] for x in zip(rtuples, attr_vals)]
+        main_attrs = []
 
-            data_tuples.extend(rtuples)
+        if isinstance(self.data, ShardedBackend):
 
-        return data_tuples, attrs
+            for dataset in self.data.datasets:
+                id2attrs, attrs = self._sm_traverse(dataset, main_class_node, [])
+
+                main_attrs = attrs
+
+                for rid, attr2vals in id2attrs.items():
+                    rtuples = [[]]
+                    for attr in attrs:
+                        if attr in attr2vals:
+                            attr_vals = [attr2vals[attr]] * len(rtuples)
+                        else:
+                            attr_vals = [None] * len(rtuples)
+                        rtuples = rtuples * len(attr2vals[attr])
+                        rtuples = [x[0] + x[1] for x in zip(rtuples, attr_vals)]
+
+                    data_tuples.extend(rtuples)
+        else:
+            id2attrs, attrs = self._sm_traverse(self.data, main_class_node, [])
+
+            main_attrs = attrs
+
+            for rid, attr2vals in id2attrs.items():
+                rtuples = [[]]
+                for attr in attrs:
+                    if attr in attr2vals:
+                        attr_vals = [attr2vals[attr]] * len(rtuples)
+                    else:
+                        attr_vals = [None] * len(rtuples)
+                    rtuples = rtuples * len(attr2vals[attr])
+                    rtuples = [x[0] + x[1] for x in zip(rtuples, attr_vals)]
+
+                data_tuples.extend(rtuples)
+
+        return data_tuples, main_attrs
 
     def _find_main_class(self):
         for class_ in self.sm.iter_class_nodes():
@@ -89,19 +114,19 @@ class CSVWriteFunc(IFunc):
             if is_main_class:
                 return class_
 
-    def _sm_traverse(self, node: Node, visited: List[Node],) -> (list, set):
-
+    def _sm_traverse(self, dataset: BaseOutputSM, node: Node, visited: List[Node], ) -> (list, set):
+        print(f"Called {node.node_id}")
         id2attrs = defaultdict(lambda: defaultdict(list))
-        attrs = []
+        attrs = set()
 
         for edge in self.sm.iter_outgoing_edges(node.node_id):
             child_node = self.sm.nodes[edge.target_id]
             predicate_url = edge.label
 
             if isinstance(child_node, LiteralNode) or isinstance(child_node, DataNode):
-                attrs.append(predicate_url)
+                attrs.add(predicate_url)
 
-                for record in self.data.cid(node.node_id).iter_records():
+                for record in dataset.cid(node.node_id).iter_records():
                     val = record.m(predicate_url)
                     if not isinstance(val, list):
                         val = [val]
@@ -111,21 +136,20 @@ class CSVWriteFunc(IFunc):
                 if child_node not in visited:
 
                     child2tuples, child_attrs = self._sm_traverse(
-                        node, visited + [child_node]
+                        dataset, child_node, visited + [child_node]
                     )
-                    for record in self.data.cid(node.node_id).iter_records():
-                        for rid in record.m(predicate_url):
-                            record = self.data.get_record_by_id(rid)
-                            for attr in child2tuples[record.id]:
+                    for record in dataset.cid(node.node_id).iter_records():
+                        for child_record in dataset.cid(child_node.node_id).iter_records():
+                            for attr in child2tuples[child_record.id]:
                                 id2attrs[record.id][
                                     predicate_url + "---" + attr
-                                ] = child2tuples[record.m(predicate_url).id][attr]
+                                    ] = child2tuples[child_record.id][attr]
 
-                                attrs.append(predicate_url + "---" + attr)
+                                attrs.add(predicate_url + "---" + attr)
 
-        return id2attrs, attrs
+        return id2attrs, list(attrs)
 
     def change_metadata(
-        self, metadata: Optional[Dict[str, Metadata]]
+            self, metadata: Optional[Dict[str, Metadata]]
     ) -> Dict[str, Metadata]:
         return metadata
