@@ -27,5 +27,4 @@ if __name__ == "__main__":
     cropped_data = crop_func.exec()
 
     write_func = CSVWriteFunc(cropped_data["data"], "../demo/cropped_result.csv")
-
-    # TODO Provide explicit internal data printout for Xinting's testing
+    write_func.exec()
