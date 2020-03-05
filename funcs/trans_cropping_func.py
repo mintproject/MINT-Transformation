@@ -27,7 +27,7 @@ class CroppingTransFunc(IFunc):
         "ymax": ArgType.Number
     }
 
-    outputs = {"array": ArgType.DataSet(None)}
+    outputs = {"data": ArgType.DataSet(None)}
 
     def __init__(self, variable_name: str, dataset, shape, xmin: int, ymin: int, xmax: int,
                  ymax: int):
@@ -153,4 +153,4 @@ class CroppingTransFunc(IFunc):
         self.output = ShardedBackend(len(self.results))
         for d in self.results:
             self.output.add(d)
-        return self.output
+        return {"data": self.output}
