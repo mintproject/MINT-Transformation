@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import os
+import uuid
 from dtran.argtype import ArgType
 from dtran.backend import ShardedBackend
 from dtran.ifunc import IFunc
@@ -9,9 +11,6 @@ from funcs.gdal.raster import Raster, GeoTransform, BoundingBox, ReSample
 from funcs.gdal.raster_to_dataset import raster_to_dataset
 import fiona
 from fiona.crs import from_epsg
-
-# TODO Inelegant solution to temp files, should probably clean them up after execution
-tempfile_name = "temp_shape.shp"
 
 
 class CroppingTransFunc(IFunc):
@@ -30,7 +29,7 @@ class CroppingTransFunc(IFunc):
     outputs = {"data": ArgType.DataSet(None)}
 
     def __init__(
-        self, variable_name: str, dataset, shape=None, xmin=0, ymin=0, xmax=0, ymax=0
+            self, variable_name: str, dataset, shape=None, xmin=0, ymin=0, xmax=0, ymax=0
     ):
         self.variable_name = variable_name
         self.dataset = dataset
@@ -50,27 +49,27 @@ class CroppingTransFunc(IFunc):
 
     @staticmethod
     def shape_array_to_shapefile(data, fname):
-        polygon = data[0]
+        polygon = data['polygon']
         if isinstance(polygon[0][0][0], (int, float)):
             shape_type = "Polygon"
         else:
             shape_type = "MultiPolygon"
 
-        epsg = from_epsg(data[1])
+        epsg = from_epsg(data['epsg'])
         driver = "ESRI Shapefile"
-        polygon = {
-            "geometry": {"type": shape_type, "coordinates": data[0]},
+        polygon_data = {
+            "geometry": {"type": shape_type, "coordinates": polygon},
             "properties": {"name": "TempCroppingPolygon"},
         }
         schema = {"geometry": shape_type, "properties": {"name": "str"}}
         with fiona.open(
-            fname,
-            "w",
-            crs="+datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat",
-            driver=driver,
-            schema=schema,
+                fname,
+                "w",
+                crs="+datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat",
+                driver=driver,
+                schema=schema,
         ) as shapefile:
-            shapefile.write(polygon)
+            shapefile.write(polygon_data)
 
     @staticmethod
     def get_namespaces(sm: ArgType.DataSet):
@@ -86,7 +85,7 @@ class CroppingTransFunc(IFunc):
         rasters = []
 
         for c in sm.c(mint_ns.Variable).filter(
-            outputs.FCondition(mint_ns.standardName, "==", variable_name)
+                outputs.FCondition(mint_ns.standardName, "==", variable_name)
         ):
             for raster_id, sc in c.group_by(mint_geo_ns.raster):
                 data = sc.p(rdf_ns.value).as_ndarray(
@@ -123,11 +122,12 @@ class CroppingTransFunc(IFunc):
                 # epsg = int(record.s(mint_geo_ns.epsg))
                 epsg = 4326
 
-                shapes.append([polygon, epsg, place])
+                shapes.append({"polygon": polygon, "epsg": epsg, "place": place})
 
         return shapes
 
     def _crop_boundbox(self):
+
         self.rasters = CroppingTransFunc.extract_raster(
             self.dataset, self.variable_name
         )
@@ -135,10 +135,10 @@ class CroppingTransFunc(IFunc):
             x_min=self.xmin, y_min=self.ymin, x_max=self.xmax, y_max=self.ymax
         )
 
-        self.results = []
+        self.results = ShardedBackend(len(self.rasters))
         for r in self.rasters:
             cropped_raster = r.crop(bounds=bb, resampling_algo=ReSample.BILINEAR)
-            self.results.append(raster_to_dataset(cropped_raster))
+            self.results.add(raster_to_dataset(cropped_raster, self.results.inject_class_id))
 
     def _crop_shape_dataset(self):
         self.rasters = CroppingTransFunc.extract_raster(
@@ -146,15 +146,17 @@ class CroppingTransFunc(IFunc):
         )
         self.shapes = CroppingTransFunc.extract_shape(self.shape_sm)
 
-        self.results = []
+        self.results = ShardedBackend(len(self.rasters) * len(self.shapes))
         for r in self.rasters:
-            for s in self.shapes:
-                CroppingTransFunc.shape_array_to_shapefile(s, tempfile_name)
+            for shape in self.shapes:
+                tempfile_name = f"/tmp/{uuid.uuid1()}.shp"
+                CroppingTransFunc.shape_array_to_shapefile(shape, tempfile_name)
                 cropped_raster = r.crop(
                     vector_file=tempfile_name, resampling_algo=ReSample.BILINEAR
                 )
-                place = s[2]
-                self.results.append(raster_to_dataset(cropped_raster, place))
+                os.remove(tempfile_name)
+                place = shape['place']
+                self.results.add(raster_to_dataset(cropped_raster, self.results.inject_class_id, place))
 
     def crop_shape_shardedbackend(self):
         # TODO Stub for sharded backend later
@@ -170,7 +172,4 @@ class CroppingTransFunc(IFunc):
         else:
             self._crop_shape_dataset()
 
-        output = ShardedBackend(len(self.results))
-        for d in self.results:
-            output.add(d)
-        return {"data": output}
+        return {"data": self.results}

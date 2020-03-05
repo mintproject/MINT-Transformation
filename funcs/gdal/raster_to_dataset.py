@@ -78,7 +78,7 @@ def _update_model(place_dict):
     return updated_model
 
 
-def raster_to_dataset(raster: Raster, place=None):
+def raster_to_dataset(raster: Raster, inject_class_id: Callable[[str], str] = None, place=None):
     if place:
         place_dict = place.to_dict()
     else:
@@ -103,6 +103,6 @@ def raster_to_dataset(raster: Raster, place=None):
     reader = NPDictReader(alignment)
     temp_file = f"resource_temp"
     ReaderContainer.get_instance().set(temp_file, reader)
-    new_sm = outputs.ArrayBackend.from_drepr(dsmodel, temp_file)
+    new_sm = outputs.ArrayBackend.from_drepr(dsmodel, temp_file, inject_class_id)
 
     return new_sm
