@@ -22,6 +22,7 @@ from drepr.outputs.record_id import RecordID
 
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc, IFuncType
+from funcs.readers.dcat_read_func import ShardedBackend
 
 
 class VariableAggregationFunc(IFunc):
@@ -66,7 +67,7 @@ class VariableAggregationFunc(IFunc):
                     key = (time_key, location_key)
                     groups[key].append(r.s(rdf.value))
 
-        if operator == "sum":
+        if self.operator == "sum":
             data = [{}]
 
         return data

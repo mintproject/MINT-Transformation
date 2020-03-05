@@ -9,9 +9,9 @@ import ujson as json
 from drepr.models import SemanticModel, Node, LiteralNode, DataNode
 
 from dtran.argtype import ArgType
+from dtran.backend import SharedBackend
 from dtran.ifunc import IFunc, IFuncType
 from dtran.metadata import Metadata
-from funcs.readers.dcat_read_func import SharedBackend
 
 
 class CSVWriteFunc(IFunc):
@@ -39,13 +39,11 @@ class CSVWriteFunc(IFunc):
         self.sm: SemanticModel = self.data._get_sm()
 
     def exec(self) -> dict:
-        all_data_rows, attr_names = self.tabularize_data()
+        data_tuples, attr_names = self.tabularize_data()
         if self.output_file.endswith("csv"):
-            CSVWriteFunc._dump_to_csv(all_data_rows, attr_names, self.output_file)
+            CSVWriteFunc._dump_to_csv(data_tuples, attr_names, self.output_file)
         elif self.output_file.endswith("json"):
-            CSVWriteFunc._dump_to_json(all_data_rows, attr_names, self.output_file)
-        else:
-            all_data_rows = []
+            CSVWriteFunc._dump_to_json(data_tuples, attr_names, self.output_file)
         return {"output_file": str(self.output_file)}
 
     def validate(self) -> bool:
@@ -70,11 +68,18 @@ class CSVWriteFunc(IFunc):
 
         data_tuples = []
         for rid, attr2vals in id2attrs.items():
-            rtuples = [[""]]
+            rtuples = [[]]
             for attr in attrs:
-                rtuples =
+                if attr in attr2vals:
+                    attr_vals = [attr2vals[attr]] * len(rtuples)
+                else:
+                    attr_vals = [None] * len(rtuples)
+                rtuples = rtuples * len(attr2vals[attr])
+                rtuples = [x[0] + [x[1]] for x in zip(rtuples, attr_vals)]
 
-        return data_tuples
+            data_tuples.extend(rtuples)
+
+        return data_tuples, attrs
 
     def _find_main_class(self):
         for class_ in self.sm.iter_class_nodes():

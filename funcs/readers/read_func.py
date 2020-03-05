@@ -6,8 +6,10 @@ from typing import Union
 
 import ujson
 from drepr import Graph, DRepr
+from drepr.outputs import ArrayBackend, GraphBackend
 
 from dtran.argtype import ArgType
+from dtran.backend import SharedBackend
 from dtran.ifunc import IFunc, IFuncType
 
 
@@ -37,8 +39,18 @@ class ReadFunc(IFunc):
         self.repr = DRepr.parse_from_file(str(repr_file))
 
     def exec(self) -> dict:
-        g = Graph.from_drepr(self.repr, self.resources)
-        return {"data": g}
+        if self.get_preference("data") is None or self.get_preference("data") == 'array':
+            backend = ArrayBackend
+        else:
+            backend = GraphBackend
+
+        if self.repr_type == 'dataset_repr':
+            return {"data": backend.from_drepr(self.repr, list(self.resources.values())[0])}
+        else:
+            dataset = SharedBackend(len(self.resources))
+            for resource in self.resources.values():
+                dataset.add(backend.from_drepr(self.repr, resource, dataset.inject_class_id))
+            return {"data": dataset}
 
     def validate(self) -> bool:
         return True
