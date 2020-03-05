@@ -62,9 +62,9 @@ class DcatReadFunc(IFunc):
 
         resource_results = DCatAPI.get_instance(DCAT_URL).find_resources_by_dataset_id(
             dataset_id, start_time, end_time)
-        # self.resource_results = resource_results
-        # print(len(resource_results))
+
         resource_ids = {}
+        resource_types = {}
         if 'resource_repr' in dataset_result['metadata']:
             self.repr = DRepr.parse(dataset_result['metadata']['resource_repr'])
             for resource in resource_results:
@@ -77,12 +77,15 @@ class DcatReadFunc(IFunc):
                         continue
 
                 resource_ids[resource['resource_id']] = resource['resource_data_url']
+                resource_types[resource['resource_id']] = resource['resource_type']
             self.repr_type = 'resource_repr'
         else:
             # TODO: fix me!!
             assert len(resource_results) == 1
             resource_ids[resource_results[0]
                          ['resource_id']] = resource_results[0]['resource_data_url']
+            resource_types[resource_results[0]
+                           ['resource_id']] = resource_results[0]['resource_type']
             self.repr = DRepr.parse(dataset_result['metadata']['dataset_repr'])
             self.repr_type = 'dataset_repr'
 
@@ -98,16 +101,83 @@ class DcatReadFunc(IFunc):
         self.resources = OrderedDict()
         n_skip = 0
         n_download = 0
+        compression_formats = {".zip", ".tar.gz", ".tar"}
         for resource_id, resource_url in resource_ids.items():
-            file_full_path = os.path.join(DATA_CATALOG_DOWNLOAD_DIR, f'{resource_id}.dat')
-            self.resources[resource_id] = file_full_path
-            if use_cache and Path(file_full_path).exists():
+            is_compressed_resource = resource_types[resource_id] in compression_formats
+            if is_compressed_resource:
+                resource_base_path = os.path.join(DATA_CATALOG_DOWNLOAD_DIR, f'{resource_id}')
+                resource_exist = os.path.exists(resource_base_path)
+            else:
+                resource_base_path = os.path.join(DATA_CATALOG_DOWNLOAD_DIR, f'{resource_id}.dat')
+                resource_exist = os.path.exists(resource_base_path)
+
+            if use_cache and resource_exist:
                 self.logger.debug(f"Skipping resource {resource_id}, found in cache")
+                if is_compressed_resource:
+                    # we need to look in the folder and find the resource
+                    files = [
+                        fpath for fpath in Path(resource_base_path).iterdir()
+                        if fpath.is_file() and not fpath.name.startswith(".")
+                    ]
+                    if len(files) == 0:
+                        raise Exception(f"The compressed resource {resource_id} is empty")
+                    elif len(files) != 1:
+                        # this indicates the shapefile
+                        files = [f for f in files if f.name.endswith(".shp")]
+                        if len(files) != 1:
+                            raise Exception(
+                                f"Cannot handle compressed resource {resource_id} because it has more than one resource"
+                            )
+                        resource_path = str(files[0])
+                    else:
+                        resource_path = str(files[0])
+                else:
+                    resource_path = resource_base_path
                 n_skip += 1
-                continue
-            self.logger.debug(f"Downloading resource {resource_id} ...")
-            subprocess.check_call(f'wget {resource_url} -O {file_full_path}', shell=True)
-            n_download += 1
+            else:
+                if is_compressed_resource:
+                    temp_file = resource_base_path + resource_types[resource_id]
+                    if resource_types[resource_id] == ".zip":
+                        extract_cmd = f"unzip {temp_file} -d {resource_base_path}"
+                    elif resource_types[resource_id].startswith(".tar"):
+                        raise NotImplementedError()
+                    subprocess.check_call(
+                        f'wget {resource_url} -O {temp_file} && {extract_cmd} && rm {temp_file}',
+                        shell=True)
+                    # flatten the structure (max two levels)
+                    for fpath in Path(resource_base_path).iterdir():
+                        if fpath.is_dir():
+                            for sub_file in fpath.iter_dir():
+                                new_file = os.path.join(resource_base_path, fpath.name)
+                                if os.path.exists(new_file):
+                                    raise Exception(
+                                        "Invalid resource. Shouldn't overwrite existing file")
+                                os.rename(str(sub_file), new_file)
+                            shutil.rmtree(str(fpath))
+                    # we need to look in the folder and find the resource
+                    files = [
+                        fpath for fpath in Path(resource_base_path).iterdir()
+                        if fpath.is_file() and not fpath.name.startswith(".")
+                    ]
+                    if len(files) == 0:
+                        raise Exception(f"The compressed resource {resource_id} is empty")
+                    elif len(files) != 1:
+                        # this indicates the shapefile
+                        files = [f for f in files if f.name.endswith(".shp")]
+                        if len(files) != 1:
+                            raise Exception(
+                                f"Cannot handle compressed resource {resource_id} because it has more than one resource"
+                            )
+                        resource_path = str(files[0])
+                    else:
+                        resource_path = str(files[0])
+                else:
+                    subprocess.check_call(f'wget {resource_url} -O {resource_base_path}',
+                                          shell=True)
+                    resource_path = resource_base_path
+                n_download += 1
+
+            self.resources[resource_id] = resource_path
 
         self.logger.info(f"Download Complete. Skip {n_skip} and download {n_download} resources")
 
