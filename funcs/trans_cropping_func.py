@@ -30,9 +30,8 @@ class CroppingTransFunc(IFunc):
 
     outputs = {"array": ArgType.DataSet(None)}
 
-    def __init__(
-            self, variable_name: str, dataset, shape, xmin: int, ymin: int, xmax: int, ymax: int
-    ):
+    def __init__(self, variable_name: str, dataset, shape, xmin: int, ymin: int, xmax: int,
+                 ymax: int):
         self.variable_name = variable_name
         self.dataset = dataset
         self.shape_sm = shape
@@ -51,7 +50,7 @@ class CroppingTransFunc(IFunc):
 
     @staticmethod
     def shape_array_to_shapefile(data, fname):
-        if data[0].shape[0] == 2:
+        if len(data[0]) == 2:
             shape_type = 'Polygon'
         else:
             shape_type = 'MultiPolygon'
@@ -67,12 +66,7 @@ class CroppingTransFunc(IFunc):
                 'name': 'TempCroppingPolygon'
             }
         }
-        schema = {
-            'geometry': shape_type,
-            'properties': {
-                'name': 'str'
-            }
-        }
+        schema = {'geometry': shape_type, 'properties': {'name': 'str'}}
         with fiona.open(fname, 'w', crs=epsg, driver=driver, schema=schema) as shapefile:
             shapefile.write(polygon)
 
@@ -89,13 +83,16 @@ class CroppingTransFunc(IFunc):
 
         rasters = []
 
-        for c in sm.c(mint_ns.Variable).filter(outputs.FCondition(mint_ns.standardName, "==", variable_name)):
+        for c in sm.c(mint_ns.Variable).filter(
+                outputs.FCondition(mint_ns.standardName, "==", variable_name)):
             for raster_id, sc in c.group_by(mint_geo_ns.raster):
-                data = sc.p(rdf_ns.value).as_ndarray([sc.p(mint_geo_ns.lat), sc.p(mint_geo_ns.long)])
+                data = sc.p(rdf_ns.value).as_ndarray(
+                    [sc.p(mint_geo_ns.lat), sc.p(mint_geo_ns.long)])
                 gt_info = sm.get_record_by_id(raster_id)
                 gt = GeoTransform(x_0=gt_info.s(mint_geo_ns.x_0),
                                   y_0=gt_info.s(mint_geo_ns.y_0),
-                                  dx=gt_info.s(mint_geo_ns.dx), dy=gt_info.s(mint_geo_ns.dy))
+                                  dx=gt_info.s(mint_geo_ns.dx),
+                                  dy=gt_info.s(mint_geo_ns.dy))
                 raster = Raster(data.data, gt, int(gt_info.s(mint_geo_ns.epsg)),
                                 data.nodata.value if data.nodata is not None else None)
 
@@ -135,7 +132,8 @@ class CroppingTransFunc(IFunc):
         for r in self.rasters:
             for s in self.shapes:
                 CroppingTransFunc.shape_array_to_shapefile(s, tempfile_name)
-                cropped_raster = r.crop(vector_file=tempfile_name, resampling_algo=ReSample.BILINEAR)
+                cropped_raster = r.crop(vector_file=tempfile_name,
+                                        resampling_algo=ReSample.BILINEAR)
                 place = s[2]
                 self.results.append(raster_to_dataset(cropped_raster, place))
 
