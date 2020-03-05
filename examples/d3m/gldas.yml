@@ -2,13 +2,6 @@ version: "2"
 resources: netcdf4
 preprocessing:
   - type: pmap
-    path: $.@.MAP_PROJECTION
-    code: |
-      if value == "EQUIDISTANT CYLINDRICAL":
-        # https://epsg.io/32663 this is different to https://epsg.io/4326
-        return 32663
-      raise NotImplementedError()
-  - type: pmap
     path: $.@.SOUTH_WEST_CORNER_LAT
     code: |
       dy = context.get_value(["@", "DY"])
@@ -30,7 +23,6 @@ preprocessing:
 attributes:
   latitude: $.lat.data[:]
   longitude: $.lon.data[:]
-  projection: $.@.MAP_PROJECTION
   dx: $.@.DX
   dy: $.@.DY
   x_0: $.@.SOUTH_WEST_CORNER_LON
@@ -156,22 +148,18 @@ alignments:
     aligned_dims: []
   - type: dimension
     source: Rainf_f_tavg
-    target: projection
-    aligned_dims: []
-  - type: dimension
-    source: projection
     target: x_0
     aligned_dims: []
   - type: dimension
-    source: projection
+    source: Rainf_f_tavg
     target: y_0
     aligned_dims: []
   - type: dimension
-    source: projection
+    source: Rainf_f_tavg
     target: dx
     aligned_dims: []
   - type: dimension
-    source: projection
+    source: Rainf_f_tavg
     target: dy
     aligned_dims: []
   # - type: dimension
@@ -719,12 +707,12 @@ semantic_model:
 #       - [mint-geo:raster, mint-geo:Raster:1]
   mint-geo:Raster:1:
     properties:
-      - [mint-geo:epsg, projection]
       - [mint-geo:x_0, x_0]
       - [mint-geo:y_0, y_0]
       - [mint-geo:dx, dx]
       - [mint-geo:dy, dy]
     static_properties:
+      - [mint-geo:epsg, 4326]
       - [mint-geo:x_slope, 0]
       - [mint-geo:y_slope, 0]
   prefixes:
