@@ -18,12 +18,12 @@ y_max = -65.96
 
 
 def use_bb(variable_name, dataset):
-    func = CroppingTransFunc(variable_name, dataset, None, x_min, y_min, x_max, y_max)
+    func = CroppingTransFunc(variable_name, dataset, xmin=x_min, ymin=y_min, xmax=x_max, ymax=y_max)
     return func.exec()
 
 
 def use_shp_model(variable_name, dataset, shape_dataset):
-    func = CroppingTransFunc(variable_name, dataset, shape_dataset, 0, 0, 0, 0)
+    func = CroppingTransFunc(variable_name, dataset, shape=shape_dataset)
     return func.exec()
 
 

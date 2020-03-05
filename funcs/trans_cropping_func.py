@@ -29,8 +29,8 @@ class CroppingTransFunc(IFunc):
 
     outputs = {"data": ArgType.DataSet(None)}
 
-    def __init__(self, variable_name: str, dataset, shape, xmin: int, ymin: int, xmax: int,
-                 ymax: int):
+    def __init__(self, variable_name: str, dataset, shape=None, xmin=0, ymin=0, xmax=0,
+                 ymax=0):
         self.variable_name = variable_name
         self.dataset = dataset
         self.shape_sm = shape
@@ -49,7 +49,8 @@ class CroppingTransFunc(IFunc):
 
     @staticmethod
     def shape_array_to_shapefile(data, fname):
-        if len(data[0]) == 2:
+        polygon = data[0]
+        if isinstance(polygon[0][0][0], (int, float)):
             shape_type = 'Polygon'
         else:
             shape_type = 'MultiPolygon'
