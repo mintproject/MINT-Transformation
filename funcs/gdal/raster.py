@@ -114,7 +114,7 @@ class Raster:
              x_res: float = None,
              y_res: float = None,
              resampling_algo: ReSample = None,
-             touch_cutline: bool = True) -> 'Raster':
+             touch_cutline: bool = False) -> 'Raster':
         """
         @param x_res, y_res None will use original resolution
         """

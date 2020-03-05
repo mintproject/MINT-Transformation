@@ -2,12 +2,19 @@ version: "2"
 resources: netcdf4
 attributes:
   variable:
-    path: $.land_surface_air__temperature.data[0][:][:]
+    path: $.variable.data[0][:][:]
     missing_values: [-9999]
   latitude: $.lat.data[:]
   longitude: $.long.data[:]
   timestamp: $.time.data[0]
-  standard_name: $.land_surface_air__temperature.@.standard_name
+  standard_name: $.variable.@.standard_name
+  dx: $.@.dx
+  dy: $.@.dy
+  x_0: $.@.x_0
+  y_0: $.@.y_0
+  x_slope: $.@.x_slope
+  y_slope: $.@.y_slope
+  epsg: $.@.epsg
 alignments:
   - type: dimension
     value: variable:3 <-> latitude:2
@@ -21,6 +28,34 @@ alignments:
     source: variable
     target: standard_name
     aligned_dims: []
+  - type: dimension
+    source: variable
+    target: dx
+    aligned_dims: []
+  - type: dimension
+    source: variable
+    target: dy
+    aligned_dims: []
+  - type: dimension
+    source: variable
+    target: x_0
+    aligned_dims: []
+  - type: dimension
+    source: variable
+    target: y_0
+    aligned_dims: []
+  - type: dimension
+    source: variable
+    target: x_slope
+    aligned_dims: []
+  - type: dimension
+    source: variable
+    target: y_slope
+    aligned_dims: []
+  - type: dimension
+    source: variable
+    target: epsg
+    aligned_dims: []
 semantic_model:
   mint:Variable:1:
     properties:
@@ -32,14 +67,14 @@ semantic_model:
     links:
       - [mint-geo:raster, mint-geo:Raster:1]
   mint-geo:Raster:1:
-    static_properties:
-      - [mint-geo:epsg, 4326]
-      - [mint-geo:x_slope, 0]
-      - [mint-geo:y_slope, 0]
-      - [mint-geo:x_0, -180]
-      - [mint-geo:y_0, -90]
-      - [mint-geo:dx, 0.1]
-      - [mint-geo:dy, 0.1]
+    properties:
+      - [mint-geo:epsg, epsg]
+      - [mint-geo:x_slope, x_slope]
+      - [mint-geo:y_slope, y_slope]
+      - [mint-geo:x_0, x_0]
+      - [mint-geo:y_0, y_0]
+      - [mint-geo:dx, dx]
+      - [mint-geo:dy, dy]
   prefixes:
     mint: https://mint.isi.edu/
     # do we need this? our latitude/longitude don't have CRS

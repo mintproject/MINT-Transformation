@@ -77,7 +77,7 @@ semantic_model:
       - ["mint-geo:dy", "gt_dy"]
       - ["mint-geo:epsg", "gt_epsg"]
       - ["mint-geo:x_slope", "gt_x_slope"]
-      - ["mint-geo:y_shope", "gt_y_slope"]
+      - ["mint-geo:y_slope", "gt_y_slope"]
   prefixes:
     mint: "https://mint.isi.edu/"
     mint-geo: "https://mint.isi.edu/geo"

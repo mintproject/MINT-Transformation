@@ -50,7 +50,8 @@ class CroppingTransFunc(IFunc):
 
     @staticmethod
     def shape_array_to_shapefile(data, fname):
-        if len(data[0]) == 2:
+        polygon = data[0]
+        if isinstance(polygon[0][0][0], (int, float)):
             shape_type = 'Polygon'
         else:
             shape_type = 'MultiPolygon'
@@ -60,7 +61,7 @@ class CroppingTransFunc(IFunc):
         polygon = {
             'geometry': {
                 'type': shape_type,
-                'coordinates': data[0]
+                'coordinates': polygon
             },
             'properties': {
                 'name': 'TempCroppingPolygon'
