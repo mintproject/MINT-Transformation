@@ -9,7 +9,7 @@ import ujson as json
 from drepr.models import SemanticModel, Node, LiteralNode, DataNode
 
 from dtran.argtype import ArgType
-from dtran.backend import SharedBackend
+from dtran.backend import ShardedBackend
 from dtran.ifunc import IFunc, IFuncType
 from dtran.metadata import Metadata
 
@@ -30,19 +30,18 @@ class CSVWriteFunc(IFunc):
         "output_file": "example.csv",
     }
 
-    def __init__(self, data: SharedBackend, output_file: Union[str, Path]):
+    def __init__(self, data: ShardedBackend, output_file: Union[str, Path]):
 
         self.data = data
         self.output_file = Path(output_file)
-        self.filter_func = IFunc.filter_func(filter)
 
-        self.sm: SemanticModel = self.data._get_sm()
+        self.sm: SemanticModel = self.data.get_sm()
 
     def exec(self) -> dict:
         data_tuples, attr_names = self.tabularize_data()
-        if self.output_file.endswith("csv"):
+        if self.output_file.suffix == ".csv":
             CSVWriteFunc._dump_to_csv(data_tuples, attr_names, self.output_file)
-        elif self.output_file.endswith("json"):
+        elif self.output_file.suffix == ".json":
             CSVWriteFunc._dump_to_json(data_tuples, attr_names, self.output_file)
         return {"output_file": str(self.output_file)}
 
@@ -52,8 +51,8 @@ class CSVWriteFunc(IFunc):
     @staticmethod
     def _dump_to_csv(tabular_rows, attr_names, file_path):
         with open(file_path, "w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=attr_names)
-            writer.writeheader()
+            writer = csv.writer(f)
+            writer.writerow(attr_names)
             writer.writerows(tabular_rows)
 
     @staticmethod
@@ -75,7 +74,7 @@ class CSVWriteFunc(IFunc):
                 else:
                     attr_vals = [None] * len(rtuples)
                 rtuples = rtuples * len(attr2vals[attr])
-                rtuples = [x[0] + [x[1]] for x in zip(rtuples, attr_vals)]
+                rtuples = [x[0] + x[1] for x in zip(rtuples, attr_vals)]
 
             data_tuples.extend(rtuples)
 
@@ -84,7 +83,7 @@ class CSVWriteFunc(IFunc):
     def _find_main_class(self):
         for class_ in self.sm.iter_class_nodes():
             is_main_class = True
-            for _ in self.sm.iter_incoming_edges():
+            for _ in self.sm.iter_incoming_edges(class_.node_id):
                 is_main_class = False
                 break
             if is_main_class:
@@ -115,12 +114,14 @@ class CSVWriteFunc(IFunc):
                         node, visited + [child_node]
                     )
                     for record in self.data.cid(node.node_id).iter_records():
-                        for attr in child2tuples[record.m(predicate_url).id]:
-                            id2attrs[record.id][
-                                predicate_url + "---" + attr
-                            ] = child2tuples[record.m(predicate_url).id][attr]
+                        for rid in record.m(predicate_url):
+                            record = self.data.get_record_by_id(rid)
+                            for attr in child2tuples[record.id]:
+                                id2attrs[record.id][
+                                    predicate_url + "---" + attr
+                                ] = child2tuples[record.m(predicate_url).id][attr]
 
-                            attrs.append(predicate_url + "---" + attr)
+                                attrs.append(predicate_url + "---" + attr)
 
         return id2attrs, attrs
 

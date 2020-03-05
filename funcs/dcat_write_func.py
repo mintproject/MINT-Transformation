@@ -5,9 +5,9 @@ from pathlib import Path
 from typing import Union
 
 import ujson as json
-from dcatreg.dcat_api import DCatAPI
 
 from dtran.argtype import ArgType
+from dtran.dcat.api import DCatAPI
 from dtran.ifunc import IFunc, IFuncType
 
 

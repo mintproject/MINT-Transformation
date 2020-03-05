@@ -20,15 +20,33 @@ class DCatAPI:
             DCatAPI.instance = DCatAPI(dcat_url)
         return DCatAPI.instance
 
-    def find_resources_by_dataset_id(self, dataset_id: str):
+    def find_resources_by_dataset_id(
+        self,
+        dataset_id: str,
+        start_time: datetime = None,
+        end_time: datetime = None,
+        limit: int = 100000,
+    ):
+        """start_time and end_time is inclusive"""
         request_headers = {
             "Content-Type": "application/json",
             "X-Api-Key": self.get_api_key(),
         }
+        query = {
+            "dataset_id": dataset_id,
+            "limit": limit,
+        }
+        if start_time is not None or end_time is not None:
+            query["filter"] = {}
+            if start_time is not None:
+                query["filter"]["start_time__gte"] = start_time.isoformat()
+            if end_time is not None:
+                query["filter"]["end_time__lte"] = end_time.isoformat()
+
         resp = requests.post(
             f"{self.dcat_url}/datasets/dataset_resources",
             headers=request_headers,
-            json={"dataset_id": dataset_id},
+            json=query,
         )
         assert resp.status_code == 200, resp.text
         return resp.json()["resources"]

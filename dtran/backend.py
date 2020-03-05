@@ -20,7 +20,7 @@ class ShardedClassID(str):
         self.idx = idx
 
 
-class SharedBackend(BaseOutputSM):
+class ShardedBackend(BaseOutputSM):
     def __init__(self, n_chunks: int):
         # list of datasets in the reverse order
         self.n_chunks = n_chunks
