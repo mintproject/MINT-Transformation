@@ -7,8 +7,8 @@ varname = "atmosphere_water__rainfall_volume_flux"
 precipitation_dcat_id = "ea0e86f3-9470-4e7e-a581-df85b4a7075d"
 shape_dcat_id = "74e6f707-d5e9-4cbd-ae26-16ffa21a1d84"
 
-start = datetime(2019, 8, 1)
-end = datetime(2019, 9, 30)
+start = datetime(2018, 1, 1)
+end = datetime(2018, 9, 30)
 
 if __name__ == "__main__":
     precipitation_data_reader = DcatReadFunc(precipitation_dcat_id, start_time=start, end_time=end)
@@ -25,4 +25,3 @@ if __name__ == "__main__":
     cropped_data = crop_func.exec()
 
     # TODO Provide explicit internal data printout for Xinting's testing
-
