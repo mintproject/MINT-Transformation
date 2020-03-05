@@ -21,7 +21,7 @@ interface InputSelectProps {
 
 interface InputSelectState {
   // FIXME: hardcode all option for this specific adapter
-  input1Selected: string
+  groupBySelected: string
 }
 
 @inject((stores: IStore) => ({
@@ -36,27 +36,27 @@ export class InputSelectComponent extends React.Component<
 > {
   state: InputSelectState = {
     // hovered: false
-    input1Selected: ""
+    groupBySelected: ""
   }
 
-  handleInput1Change1 = () => {
+  handleGroupBySelectChange = () => {
     console.log("Should set graph node content!")
   }
 
-  handleInput1Change2 = () => {
+  handleGroupByValueChange = () => {
     console.log("Should set graph node content!")
   }
 
-  handleInput2Change = () => {
+  handleAggregationChange = () => {
     console.log("Should set graph node content!")
   }
 
   render() {
     const { selectType } = this.props;
-    if (selectType === "input1") {
+    if (selectType === "groupby") {
       return (<Row>
         <Col span={4}>
-          <Select defaultValue="lucy" style={{ width: 120 }} onChange={this.handleInput1Change1}>
+          <Select defaultValue="lucy" style={{ width: 120 }} onChange={this.handleGroupBySelectChange}>
             <Option value="jack">Jack</Option>
             <Option value="lucy">Lucy</Option>
             <Option value="disabled" disabled>
@@ -66,7 +66,7 @@ export class InputSelectComponent extends React.Component<
           </Select>
         </Col>
         <Col span={4}>
-          {_.isEmpty(this.state.input1Selected) ? null : <Select defaultValue="lucy" style={{ width: 120 }} onChange={this.handleInput1Change2}>
+          {_.isEmpty(this.state.groupBySelected) ? null : <Select defaultValue="lucy" style={{ width: 120 }} onChange={this.handleGroupByValueChange}>
             <Option value="jack">Jack</Option>
             <Option value="lucy">Lucy</Option>
             <Option value="disabled" disabled>
@@ -76,8 +76,8 @@ export class InputSelectComponent extends React.Component<
           </Select>}
         </Col>
       </Row>);
-    } else if (selectType === "input2") {
-      return (<Select defaultValue="lucy" style={{ width: 120 }} onChange={this.handleInput2Change}>
+    } else if (selectType === "aggregation") {
+      return (<Select defaultValue="lucy" style={{ width: 120 }} onChange={this.handleAggregationChange}>
         <Option value="jack">Jack</Option>
         <Option value="lucy">Lucy</Option>
         <Option value="disabled" disabled>
