@@ -2,10 +2,12 @@ from funcs.readers.dcat_read_func import *
 from funcs.trans_cropping_func import CroppingTransFunc
 from datetime import datetime
 
-precipitation_dcat_id = "ea0e86f3-9470-4e7e-a581-df85b4a7075d"
-shape_dcat_id = "90dc3def-18bf-4dbc-971f-fb428240d7d7"
+varname = "atmosphere_water__rainfall_volume_flux"
 
-start = datetime(2019, 9, 1)
+precipitation_dcat_id = "ea0e86f3-9470-4e7e-a581-df85b4a7075d"
+shape_dcat_id = "74e6f707-d5e9-4cbd-ae26-16ffa21a1d84"
+
+start = datetime(2019, 8, 1)
 end = datetime(2019, 9, 30)
 
 if __name__ == "__main__":
@@ -19,4 +21,8 @@ if __name__ == "__main__":
     precipitation_dataset = precipitation_data_reader.exec()
     shape_dataset = shape_data_reader.exec()
 
+    crop_func = CroppingTransFunc(varname, precipitation_dataset['data'], shape_dataset['data'])
+    cropped_data = crop_func.exec()
+
+    # TODO Provide explicit internal data printout for Xinting's testing
 
