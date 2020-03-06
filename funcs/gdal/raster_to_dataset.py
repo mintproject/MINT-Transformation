@@ -3,14 +3,18 @@ from funcs.gdal.raster import *
 from drepr import DRepr, outputs
 from drepr.executors.readers.reader_container import ReaderContainer
 from drepr.executors.readers.np_dict import NPDictReader
-import copy
+import copy, uuid
 
 raster_model = {
     "version": "2",
     "resources": "container",
     "attributes": {
-        "variable": "$.variable[:][:]",
-        "nodata": "$.nodata",
+        "variable": {
+            "path": "$.variable[:][:]",
+            "missing_values": []
+        },
+        "lat": "$.lat[:]",
+        "long": "$.long[:]",
         "timestamp": "$.timestamp",
         "gt_x_0": "$.gt_x_0",
         "gt_y_0": "$.gt_y_0",
@@ -19,16 +23,21 @@ raster_model = {
         "gt_epsg": "$.gt_epsg",
         "gt_x_slope": "$.gt_x_slope",
         "gt_y_slope": "$.gt_y_slope",
-
     },
     "alignments": [
+                      {"type": "dimension", "value": "variable:1 <-> lat:1"},
+                      {"type": "dimension", "value": "variable:2 <-> long:1"}
+                  ] +
+        [
         {"type": "dimension", "source": "variable", "target": x, "aligned_dims": []}
-        for x in ["nodata", "timestamp", "gt_x_0", "gt_y_0", "gt_dx", "gt_dy", "gt_epsg", "gt_x_slope", "gt_y_slope"]
+        for x in ["timestamp", "gt_x_0", "gt_y_0", "gt_dx", "gt_dy", "gt_epsg", "gt_x_slope", "gt_y_slope"]
     ],
     "semantic_model": {
         "mint:Variable:1": {
             "properties": [
                 ("rdf:value", "variable"),
+                ("mint-geo:lat", "lat"),
+                ("mint-geo:long", "long"),
                 ("mint:timestamp", "timestamp")
             ],
             "links": [
@@ -86,6 +95,13 @@ def raster_to_dataset(raster: Raster, inject_class_id: Callable[[str], str] = No
     else:
         place_dict = {}
     model = _update_model(place_dict)
+    if isinstance(raster.nodata, (float, np.float32, np.float64)):
+        model['attributes']['variable']['missing_values'].append(float(raster.nodata))
+    elif isinstance(raster.nodata, (int, np.int32, np.int64)):
+        model['attributes']['variable']['missing_values'].append(int(raster.nodata))
+    else:
+        model['attributes']['variable']['missing_values'].append(raster.nodata)
+
     dsmodel = DRepr.parse(model)
     alignment = {
         "variable": raster.data,
@@ -104,8 +120,8 @@ def raster_to_dataset(raster: Raster, inject_class_id: Callable[[str], str] = No
             if f"mint:{pp}" in place_dict:
                 alignment[f"place_{pp}"] = place.s(f"mint:{pp}")
     reader = NPDictReader(alignment)
-    temp_file = f"resource_temp"
+    temp_file = f"resource_{str(uuid.uuid4())}"
     ReaderContainer.get_instance().set(temp_file, reader)
     new_sm = outputs.ArrayBackend.from_drepr(dsmodel, temp_file, inject_class_id)
-
+    ReaderContainer.get_instance().delete(temp_file)
     return new_sm

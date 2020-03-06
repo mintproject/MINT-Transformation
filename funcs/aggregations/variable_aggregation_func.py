@@ -75,8 +75,8 @@ class VariableAggregationFunc(IFunc):
     friendly_name: str = "Aggregation Function"
     inputs = {
         "dataset": ArgType.DataSet(None),
-        "group_bys": ArgType.VarAggGroupBy,
-        "operator": ArgType.VarAggFunc
+        "group_by": ArgType.VarAggGroupBy,
+        "function": ArgType.VarAggFunc
     }
     outputs = {"data": ArgType.DataSet(None)}
     example = {
@@ -85,10 +85,10 @@ class VariableAggregationFunc(IFunc):
     }
     logger = logging.getLogger(__name__)
 
-    def __init__(self, dataset, group_by, operator):
+    def __init__(self, dataset, group_by, function):
         self.dataset = dataset
         self.group_by = GroupBy([GroupByProp(**x) for x in group_by])
-        self.operator = AggregationFunc(operator)
+        self.function = AggregationFunc(function)
 
     def exec(self) -> dict:
         output = {}
@@ -97,9 +97,9 @@ class VariableAggregationFunc(IFunc):
         if isinstance(self.dataset, ShardedBackend):
             # check if the data is partition
             for dataset in reversed(self.dataset.datasets):
-                values += VariableAggregationFunc._aggregate(dataset, self.group_by, self.operator)
+                values += VariableAggregationFunc._aggregate(dataset, self.group_by, self.function)
         else:
-            values = VariableAggregationFunc._aggregate(self.dataset, self.group_by, self.operator)
+            values = VariableAggregationFunc._aggregate(self.dataset, self.group_by, self.function)
 
         if len(values) > 1:
             ds = ShardedBackend(len(values))

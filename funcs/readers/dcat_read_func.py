@@ -246,6 +246,7 @@ class DCatAPI:
             headers=request_headers,
             json=query,
         )
+
         assert resp.status_code == 200, resp.text
         return resp.json()["resources"]
 
