@@ -1,14 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from datetime import datetime
-
+from typing import *
 import ujson
 from dateutil import parser
 
 
-def dataset(val: Any, preference: str = None, input_ref: str = None) -> 'ArgType':
+def dataset(val: Any, optional=False, preference: str = None, input_ref: str = None) -> 'ArgType':
     assert preference is None or preference == 'graph' or preference == 'array', 'preference only accepts values "graph" or "array"'
-    return ArgType("dataset", val=val, preference=preference, input_ref=input_ref)
+    return ArgType("dataset", optional=Optional, val=val, preference=preference, input_ref=input_ref)
 
 
 class ArgType(object):
