@@ -19,7 +19,7 @@ class CroppingTransFunc(IFunc):
     inputs = {
         "variable_name": ArgType.String,
         "dataset": ArgType.DataSet(None),
-        "shape": ArgType.DataSet(None),
+        "shape": ArgType.DataSet(None, optional=True),
         "xmin": ArgType.Number(optional=True),
         "ymin": ArgType.Number(optional=True),
         "xmax": ArgType.Number(optional=True),
@@ -100,6 +100,11 @@ class CroppingTransFunc(IFunc):
         for c in sm.c(mint_ns.Variable).filter(
                 outputs.FCondition(mint_ns.standardName, "==", variable_name)):
             for raster_id, sc in c.group_by(mint_geo_ns.raster):
+                if sc.p(mint_ns.timestamp) is not None:
+                    timestamp = next(sc.iter_records()).s(mint_ns.timestamp)
+                else:
+                    timestamp = None
+
                 data = sc.p(rdf_ns.value).as_ndarray(
                     [sc.p(mint_geo_ns.lat), sc.p(mint_geo_ns.long)])
                 gt_info = sm.get_record_by_id(raster_id)
@@ -115,8 +120,7 @@ class CroppingTransFunc(IFunc):
                     int(gt_info.s(mint_geo_ns.epsg)),
                     data.nodata.value if data.nodata is not None else None,
                 )
-
-                rasters.append(raster)
+                rasters.append({"raster": raster, "timestamp": timestamp})
 
         return rasters
 
@@ -142,8 +146,8 @@ class CroppingTransFunc(IFunc):
 
         self.results = ShardedBackend(len(self.rasters))
         for r in self.rasters:
-            cropped_raster = r.crop(bounds=bb, resampling_algo=ReSample.BILINEAR)
-            self.results.add(raster_to_dataset(cropped_raster, self.results.inject_class_id))
+            cropped_raster = r["raster"].crop(bounds=bb, resampling_algo=ReSample.BILINEAR)
+            self.results.add(raster_to_dataset(cropped_raster, self.results.inject_class_id, timestamp=r["timestamp"]))
 
     def _crop_shape_dataset(self):
         self.rasters = CroppingTransFunc.extract_raster(self.dataset, self.variable_name)
@@ -154,12 +158,13 @@ class CroppingTransFunc(IFunc):
             for shape in self.shapes:
                 tempfile_name = f"/tmp/{uuid.uuid1()}.shp"
                 CroppingTransFunc.shape_array_to_shapefile(shape, tempfile_name)
-                cropped_raster = r.crop(vector_file=tempfile_name,
-                                        resampling_algo=ReSample.BILINEAR)
+                cropped_raster = r["raster"].crop(
+                    vector_file=tempfile_name, resampling_algo=ReSample.BILINEAR
+                )
                 os.remove(tempfile_name)
                 place = shape['place']
-                self.results.add(
-                    raster_to_dataset(cropped_raster, self.results.inject_class_id, place))
+                self.results.add(raster_to_dataset(cropped_raster, self.results.inject_class_id, place=place,
+                                                   timestamp=r["timestamp"]))
 
     def crop_shape_shardedbackend(self):
         # TODO Stub for sharded backend later
