@@ -1,5 +1,5 @@
 from typing import *
-from extra_libs.raster.raster import *
+from funcs.gdal.raster import *
 from drepr import DRepr, outputs
 from drepr.executors.readers.reader_container import ReaderContainer
 from drepr.executors.readers.np_dict import NPDictReader
