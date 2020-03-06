@@ -5,7 +5,7 @@ import os
 import uuid
 from dtran.argtype import ArgType
 from dtran.backend import ShardedBackend
-from dtran.ifunc import IFunc
+from dtran.ifunc import IFunc, IFuncType
 from drepr import outputs
 from funcs.gdal.raster import Raster, GeoTransform, BoundingBox, ReSample
 from funcs.gdal.raster_to_dataset import raster_to_dataset
@@ -18,15 +18,25 @@ class CroppingTransFunc(IFunc):
 
     inputs = {
         "variable_name": ArgType.String,
-        "dataset": ArgType.DataSet,
-        "shape": ArgType.DataSet,
-        "xmin": ArgType.Number,
-        "ymin": ArgType.Number,
-        "xmax": ArgType.Number,
-        "ymax": ArgType.Number,
+        "dataset": ArgType.DataSet(None),
+        "shape": ArgType.DataSet(None),
+        "xmin": ArgType.Number(optional=True),
+        "ymin": ArgType.Number(optional=True),
+        "xmax": ArgType.Number(optional=True),
+        "ymax": ArgType.Number(optional=True),
     }
 
     outputs = {"data": ArgType.DataSet(None)}
+
+    func_type = IFuncType.CROPPING_TRANS
+    friendly_name: str = "Cropping function"
+    example = {
+        "variable_name": "",
+        "xmin": "",
+        "ymin": "",
+        "xmax": "",
+        "ymax": "",
+    }
 
     def __init__(
             self, variable_name: str, dataset, shape=None, xmin=0, ymin=0, xmax=0, ymax=0

@@ -38,7 +38,12 @@ class DcatReadFunc(IFunc):
         "use_cache": ArgType.Boolean(optional=True),
     }
     outputs = {"data": ArgType.DataSet(None)}
-    example = {"dataset_id": "05c43c58-ed42-4830-9b1f-f01059c4b96f"}
+    example = {
+        "dataset_id": "ea0e86f3-9470-4e7e-a581-df85b4a7075d",
+        "start_time": "2020-03-02T12:30:55",
+        "end_time": "2020-03-02T12:30:55",
+        "use_cache": "True"
+    }
     logger = logging.getLogger(__name__)
 
     def __init__(

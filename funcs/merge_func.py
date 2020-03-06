@@ -9,8 +9,8 @@ class MergeFunc(IFunc):
     description = ''' A transformation adapter.
     Merges two graphs into one.
     '''
-    inputs = {"data1": ArgType.DataSet, "data2": ArgType.DataSet}
-    outputs = {"data": ArgType.DataSet}
+    inputs = {"data1": ArgType.DataSet(None), "data2": ArgType.DataSet(None)}
+    outputs = {"data": ArgType.DataSet(None)}
     friendly_name: str = "Merge Two Graphs Into One"
     func_type = IFuncType.INTERMEDIATE
 

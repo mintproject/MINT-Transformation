@@ -29,6 +29,7 @@ class IFuncType(Enum):
     SPATIAL_TRANS = "Spatial Transformation"
     UNIT_TRANS = "Unit Conversion Transformation"
     MODEL_TRANS = "Model-specific Transformation"
+    CROPPING_TRANS = "Cropping Transformation"
     INTERMEDIATE = "Other Transformation"
 
 
