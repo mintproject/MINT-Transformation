@@ -29,3 +29,4 @@ dependencies:
       - matplotlib
       - fiona
       - python-dotenv
+      - peewee

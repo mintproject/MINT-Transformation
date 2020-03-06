@@ -47,11 +47,11 @@ class DcatReadFunc(IFunc):
     logger = logging.getLogger(__name__)
 
     def __init__(
-        self,
-        dataset_id: str,
-        start_time: datetime = None,
-        end_time: datetime = None,
-        use_cache: bool = True,
+            self,
+            dataset_id: str,
+            start_time: datetime = None,
+            end_time: datetime = None,
+            use_cache: bool = True,
     ):
         self.dataset_id = dataset_id
         dataset_result = DCatAPI.get_instance(DCAT_URL).find_dataset_by_id(dataset_id)
@@ -59,14 +59,12 @@ class DcatReadFunc(IFunc):
         assert ("resource_repr" in dataset_result["metadata"]) or (
             "dataset_repr" in dataset_result["metadata"]
         ), "Dataset is missing both 'resource_repr' and 'dataset_repr'"
-        assert not (
-            ("resource_repr" in dataset_result["metadata"])
-            and ("dataset_repr" in dataset_result["metadata"])
-        ), "Dataset has both 'resource_repr' and 'dataset_repr'"
+        assert not (("resource_repr" in dataset_result["metadata"]) and
+                    ("dataset_repr" in dataset_result["metadata"])
+                    ), "Dataset has both 'resource_repr' and 'dataset_repr'"
 
         resource_results = DCatAPI.get_instance(DCAT_URL).find_resources_by_dataset_id(
-            dataset_id, start_time, end_time
-        )
+            dataset_id, start_time, end_time)
 
         resource_ids = {}
         resource_types = {}
@@ -74,18 +72,11 @@ class DcatReadFunc(IFunc):
             self.repr = DRepr.parse(dataset_result["metadata"]["resource_repr"])
             for resource in resource_results:
                 if start_time or end_time:
-                    temporal_coverage = resource["resource_metadata"][
-                        "temporal_coverage"
-                    ]
-                    temporal_coverage["start_time"] = parser.parse(
-                        temporal_coverage["start_time"]
-                    )
-                    temporal_coverage["end_time"] = parser.parse(
-                        temporal_coverage["end_time"]
-                    )
+                    temporal_coverage = resource["resource_metadata"]["temporal_coverage"]
+                    temporal_coverage["start_time"] = parser.parse(temporal_coverage["start_time"])
+                    temporal_coverage["end_time"] = parser.parse(temporal_coverage["end_time"])
                     if (start_time and start_time > temporal_coverage["end_time"]) or (
-                        end_time and end_time < temporal_coverage["start_time"]
-                    ):
+                            end_time and end_time < temporal_coverage["start_time"]):
                         continue
 
                 resource_ids[resource["resource_id"]] = resource["resource_data_url"]
@@ -94,24 +85,18 @@ class DcatReadFunc(IFunc):
         else:
             # TODO: fix me!!
             assert len(resource_results) == 1
-            resource_ids[resource_results[0]["resource_id"]] = resource_results[0][
-                "resource_data_url"
-            ]
-            resource_types[resource_results[0]["resource_id"]] = resource_results[0][
-                "resource_type"
-            ]
+            resource_ids[resource_results[0]
+                         ["resource_id"]] = resource_results[0]["resource_data_url"]
+            resource_types[resource_results[0]
+                           ["resource_id"]] = resource_results[0]["resource_type"]
             self.repr = DRepr.parse(dataset_result["metadata"]["dataset_repr"])
             self.repr_type = "dataset_repr"
 
         if dataset_id == "ea0e86f3-9470-4e7e-a581-df85b4a7075d":
-            self.repr = DRepr.parse_from_file(
-                os.environ["HOME_DIR"] + "/examples/d3m/gpm.yml"
-            )
+            self.repr = DRepr.parse_from_file(os.environ["HOME_DIR"] + "/examples/d3m/gpm.yml")
             self.logger.info("Overwrite GPM")
         elif dataset_id == "5babae3f-c468-4e01-862e-8b201468e3b5":
-            self.repr = DRepr.parse_from_file(
-                os.environ["HOME_DIR"] + "/examples/d3m/gldas.yml"
-            )
+            self.repr = DRepr.parse_from_file(os.environ["HOME_DIR"] + "/examples/d3m/gldas.yml")
             self.logger.info("Overwrite GLDAS")
 
         self.logger.info(f"Found key '{self.repr_type}'")
@@ -123,14 +108,10 @@ class DcatReadFunc(IFunc):
         for resource_id, resource_url in resource_ids.items():
             is_compressed_resource = resource_types[resource_id] in compression_formats
             if is_compressed_resource:
-                resource_base_path = os.path.join(
-                    DATA_CATALOG_DOWNLOAD_DIR, f"{resource_id}"
-                )
+                resource_base_path = os.path.join(DATA_CATALOG_DOWNLOAD_DIR, f"{resource_id}")
                 resource_exist = os.path.exists(resource_base_path)
             else:
-                resource_base_path = os.path.join(
-                    DATA_CATALOG_DOWNLOAD_DIR, f"{resource_id}.dat"
-                )
+                resource_base_path = os.path.join(DATA_CATALOG_DOWNLOAD_DIR, f"{resource_id}.dat")
                 resource_exist = os.path.exists(resource_base_path)
 
             if use_cache and resource_exist:
@@ -138,14 +119,11 @@ class DcatReadFunc(IFunc):
                 if is_compressed_resource:
                     # we need to look in the folder and find the resource
                     files = [
-                        fpath
-                        for fpath in Path(resource_base_path).iterdir()
+                        fpath for fpath in Path(resource_base_path).iterdir()
                         if fpath.is_file() and not fpath.name.startswith(".")
                     ]
                     if len(files) == 0:
-                        raise Exception(
-                            f"The compressed resource {resource_id} is empty"
-                        )
+                        raise Exception(f"The compressed resource {resource_id} is empty")
                     elif len(files) != 1:
                         # this indicates the shapefile
                         files = [f for f in files if f.name.endswith(".shp")]
@@ -177,20 +155,16 @@ class DcatReadFunc(IFunc):
                                 new_file = os.path.join(resource_base_path, fpath.name)
                                 if os.path.exists(new_file):
                                     raise Exception(
-                                        "Invalid resource. Shouldn't overwrite existing file"
-                                    )
+                                        "Invalid resource. Shouldn't overwrite existing file")
                                 os.rename(str(sub_file), new_file)
                             shutil.rmtree(str(fpath))
                     # we need to look in the folder and find the resource
                     files = [
-                        fpath
-                        for fpath in Path(resource_base_path).iterdir()
+                        fpath for fpath in Path(resource_base_path).iterdir()
                         if fpath.is_file() and not fpath.name.startswith(".")
                     ]
                     if len(files) == 0:
-                        raise Exception(
-                            f"The compressed resource {resource_id} is empty"
-                        )
+                        raise Exception(f"The compressed resource {resource_id} is empty")
                     elif len(files) != 1:
                         # this indicates the shapefile
                         files = [f for f in files if f.name.endswith(".shp")]
@@ -202,37 +176,27 @@ class DcatReadFunc(IFunc):
                     else:
                         resource_path = str(files[0])
                 else:
-                    subprocess.check_call(
-                        f"wget {resource_url} -O {resource_base_path}", shell=True
-                    )
+                    subprocess.check_call(f"wget {resource_url} -O {resource_base_path}",
+                                          shell=True)
                     resource_path = resource_base_path
                 n_download += 1
 
             self.resources[resource_id] = resource_path
 
-        self.logger.info(
-            f"Download Complete. Skip {n_skip} and download {n_download} resources"
-        )
+        self.logger.info(f"Download Complete. Skip {n_skip} and download {n_download} resources")
 
     def exec(self) -> dict:
-        if (
-            self.get_preference("data") is None
-            or self.get_preference("data") == "array"
-        ):
+        if (self.get_preference("data") is None or self.get_preference("data") == "array"):
             backend = ArrayBackend
         else:
             backend = GraphBackend
 
         if self.repr_type == "dataset_repr":
-            return {
-                "data": backend.from_drepr(self.repr, list(self.resources.values())[0])
-            }
+            return {"data": backend.from_drepr(self.repr, list(self.resources.values())[0])}
         else:
             dataset = ShardedBackend(len(self.resources))
             for resource in self.resources.values():
-                dataset.add(
-                    backend.from_drepr(self.repr, resource, dataset.inject_class_id)
-                )
+                dataset.add(backend.from_drepr(self.repr, resource, dataset.inject_class_id))
             return {"data": dataset}
 
     def validate(self) -> bool:
@@ -255,11 +219,11 @@ class DCatAPI:
         return DCatAPI.instance
 
     def find_resources_by_dataset_id(
-        self,
-        dataset_id: str,
-        start_time: datetime = None,
-        end_time: datetime = None,
-        limit: int = 100000,
+            self,
+            dataset_id: str,
+            start_time: datetime = None,
+            end_time: datetime = None,
+            limit: int = 100000,
     ):
         """start_time and end_time is inclusive"""
         request_headers = {

@@ -113,4 +113,5 @@ examples/demo/data
 # node modules
 *node_modules*
 
-environ.env
+data
+.env

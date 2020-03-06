@@ -11,6 +11,7 @@ raster_model = {
     "attributes": {
         "variable": "$.variable[:][:]",
         "nodata": "$.nodata",
+        "timestamp": "$.timestamp",
         "gt_x_0": "$.gt_x_0",
         "gt_y_0": "$.gt_y_0",
         "gt_dx": "$.gt_dx",
@@ -22,12 +23,13 @@ raster_model = {
     },
     "alignments": [
         {"type": "dimension", "source": "variable", "target": x, "aligned_dims": []}
-        for x in ["nodata", "gt_x_0", "gt_y_0", "gt_dx", "gt_dy", "gt_epsg", "gt_x_slope", "gt_y_slope"]
+        for x in ["nodata", "timestamp", "gt_x_0", "gt_y_0", "gt_dx", "gt_dy", "gt_epsg", "gt_x_slope", "gt_y_slope"]
     ],
     "semantic_model": {
         "mint:Variable:1": {
             "properties": [
-                ("rdf:value", "variable")
+                ("rdf:value", "variable"),
+                ("mint:timestamp", "timestamp")
             ],
             "links": [
                 ("mint:place", "mint:Place:1"),
@@ -78,7 +80,7 @@ def _update_model(place_dict):
     return updated_model
 
 
-def raster_to_dataset(raster: Raster, inject_class_id: Callable[[str], str] = None, place=None):
+def raster_to_dataset(raster: Raster, inject_class_id: Callable[[str], str] = None, place=None, timestamp=None):
     if place:
         place_dict = place.to_dict()
     else:
@@ -87,6 +89,7 @@ def raster_to_dataset(raster: Raster, inject_class_id: Callable[[str], str] = No
     dsmodel = DRepr.parse(model)
     alignment = {
         "variable": raster.data,
+        "timestamp": timestamp,
         "nodata": raster.nodata,
         "gt_x_0": raster.geotransform.x_0,
         "gt_y_0": raster.geotransform.y_0,

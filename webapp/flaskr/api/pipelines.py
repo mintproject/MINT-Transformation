@@ -151,24 +151,24 @@ def upload_pipeline_config():
         return jsonify({"error": str(e)}), 400
 
 
-@pipelines_blueprint.route('/pipeline/dcat/<dcat_id>', methods=["GET"])
-def get_dcat_config(dcat_id: str):
-    # TODO: connect with data catalog
-    try:
-        dataset = DCATAPI_INSTANCE.find_dataset_by_id(dcat_id)
-        dataset_config = dataset["dataset_metadata"].get("config", None)
-        if dataset_config is None:
-            return jsonify({
-                "error": "This dataset has no config associated!"
-            }), 400
-        else:
-            print(dataset_config)
-            display_data = DiGraphSchema().dump(dataset_config)
-            print(display_data)
-            return jsonify({"data": display_data}), 200
-    except Exception as e:
-        print(e)
-        return jsonify({"error": str(e)}), 400
+# @pipelines_blueprint.route('/pipeline/dcat/<dcat_id>', methods=["GET"])
+# def get_dcat_config(dcat_id: str):
+#     # TODO: connect with data catalog
+#     try:
+#         dataset = DCATAPI_INSTANCE.find_dataset_by_id(dcat_id)
+#         dataset_config = dataset["dataset_metadata"].get("config", None)
+#         if dataset_config is None:
+#             return jsonify({
+#                 "error": "This dataset has no config associated!"
+#             }), 400
+#         else:
+#             print(dataset_config)
+#             display_data = DiGraphSchema().dump(dataset_config)
+#             print(display_data)
+#             return jsonify({"data": display_data}), 200
+#     except Exception as e:
+#         print(e)
+#         return jsonify({"error": str(e)}), 400
 
 # ------ fake pipeline -------
 

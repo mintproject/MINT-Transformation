@@ -1,0 +1,189 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import os
+import logging
+import time
+import requests
+import enum
+from datetime import datetime
+from dateutil import parser
+from typing import Union, List, Dict, Iterable
+from pathlib import Path
+from drepr import DRepr, outputs
+from drepr.models import SemanticModel
+from drepr.outputs import ArrayBackend, GraphBackend
+from drepr.outputs.base_lst_output_class import BaseLstOutputClass
+from drepr.outputs.base_output_class import BaseOutputClass
+from drepr.outputs.base_output_sm import BaseOutputSM
+import subprocess
+
+from drepr.outputs.base_record import BaseRecord
+from drepr.outputs.record_id import RecordID
+
+from dtran.argtype import ArgType
+from dtran.ifunc import IFunc, IFuncType
+
+
+class GroupByTimeValue(enum.Enum):
+    MINUTE = "minute"
+    HOUR = "hour"
+    DATE = "date"
+    WEEK = "week"
+    MONTH = "month"
+    YEAR = "year"
+    CUSTOM = "custom"
+
+
+class GroupByLocationValue(enum.Enum):
+    FIELD = "field"
+
+
+@dataclass
+class GroupBy:
+    time: Optional[Tuple[GroupByTimeValue, Union[bool, str]]]
+    location: Optional[str]
+
+    def get_time_key(self, value: datetime):
+        if self.time[0] == GroupByTimeValue.MINUTE:
+            return value.strftime("%Y-%m-%dT%H:%M")
+        elif self.time[0] == GroupByTimeValue.HOUR:
+            return value.strftime("%Y-%m-%dT%H")
+        elif self.time[0] == GroupByTimeValue.DATE:
+            return value.strftime("%Y-%m-%d")
+        elif self.time[0] == GroupByTimeValue.WEEK:
+            return value.strftime("%Y-%W")
+        elif self.time[0] == GroupByTimeValue.MONTH:
+            return value.strftime("%Y-%m")
+        elif self.time[0] == GroupByTimeValue.YEAR:
+            return value.strftime("%Y")
+        elif self.time[0] == GroupByTimeValue.CUSTOM:
+            return self.time[1](value)
+
+        assert False, "Unreachable"
+
+
+class AggregationFunc(enum.Enum):
+    SUM = "sum"
+    AVG = "average"
+    COUNT = "count"
+
+
+class VariableAggregationFunc(IFunc):
+    id = "aggregation_func"
+    description = ''''''
+    func_type = IFuncType.OTHERS
+    friendly_name: str = "Aggregation"
+    inputs = {
+        "dataset": ArgType.DataSet(None),
+        "group_by": ArgType.String,
+        "operator": ArgType.String
+    }
+    outputs = {"data": ArgType.DataSet(None)}
+    example = {}
+    logger = logging.getLogger(__name__)
+
+    def __init__(self, dataset, group_by: GroupBy, operator: AggregationFunc):
+        self.dataset = dataset
+        self.group_by = group_by
+        self.operator = operator
+
+    def exec(self) -> dict:
+        output = {}
+        values = []
+
+        if isinstance(self.dataset, ShardedBackend):
+            # check if the data is partition
+            for dataset in self.dataset.drain():
+                values += self._aggregate(dataset, self.group_by)
+        else:
+            values = self._aggregate(self.dataset, self.group_by)
+
+        return data
+
+    def validate(self) -> bool:
+        return True
+
+    @staticmethod
+    def _aggregate(sm, group_by, aggregation_func):
+        """Aggregate the data"""
+        rdf = sm.ns(outputs.Namespace.RDF)
+        mint_geo = sm.ns("https://mint.isi.edu/geo")
+        mint = sm.ns("https://mint.isi.edu/")
+
+        group_as_class = True
+        for c in sm.c(mint.Variable):
+            if group_by.location is not None:
+                location_size = r.s(mint.place).ndarray_size()
+                if location_size != 1:
+                    group_as_class = False
+                    break
+
+            if group_by.time is not None:
+                time_size = r.s(mint.timestamp).ndarray_size()
+                if time_size != 1:
+                    group_as_class = False
+                    break
+
+        if group_as_class:
+            groups = {}
+            for c in sm.c(mint.Variable):
+                if group_by.time is not None:
+                    time_key = datetime.utcfromtimestamp(c.p(mint.timestamp).as_ndarray([]).data[0])
+                    time_key = group_by.get_time_key(time_key)
+                else:
+                    time_key = None
+
+                if group_by.location is not None:
+                    place = sm.get_record_by_id(next(c.iter_records()).s(mint.place))
+                    location_key = place.s(group_by.location)
+                else:
+                    location_key = None
+
+                key = (time_key, location_key)
+                if key not in groups:
+                    groups[key] = {"key": key, "values": []}
+                groups[key]["values"].append(c.p(rdf.value).as_ndarray([]))
+        else:
+            groups = {}
+            for c in sm.c(mint.Variable):
+                for r in c.iter_Records():
+                    if group_by.time is not None:
+                        time_key = datetime.utcfromtimestamp(r.s(mint.timestamp))
+                        time_key = group_by.get_time_key(time_key)
+                    else:
+                        time_key = None
+
+                if group_by.location is not None:
+                    place = sm.get_record_by_id(r.s(mint.place))
+                    location_key = place.s(group_by.location)
+                else:
+                    location_key = None
+                key = (time_key, location_key)
+                if key not in groups:
+                    groups[key] = {"key": key, "values": []}
+
+                if r.s(rdf.value) is not None:
+                    groups[key]['values'].append(r.s(rdf.value))
+
+        for group in groups:
+            values = group['values']
+            if len(values) == 0:
+                values = 0
+            else:
+                if isinstance(values[0], outputs.PropDataNDArray):
+                    if aggregation_func == AggregationFunc.SUM:
+                        values = np.sum((np.sum(x.data[x.data != x.nodata]) for x in values))
+                    elif aggregation_func == AggregationFunc.COUNT:
+                        values = np.sum((np.sum(x.data != x.nodata) for x in values))
+                    elif aggregation_func == AggregationFunc.AVG:
+                        n_occur = np.zeros(values[0].data.shape, dtype=np.int64)
+                        total = np.zeros(values[0].data.shape, dtype=np.int64)
+                else:
+                    if aggregation_func == AggregationFunc.SUM:
+                        values = np.sum(values)
+                    elif aggregation_func == AggregationFunc.COUNT:
+                        values = len(values)
+                    elif aggregation_func == AggregationFunc.AVG:
+                        values = np.average(values)
+            group['values'] = values
