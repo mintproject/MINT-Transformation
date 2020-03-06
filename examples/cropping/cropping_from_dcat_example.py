@@ -10,7 +10,7 @@ precipitation_dcat_id = "ea0e86f3-9470-4e7e-a581-df85b4a7075d"
 shape_dcat_id = "74e6f707-d5e9-4cbd-ae26-16ffa21a1d84"
 
 start = datetime(2018, 1, 1)
-end = datetime(2018, 9, 30)
+end = datetime(2018, 2, 1)
 
 if __name__ == "__main__":
     precipitation_data_reader = DcatReadFunc(precipitation_dcat_id, start_time=start, end_time=end)
@@ -26,5 +26,5 @@ if __name__ == "__main__":
     crop_func = CroppingTransFunc(varname, precipitation_dataset['data'], shape_dataset['data'])
     cropped_data = crop_func.exec()
 
-    write_func = CSVWriteFunc(cropped_data["data"], "../demo/cropped_result.csv")
+    write_func = CSVWriteFunc(cropped_data["data"], "../demo/data/cropped_result.csv")
     write_func.exec()
