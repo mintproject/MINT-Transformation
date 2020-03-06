@@ -13,6 +13,7 @@ LOG_DIR = os.environ.get("LOG_DIR", "")
 
 if LOG_CONF_FILE is not None and os.path.exists(LOG_CONF_FILE):
     from ruamel.yaml import YAML
+
     if not os.path.exists(LOG_DIR):
         Path(LOG_DIR).mkdir(exist_ok=True, parents=True)
 

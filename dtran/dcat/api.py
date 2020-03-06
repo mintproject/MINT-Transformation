@@ -21,11 +21,11 @@ class DCatAPI:
         return DCatAPI.instance
 
     def find_resources_by_dataset_id(
-        self,
-        dataset_id: str,
-        start_time: datetime = None,
-        end_time: datetime = None,
-        limit: int = 100000,
+            self,
+            dataset_id: str,
+            start_time: datetime = None,
+            end_time: datetime = None,
+            limit: int = 100000,
     ):
         """start_time and end_time is inclusive"""
         request_headers = {

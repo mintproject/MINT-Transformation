@@ -37,8 +37,8 @@ class ReadFunc(IFunc):
 
     def exec(self) -> dict:
         if (
-            self.get_preference("data") is None
-            or self.get_preference("data") == "array"
+                self.get_preference("data") is None
+                or self.get_preference("data") == "array"
         ):
             backend = ArrayBackend
         else:

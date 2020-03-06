@@ -57,7 +57,7 @@ class DcatReadFunc(IFunc):
         dataset_result = DCatAPI.get_instance(DCAT_URL).find_dataset_by_id(dataset_id)
 
         assert ("resource_repr" in dataset_result["metadata"]) or (
-            "dataset_repr" in dataset_result["metadata"]
+                "dataset_repr" in dataset_result["metadata"]
         ), "Dataset is missing both 'resource_repr' and 'dataset_repr'"
         assert not (("resource_repr" in dataset_result["metadata"]) and
                     ("dataset_repr" in dataset_result["metadata"])
@@ -86,9 +86,9 @@ class DcatReadFunc(IFunc):
             # TODO: fix me!!
             assert len(resource_results) == 1
             resource_ids[resource_results[0]
-                         ["resource_id"]] = resource_results[0]["resource_data_url"]
+            ["resource_id"]] = resource_results[0]["resource_data_url"]
             resource_types[resource_results[0]
-                           ["resource_id"]] = resource_results[0]["resource_type"]
+            ["resource_id"]] = resource_results[0]["resource_type"]
             self.repr = DRepr.parse(dataset_result["metadata"]["dataset_repr"])
             self.repr_type = "dataset_repr"
 

@@ -69,9 +69,11 @@ class PipelineSchema(Schema):
         # validating cli_inputs
         for name, input in self.cli_inputs:
             if name not in mappings:
-                raise ValidationError(['cli_inputs exception', f"invalid adapter name {name}. not found in config file"])
+                raise ValidationError(
+                    ['cli_inputs exception', f"invalid adapter name {name}. not found in config file"])
             if input not in mappings[name][0].inputs:
-                raise ValidationError(['cli_inputs exception', f"invalid input {input} in {data['adapters'][name]['adapter']} for {name}"])
+                raise ValidationError(['cli_inputs exception',
+                                       f"invalid input {input} in {data['adapters'][name]['adapter']} for {name}"])
             # cli_inputs has higher priority and overwrites config_file data
             if 'inputs' not in data['adapters'][name]:
                 data['adapters'][name]['inputs'] = OrderedDict()

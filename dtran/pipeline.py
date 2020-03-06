@@ -48,7 +48,8 @@ class Pipeline(object):
             input_arg = func_classes[self.id2order[i[0]][i[1] - 1][0]].inputs[i[2]]
             output_arg = func_classes[self.id2order[o[0]][o[1] - 1][0]].outputs[o[2]]
             if input_arg != output_arg:
-                raise ValidationError(f"Incompatible ArgType while wiring {WiredIOArg.get_arg_name(i[0], i[1], i[2])} to {WiredIOArg.get_arg_name(o[0], o[1], o[2])}")
+                raise ValidationError(
+                    f"Incompatible ArgType while wiring {WiredIOArg.get_arg_name(i[0], i[1], i[2])} to {WiredIOArg.get_arg_name(o[0], o[1], o[2])}")
             self.wired[WiredIOArg.get_arg_name(i[0], i[1], i[2])] = WiredIOArg.get_arg_name(o[0], o[1], o[2])
             graph.add_edge(self.id2order[o[0]][o[1] - 1][0], self.id2order[i[0]][i[1] - 1][0])
 
@@ -59,9 +60,11 @@ class Pipeline(object):
                 if output_arg.input_ref is None:
                     preference_roots.append(node)
                 elif output_arg.input_ref not in func_classes[self.id2order[o[0]][o[1] - 1][0]].inputs:
-                    raise ValidationError(f"Invalid value for input_ref {output_arg.input_ref} of {WiredIOArg.get_arg_name(o[0], o[1], o[2])} output dataset")
+                    raise ValidationError(
+                        f"Invalid value for input_ref {output_arg.input_ref} of {WiredIOArg.get_arg_name(o[0], o[1], o[2])} output dataset")
                 elif func_classes[self.id2order[o[0]][o[1] - 1][0]].inputs[output_arg.input_ref] != output_arg:
-                    raise ValidationError(f"Invalid ArgType for input_ref {output_arg.input_ref} of {WiredIOArg.get_arg_name(o[0], o[1], o[2])} output dataset")
+                    raise ValidationError(
+                        f"Invalid ArgType for input_ref {output_arg.input_ref} of {WiredIOArg.get_arg_name(o[0], o[1], o[2])} output dataset")
                 else:
                     # adding dummy "internal" edges within the same adapter to link "dataset" output to its input_ref
                     preference_graph.add_edge((o[0], o[1], 'i', output_arg.input_ref), node, preference='n/a')
@@ -87,7 +90,8 @@ class Pipeline(object):
                     continue
                 argtype = func_cls.inputs[argname]
                 self.schema[gname] = fields.Raw(required=not argtype.optional, validate=argtype.is_valid,
-                                                error_messages={'validator_failed': f"Invalid Argument type. Expected {argtype.id}"})
+                                                error_messages={
+                                                    'validator_failed': f"Invalid Argument type. Expected {argtype.id}"})
         self.schema = Schema.from_dict(self.schema)
 
         # setting preferences for new "dataset" outputs
@@ -173,8 +177,3 @@ class Pipeline(object):
     @staticmethod
     def load(load_path: Union[str, Path]):
         pass
-
-
-
-
-

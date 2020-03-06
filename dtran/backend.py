@@ -29,7 +29,7 @@ class ShardedBackend(BaseOutputSM):
 
     @classmethod
     def from_drepr(
-        cls, ds_model: Union[DRepr, str], resources: Union[str, Dict[str, str]]
+            cls, ds_model: Union[DRepr, str], resources: Union[str, Dict[str, str]]
     ) -> BaseOutputSM:
         raise NotImplementedError("This method should never be called")
 
