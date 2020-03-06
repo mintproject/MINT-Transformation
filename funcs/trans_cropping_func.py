@@ -156,7 +156,7 @@ class CroppingTransFunc(IFunc):
         self.results = ShardedBackend(len(self.rasters) * len(self.shapes))
         for r in self.rasters:
             for shape in self.shapes:
-                tempfile_name = f"/tmp/{uuid.uuid1()}.shp"
+                tempfile_name = f"/tmp/{uuid.uuid4()}.shp"
                 CroppingTransFunc.shape_array_to_shapefile(shape, tempfile_name)
                 cropped_raster = r["raster"].crop(
                     vector_file=tempfile_name, resampling_algo=ReSample.BILINEAR
