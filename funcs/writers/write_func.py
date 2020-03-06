@@ -147,11 +147,11 @@ class CSVWriteFunc(IFunc):
                         for child_record in dataset.cid(child_node.node_id).iter_records():
                             if child_record.id == rid:
                                 print("True")
-                        for attr in child2tuples[child_record.id]:
-                            id2attrs[record.id][
-                                predicate_url + "---" + attr
-                            ] = child2tuples[child_record.id][attr]
-                            attrs.add(predicate_url + "---" + attr)
+                                for attr in child2tuples[child_record.id]:
+                                    id2attrs[record.id][
+                                        predicate_url + "---" + attr
+                                    ] = child2tuples[child_record.id][attr]
+                                    attrs.add(predicate_url + "---" + attr)
 
         return id2attrs, list(attrs)
 
