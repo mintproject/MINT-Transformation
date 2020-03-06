@@ -81,7 +81,7 @@ class VariableAggregationFunc(IFunc):
     outputs = {"data": ArgType.DataSet(None)}
     example = {
         "group_by": "time, lat, long, place",
-        "operator": "count, sum, avg"
+        "operator": "count, sum, average"
     }
     logger = logging.getLogger(__name__)
 

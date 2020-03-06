@@ -38,13 +38,7 @@ class CroppingTransFunc(IFunc):
         "ymax": "",
     }
 
-<<<<<<< HEAD
-    def __init__(
-            self, variable_name: str, dataset, shape=None, xmin=0, ymin=0, xmax=0, ymax=0
-    ):
-=======
     def __init__(self, variable_name: str, dataset, shape=None, xmin=0, ymin=0, xmax=0, ymax=0):
->>>>>>> upstream/master
         self.variable_name = variable_name
         self.dataset = dataset
         self.shape_sm = shape
