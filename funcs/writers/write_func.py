@@ -31,7 +31,9 @@ class CSVWriteFunc(IFunc):
         "output_file": "example.csv",
     }
 
-    def __init__(self, data: Union[BaseOutputSM, ShardedBackend], output_file: Union[str, Path]):
+    def __init__(
+        self, data: Union[BaseOutputSM, ShardedBackend], output_file: Union[str, Path]
+    ):
 
         self.data = data
         self.output_file = Path(output_file)
@@ -70,7 +72,7 @@ class CSVWriteFunc(IFunc):
 
         if isinstance(self.data, ShardedBackend):
 
-            for dataset in self.data.datasets:
+            for dataset in self.data.datasets[:1]:
                 id2attrs, attrs = self._sm_traverse(dataset, main_class_node, [])
 
                 main_attrs = attrs
@@ -114,7 +116,9 @@ class CSVWriteFunc(IFunc):
             if is_main_class:
                 return class_
 
-    def _sm_traverse(self, dataset: BaseOutputSM, node: Node, visited: List[Node], ) -> (list, set):
+    def _sm_traverse(
+        self, dataset: BaseOutputSM, node: Node, visited: List[Node],
+    ) -> (list, set):
         print(f"Called {node.node_id}")
         id2attrs = defaultdict(lambda: defaultdict(list))
         attrs = set()
@@ -130,7 +134,6 @@ class CSVWriteFunc(IFunc):
                     val = record.m(predicate_url)
                     if not isinstance(val, list):
                         val = [val]
-
                     id2attrs[record.id][predicate_url].extend(val)
             else:
                 if child_node not in visited:
@@ -138,18 +141,21 @@ class CSVWriteFunc(IFunc):
                     child2tuples, child_attrs = self._sm_traverse(
                         dataset, child_node, visited + [child_node]
                     )
+                    print(node.node_id, predicate_url, child_node.node_id, edge.source_id, edge.target_id)
                     for record in dataset.cid(node.node_id).iter_records():
+                        rid = record.m(predicate_url)
                         for child_record in dataset.cid(child_node.node_id).iter_records():
-                            for attr in child2tuples[child_record.id]:
-                                id2attrs[record.id][
-                                    predicate_url + "---" + attr
-                                    ] = child2tuples[child_record.id][attr]
-
-                                attrs.add(predicate_url + "---" + attr)
+                            if child_record.id == rid:
+                                print("True")
+                        for attr in child2tuples[child_record.id]:
+                            id2attrs[record.id][
+                                predicate_url + "---" + attr
+                            ] = child2tuples[child_record.id][attr]
+                            attrs.add(predicate_url + "---" + attr)
 
         return id2attrs, list(attrs)
 
     def change_metadata(
-            self, metadata: Optional[Dict[str, Metadata]]
+        self, metadata: Optional[Dict[str, Metadata]]
     ) -> Dict[str, Metadata]:
         return metadata
