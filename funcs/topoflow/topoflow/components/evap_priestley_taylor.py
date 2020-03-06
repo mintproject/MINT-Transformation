@@ -47,7 +47,6 @@
 #-----------------------------------------------------------------------
 
 import numpy as np
-import os
 
 from topoflow.components import evap_base
 

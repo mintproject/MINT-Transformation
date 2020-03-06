@@ -1,14 +1,13 @@
-from datetime import datetime
 import os
 from pathlib import Path
 
-from dtran import Pipeline
 from examples.pihm2cycles.cycle_write_func import CyclesWriteFunc
 from examples.pihm2cycles.dat_read_func import ReadDatFunc
 from examples.pihm2cycles.pihm2cycles_func import Pihm2CyclesFunc
+
+from dtran import Pipeline
 from funcs import ReadFunc
 from funcs.merge_func import MergeFunc
-import ujson as json
 
 if __name__ == "__main__":
 

@@ -1,7 +1,7 @@
 import React from "react";
-import { withStyles, WithStyles } from "@material-ui/styles";
-import { observer } from "mobx-react";
-import { Spin } from "antd";
+import {withStyles, WithStyles} from "@material-ui/styles";
+import {observer} from "mobx-react";
+import {Spin} from "antd";
 
 const styles = {
   root: {

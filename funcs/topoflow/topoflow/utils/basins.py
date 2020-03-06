@@ -33,9 +33,6 @@
 
 ## import numpy as np  # (no longer needed)
 
-import os
-import os.path
-
 from . import BMI_base
 from . import outlets
 from . import tf_utils

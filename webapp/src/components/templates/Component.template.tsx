@@ -1,7 +1,7 @@
 import React from "react";
-import { withStyles, WithStyles } from "@material-ui/styles";
-import { observer, inject } from "mobx-react";
-import { IStore } from "../../store";
+import {withStyles, WithStyles} from "@material-ui/styles";
+import {inject, observer} from "mobx-react";
+import {IStore} from "../../store";
 
 const styles = {
   root: {

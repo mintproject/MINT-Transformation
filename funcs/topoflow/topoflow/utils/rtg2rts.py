@@ -13,8 +13,10 @@ import os.path
 import sys
 
 import numpy
+
 from . import rti_files  # (see /data/progs/csdms/python)
-    
+
+
 #-----------------------------------------------------------------------
 def rtg2rts( RTG_prefix, new_RTS_file,
              nx=None, ny=None, dtype='float32' ):

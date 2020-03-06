@@ -78,15 +78,12 @@
 
 #-----------------------------------------------------------------------
 
-import numpy as np
-import os
 import time
 
+import numpy as np
 from topoflow.utils import BMI_base
-from topoflow.utils import cfg_files as cfg
-
 from topoflow.utils.tf_utils import TF_Print, TF_String, TF_Version
-from topoflow.utils import tf_utils   # (must come after the "from" line ???)
+
 
 ## from tf_utils import TF_Print, TF_String
 ## import tf_utils  # (must come after the "from" line ???)

@@ -1,15 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from pathlib import Path
 import subprocess
+from os import listdir
+from pathlib import Path
 
 from dcatreg.dataset_registration import register_dataset
+
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc, IFuncType
-from os import listdir
-
-from funcs.topoflow.write_topoflow4_climate_func import create_rts_from_nc_files
 from funcs.readers.dcat_read_func import DCatAPI
+from funcs.topoflow.write_topoflow4_climate_func import create_rts_from_nc_files
 
 DOWNLOAD_PATH = "/data/mint/dcat_gpm"
 

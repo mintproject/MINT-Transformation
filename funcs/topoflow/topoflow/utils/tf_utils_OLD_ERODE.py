@@ -33,12 +33,16 @@
 
 #      Convert_Flow_Grid()  # (move this to d8_base.py)
 
-#-------------------------------------------------------------------
+import glob  # (all are used)
+import os
+import platform
+import sys
+
+# -------------------------------------------------------------------
 from numpy import *
-import numpy
-import platform, sys, os, glob  # (all are used)
 
 from . import idl_func
+
 
 #-------------------------------------------------------------------
 def TF_Use_CCA():

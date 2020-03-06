@@ -18,17 +18,14 @@
 #
 #-------------------------------------------------------------------
 import numpy as np
-import os
 import scipy.optimize
-
 from topoflow.components import d8_global
-
-from topoflow.utils import cfg_files
 from topoflow.utils import BMI_base
-from topoflow.utils import file_utils   # (for count_lines())
+from topoflow.utils import cfg_files
+from topoflow.utils import file_utils  # (for count_lines())
 from topoflow.utils import model_output
 from topoflow.utils import rtg_files
-from topoflow.utils import rti_files
+
 
 # import matplotlib.pyplot
 

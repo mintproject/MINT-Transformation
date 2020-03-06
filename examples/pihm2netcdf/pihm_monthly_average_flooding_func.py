@@ -6,10 +6,9 @@ from collections import defaultdict
 import numpy as np
 import xarray as xr
 from drepr import Graph
-from scipy import interpolate
+from pihm_flooding_index_func import PihmFloodingIndexFunc
 
 from dtran import ArgType
-from pihm_flooding_index_func import PihmFloodingIndexFunc
 
 
 class PihmMonthlyAverageFloodingFunc(PihmFloodingIndexFunc):

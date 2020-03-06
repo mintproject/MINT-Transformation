@@ -1,11 +1,12 @@
 import React from "react";
-import { observer, inject } from "mobx-react";
-import { IStore } from "../store";
-import { Link } from "react-router-dom";
+import {inject, observer} from "mobx-react";
+import {IStore} from "../store";
+import {Link} from "react-router-dom";
 import MyLayout from "./Layout";
-import { Row, Col, Input, Menu, Button, Popover, Dropdown, Typography } from 'antd';
-import { PipelineType } from "../store/PipelineStore";
+import {Button, Col, Dropdown, Input, Menu, Popover, Row, Typography} from 'antd';
+import {PipelineType} from "../store/PipelineStore";
 import _ from "lodash";
+
 const { Title } = Typography;
 
 const { Search } = Input;

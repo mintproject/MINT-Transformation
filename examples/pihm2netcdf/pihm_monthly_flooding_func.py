@@ -5,10 +5,9 @@ import datetime
 import numpy as np
 import xarray as xr
 from drepr import Graph
-from scipy import stats
+from examples.pihm2netcdf.pihm_flooding_index_func import PihmFloodingIndexFunc
 
 from dtran import ArgType
-from examples.pihm2netcdf.pihm_flooding_index_func import PihmFloodingIndexFunc
 
 
 class PihmMonthlyFloodingFunc(PihmFloodingIndexFunc):

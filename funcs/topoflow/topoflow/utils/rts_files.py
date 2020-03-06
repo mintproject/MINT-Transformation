@@ -4,13 +4,13 @@
 
 import os
 import os.path
-import sys
 
 import numpy as np
 
 from . import bov_files
 from . import file_utils
 from . import rti_files
+
 
 #-------------------------------------------------------------------
 #

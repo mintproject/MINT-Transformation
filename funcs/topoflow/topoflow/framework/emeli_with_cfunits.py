@@ -127,7 +127,6 @@
 #
 #-----------------------------------------------------------------------
 
-import numpy as np
 import os
 # import sys
 import time
@@ -135,21 +134,19 @@ import time
 # import wx
 import xml.dom.minidom
 
-from topoflow.framework import time_interpolation    # (time_interpolator class)
-# from topoflow.framework import unit_conversion  # (unit_convertor class)
-# from topoflow.framework import grid_remapping
-
-# import OrderedDict_backport  # (for Python 2.4 to 2.7)
-
-#--------------------------------------------------------------
+import numpy as np
+# --------------------------------------------------------------
 # Load the unit conversion package.
 # This requires installing UDUnits2.2 on your Mac first, e.g.
 #     brew install udunits
 # and then installing the Python API package: cfunits
-#--------------------------------------------------------------
+# --------------------------------------------------------------
 from cfunits import Units
+from topoflow.framework import time_interpolation  # (time_interpolator class)
 
-import sys    #### for testing
+# from topoflow.framework import unit_conversion  # (unit_convertor class)
+# from topoflow.framework import grid_remapping
+# import OrderedDict_backport  # (for Python 2.4 to 2.7)
 
 #-----------------------------------------------------------------------
 # Embed some path info directly into EMELI.

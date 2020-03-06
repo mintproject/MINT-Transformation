@@ -8,15 +8,15 @@
                 "val": null,
                 "optional": false
             },
-            "resources": {
-                "id": "string",
+            "resource_path": {
+                "id": "file_path",
                 "val": null,
                 "optional": false
             }
         },
         "outputs": {
             "data": {
-                "id": "graph",
+                "id": "dataset",
                 "val": null,
                 "optional": false
             }
@@ -36,11 +36,26 @@
                 "id": "string",
                 "val": null,
                 "optional": false
+            },
+            "start_time": {
+                "id": "datetime",
+                "val": null,
+                "optional": true
+            },
+            "end_time": {
+                "id": "datetime",
+                "val": null,
+                "optional": true
+            },
+            "use_cache": {
+                "id": "boolean",
+                "val": null,
+                "optional": true
             }
         },
         "outputs": {
             "data": {
-                "id": "graph",
+                "id": "dataset",
                 "val": null,
                 "optional": false
             }
@@ -48,7 +63,10 @@
         "func_type": "Reader",
         "friendly_name": "Data Catalog Reader",
         "example": {
-            "dataset_id": "05c43c58-ed42-4830-9b1f-f01059c4b96f"
+            "dataset_id": "ea0e86f3-9470-4e7e-a581-df85b4a7075d",
+            "start_time": "2020-03-02T12:30:55",
+            "end_time": "2020-03-02T12:30:55",
+            "use_cache": "True"
         }
     },
     {
@@ -75,144 +93,39 @@
         }
     },
     {
-        "id": "UnitTransFunc",
-        "description": " A transformation adapter.\n    Alters the graph by performing unit conversion on some values in the graph.\n    ",
-        "inputs": {
-            "graph": {
-                "id": "graph",
-                "val": null,
-                "optional": false
-            },
-            "unit_value": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            },
-            "unit_label": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            },
-            "unit_desired": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            },
-            "filter": {
-                "id": "string",
-                "val": null,
-                "optional": true
-            }
-        },
-        "outputs": {
-            "graph": {
-                "id": "graph",
-                "val": null,
-                "optional": false
-            }
-        },
-        "func_type": "Unit Conversion Transformation",
-        "friendly_name": "Unit Transformation Function",
-        "example": {
-            "unit_value": "dcat: measure_1_value",
-            "unit_label": "sdmx-attribute:unitMeasure",
-            "unit_desired": "$/kg",
-            "filter": "@type = 'qb:Observation' and sdmx-attribute:refArea.contains('Aweil (Town)')"
-        }
-    },
-    {
-        "id": "GraphWriteFunc",
+        "id": "CSVWriteFunc",
         "description": " A writer adapter.\n    Generates a csv/json file.\n    ",
         "inputs": {
-            "graph": {
-                "id": "graph",
-                "val": null,
-                "optional": false
-            },
-            "main_class": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            },
-            "output_file": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            },
-            "filter": {
-                "id": "string",
-                "val": null,
-                "optional": true
-            }
-        },
-        "outputs": {
-            "output_file": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            }
-        },
-        "func_type": "Writer",
-        "friendly_name": "Graph to CSV/JSON",
-        "example": {
-            "main_class": "qb:Observation",
-            "output_file": "./price-test.csv",
-            "mapped_columns": "{}",
-            "filter": "@type = 'qb:Observation' and sdmx-attribute:refArea.contains('Aweil (Town)')"
-        }
-    },
-    {
-        "id": "VisJsonWriteFunc",
-        "description": " A writer adapter.\n    Generates a json file following the format of the MINT-Data-Catalog Visualizer.\n    ",
-        "inputs": {
-            "graph": {
-                "id": "graph",
-                "val": null,
-                "optional": false
-            },
-            "main_class": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            },
-            "output_file": {
-                "id": "file_path",
-                "val": null,
-                "optional": false
-            },
-            "mapped_columns": {
-                "id": "ordered_dict",
-                "val": null,
-                "optional": null
-            },
-            "filter": {
-                "id": "string",
-                "val": null,
-                "optional": true
-            }
-        },
-        "outputs": {
             "data": {
+                "id": "dataset",
+                "val": null,
+                "optional": false
+            },
+            "output_file": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {
+            "output_file": {
                 "id": "string",
                 "val": null,
                 "optional": false
             }
         },
         "func_type": "Writer",
-        "friendly_name": "Graph to JSON Converter and Visualizer",
+        "friendly_name": "Graph to CSV",
         "example": {
-            "main_class": "qb:Observation",
-            "output_file": "./price-test.csv",
-            "mapped_columns": "{}",
-            "filter": "@type = 'qb:Observation' and sdmx-attribute:refArea.contains('Aweil (Town)')"
+            "output_file": "example.csv"
         }
     },
     {
         "id": "GraphStr2StrFunc",
         "description": " A transformation adapter.\n    Maps an existing set of strings (semantic attributes) to a new desired set of strings.\n    ",
         "inputs": {
-            "graph": {
-                "id": "graph",
+            "data": {
+                "id": "dataset",
                 "val": null,
                 "optional": false
             },
@@ -239,20 +152,20 @@
         "id": "MergeFunc",
         "description": " A transformation adapter.\n    Merges two graphs into one.\n    ",
         "inputs": {
-            "graph1": {
-                "id": "graph",
+            "data1": {
+                "id": "dataset",
                 "val": null,
                 "optional": false
             },
-            "graph2": {
-                "id": "graph",
+            "data2": {
+                "id": "dataset",
                 "val": null,
                 "optional": false
             }
         },
         "outputs": {
             "data": {
-                "id": "graph",
+                "id": "dataset",
                 "val": null,
                 "optional": false
             }
@@ -262,173 +175,60 @@
         "example": {}
     },
     {
-        "id": "Topoflow4ClimateWriteFunc",
-        "description": " A reader-transformation-writer multi-adapter.\n    Creates an RTS (and RTI) file from NetCDF (climate) files.\n    ",
+        "id": "CroppingTransFunc",
+        "description": null,
         "inputs": {
-            "input_dir": {
+            "variable_name": {
                 "id": "string",
                 "val": null,
                 "optional": false
             },
-            "temp_dir": {
-                "id": "string",
+            "dataset": {
+                "id": "dataset",
                 "val": null,
                 "optional": false
             },
-            "output_file": {
-                "id": "string",
+            "shape": {
+                "id": "dataset",
                 "val": null,
                 "optional": false
             },
-            "var_name": {
-                "id": "string",
+            "xmin": {
+                "id": "number",
                 "val": null,
-                "optional": false
+                "optional": true
             },
-            "DEM_bounds": {
-                "id": "string",
+            "ymin": {
+                "id": "number",
                 "val": null,
-                "optional": false
+                "optional": true
             },
-            "DEM_xres_arcsecs": {
-                "id": "string",
+            "xmax": {
+                "id": "number",
                 "val": null,
-                "optional": false
+                "optional": true
             },
-            "DEM_yres_arcsecs": {
-                "id": "string",
+            "ymax": {
+                "id": "number",
                 "val": null,
-                "optional": false
+                "optional": true
             }
         },
         "outputs": {
-            "output_file": {
-                "id": "string",
+            "data": {
+                "id": "dataset",
                 "val": null,
                 "optional": false
             }
         },
-        "func_type": "Model-specific Transformation",
-        "friendly_name": "Topoflow Climate",
+        "func_type": "Cropping Transformation",
+        "friendly_name": "Cropping function",
         "example": {
-            "input_dir": "$.my_dcat_read_func.data",
-            "temp_dir": "/data/mint/sample_grid_baro",
-            "output_file": "/data/mint/sample_baro/climate_all.rt",
-            "var_name": "HQprecipitation",
-            "DEM_bounds": "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999",
-            "DEM_xres_arcsecs": "30",
-            "DEM_yres_arcsecs": "30"
-        }
-    },
-    {
-        "id": "Topoflow4ClimateWritePerMonthFunc",
-        "description": " A reader-transformation-writer multi-adapter.\n    Creates RTS (and RTI) files per month from NetCDF (climate) files.\n    ",
-        "inputs": {
-            "grid_dir": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            },
-            "date_regex": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            },
-            "output_file": {
-                "id": "file_path",
-                "val": null,
-                "optional": false
-            }
-        },
-        "outputs": {},
-        "func_type": "Model-specific Transformation",
-        "friendly_name": "Topoflow Climate Per Month",
-        "example": {
-            "grid_dir": "/data/mint/gpm_grid_baro",
-            "date_regex": "3B-HHR-E.MS.MRG.3IMERG.(?P<year>\\d{4})(?P<month>\\d{2})(?P<day>\\d{2})",
-            "output_file": "/data/mint/baro/climate.rts"
-        }
-    },
-    {
-        "id": "Topoflow4SoilWriteFunc",
-        "description": " A reader-transformation-writer multi-adapter.\n    Creates Bin (and RTI) files from tiff (soil) files.\n    ",
-        "inputs": {
-            "input_dir": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            },
-            "output_dir": {
-                "id": "file_path",
-                "val": null,
-                "optional": false
-            },
-            "layer": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            },
-            "DEM_bounds": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            },
-            "DEM_xres_arcsecs": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            },
-            "DEM_yres_arcsecs": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            }
-        },
-        "outputs": {},
-        "func_type": "Model-specific Transformation",
-        "friendly_name": "Topoflow Soil",
-        "example": {
-            "input_dir": "/ws/oct_eval_data/soilGrids/",
-            "output_dir": "/ws/examples/scotts_transformations/tmp/soil_BARO_l1",
-            "layer": "5",
-            "DEM_bounds": "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999",
-            "DEM_xres_arcsecs": "30",
-            "DEM_yres_arcsecs": "30"
-        }
-    },
-    {
-        "id": "NC2GeoTiff",
-        "description": "Convert all netcdf file in one folder to geotiff file in another folder",
-        "inputs": {
-            "input_dir": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            },
-            "output_dir": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            },
-            "var_name": {
-                "id": "string",
-                "val": null,
-                "optional": false
-            },
-            "no_data": {
-                "id": "number",
-                "val": null,
-                "optional": false
-            }
-        },
-        "outputs": {},
-        "func_type": "Writer",
-        "friendly_name": "Netcdf to Geotiff Converter",
-        "example": {
-            "input_dir": "/path/to/input/file",
-            "output_dir": "/path/to/output/file",
-            "var_name": "some_variable_name",
-            "no_data": "0.0"
+            "variable_name": "",
+            "xmin": "",
+            "ymin": "",
+            "xmax": "",
+            "ymax": ""
         }
     },
     {

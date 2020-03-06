@@ -35,15 +35,9 @@
 #-------------------------------------------------------------------
 
 import numpy
-import sys
 
-from . import file_utils
-from . import ncgs_files
-from . import ncts_files
-from . import ncps_files
 from . import rti_files
-from . import rts_files
-from . import text_ts_files
+
 
 # import text_ps_files  # (not written yet)
 

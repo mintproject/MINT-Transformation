@@ -1,7 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from typing import *
-from pathlib import Path
 from datetime import datetime
 
 import ujson
@@ -24,8 +22,12 @@ class ArgType(object):
     VarAggGroupBy: 'ArgType' = None
     VarAggFunc: 'ArgType' = None
 
-    def __init__(self, id: str, optional: bool = False, val: Any = None,
-                 validate: Callable[[Any], bool] = lambda val: True, from_str: Callable[[str], Any] = lambda val: val,
+    def __init__(self,
+                 id: str,
+                 optional: bool = False,
+                 val: Any = None,
+                 validate: Callable[[Any], bool] = lambda val: True,
+                 from_str: Callable[[str], Any] = lambda val: val,
                  **kwargs):
         self.id = id
         self.val = val
@@ -60,14 +62,28 @@ class ArgType(object):
             raise ValueError(f"could not convert string to {self.id}")
 
 
-ArgType.FilePath = ArgType("file_path", validate=lambda val: Path(val).parent.exists(), from_str=lambda val: str(Path(val)))
+ArgType.FilePath = ArgType("file_path",
+                           validate=lambda val: Path(val).parent.exists(),
+                           from_str=lambda val: str(Path(val)))
 ArgType.OrderedDict = ArgType("ordered_dict", validate=lambda val: isinstance(val, dict))
 ArgType.String = ArgType("string", validate=lambda val: isinstance(val, str))
-ArgType.Number = ArgType("number", validate=lambda val: isinstance(val, int) or isinstance(val, float),
+ArgType.Number = ArgType("number",
+                         validate=lambda val: isinstance(val, int) or isinstance(val, float),
                          from_str=lambda val: ('.' in val and float(val)) or int(val))
-ArgType.Boolean = ArgType("boolean", validate=lambda val: isinstance(val, bool),
-                          from_str=lambda val: {'True': True, 'true': True, 'False': False, 'false': False}[val])
-ArgType.DateTime = ArgType("datetime", validate=lambda val: isinstance(val, datetime),
+ArgType.Boolean = ArgType("boolean",
+                          validate=lambda val: isinstance(val, bool),
+                          from_str=lambda val: {
+                              'True': True,
+                              'true': True,
+                              'False': False,
+                              'false': False
+                          }[val])
+ArgType.DateTime = ArgType("datetime",
+                           validate=lambda val: isinstance(val, datetime),
                            from_str=lambda val: parser.parse(val))
-ArgType.VarAggGroupBy = ArgType("var_agg_group_by", validate=lambda val: isinstance(val, list), from_str=lambda val: ujson.load(val))
-ArgType.VarAggFunc = ArgType("var_agg_func", validate=lambda val: val in {"sum", "average", "count"}, from_str=lambda val: val)
+ArgType.VarAggGroupBy = ArgType("var_agg_group_by",
+                                validate=lambda val: isinstance(val, list),
+                                from_str=lambda val: ujson.load(val))
+ArgType.VarAggFunc = ArgType("var_agg_func",
+                             validate=lambda val: val in {"sum", "average", "count"},
+                             from_str=lambda val: val)

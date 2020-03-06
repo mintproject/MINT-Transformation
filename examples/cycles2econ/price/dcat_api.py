@@ -1,10 +1,12 @@
 # !/usr/bin/env python
 # coding: utf-8
-import logging, time
+import datetime
+import logging
+import time
 from typing import List, Dict
 
 import requests
-import datetime
+
 DATA_CATALOG_API = "localhost:5000"
 
 

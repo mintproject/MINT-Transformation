@@ -75,15 +75,14 @@ Water Resources Monograph 15, AGU.
 #
 #-----------------------------------------------------------------------
 
+import sys
+
 import numpy as np
-import os, sys
-
 from topoflow.components import infil_base
-from topoflow.components import soil_base
-
 from topoflow.utils import model_input
-from topoflow.utils import tf_utils  ## (for unit_test only)
 from topoflow.utils import soil_trans_BC as stbc
+from topoflow.utils import tf_utils  ## (for unit_test only)
+
 
 # import matplotlib.pyplot   # (not yet available on beach)
 

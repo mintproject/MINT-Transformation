@@ -5,16 +5,15 @@
 # December 2, 2009 (updated open_new_file to use "info")
 # October 13, 2009
 
-import os
-import sys
 import time
 
+import netCDF4 as nc
 import numpy as np
+
 from . import bov_files
 from . import file_utils
 from . import rti_files
 
-import netCDF4 as nc
 
 #-------------------------------------------------------------------
 

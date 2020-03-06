@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 import abc
 from enum import Enum
-from typing import Dict, Any
+from typing import Dict, Optional
+
 from dtran.argtype import ArgType
+from dtran.metadata import Metadata
 from dtran.wireio import WiredIO
 
 
@@ -27,6 +29,7 @@ class IFuncType(Enum):
     SPATIAL_TRANS = "Spatial Transformation"
     UNIT_TRANS = "Unit Conversion Transformation"
     MODEL_TRANS = "Model-specific Transformation"
+    CROPPING_TRANS = "Cropping Transformation"
     INTERMEDIATE = "Other Transformation"
 
 
@@ -35,6 +38,7 @@ class IFunc(metaclass=IFuncIO):
     description = None
     inputs: Dict[str, ArgType] = {}
     outputs: Dict[str, ArgType] = {}
+    preferences: Dict[str, str] = {}
 
     @abc.abstractmethod
     def validate(self) -> bool:
@@ -79,3 +83,7 @@ class IFunc(metaclass=IFuncIO):
 
     def get_preference(self, output: str) -> str:
         return self.preferences[output]
+
+    @abc.abstractmethod
+    def change_metadata(self, metadata: Optional[Dict[str, Metadata]]) -> Dict[str, Metadata]:
+        pass

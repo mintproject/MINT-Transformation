@@ -1,6 +1,9 @@
-import sys
 import argparse
 import topoflow.framework.tests.test_framework
+import argparse
+
+import topoflow.framework.tests.test_framework
+
 
 def main(args=None):
     """The main routine."""

@@ -1,4 +1,4 @@
-import { message } from "antd";
+import {message} from "antd";
 import mdFactory from "markdown-it";
 import mdMJ from "markdown-it-mathjax";
 

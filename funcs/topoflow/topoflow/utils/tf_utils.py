@@ -36,10 +36,15 @@
 
 #-------------------------------------------------------------------
 
+import glob  # (all are used)
+import os
+import platform
+import sys
+
 import numpy as np
-import platform, sys, os, glob  # (all are used)
 
 from . import idl_func
+
 
 #-------------------------------------------------------------------
 def TF_Use_CCA():

@@ -1,11 +1,12 @@
 import React from "react";
-import { observer, inject } from "mobx-react";
-import { IStore } from "../store";
-import { PipelineType } from "../store/PipelineStore";
-import { RouteComponentProps } from "react-router";
+import {inject, observer} from "mobx-react";
+import {IStore} from "../store";
+import {PipelineType} from "../store/PipelineStore";
+import {RouteComponentProps} from "react-router";
 import MyLayout from "./Layout";
-import { Card, Alert, Spin, Button, Col, Row, Input } from "antd";
+import {Alert, Button, Card, Col, Input, Row, Spin} from "antd";
 import _ from "lodash";
+
 const { TextArea } = Input;
 
 

@@ -155,12 +155,15 @@ class VariableAggregationFunc(IFunc):
                 groups[sub_key] = {
                     "key": sub_key,
                     "record": first_record,
-                    "carried_props": [p for p, po in c.predicates.items() if po.ndarray_size() == 1],
+                    "carried_props": [
+                        p for p, po in c.predicates.items() if po.ndarray_size() == 1
+                    ],
                     "index_props": index_keys,
                     "data": [c.p(rdf.value).as_ndarray([c.p(x) for x in index_keys])]
                 }
             else:
-                groups[sub_key]['data'].append(c.p(rdf.value).as_ndarray([c.p(x) for x in index_keys]))
+                groups[sub_key]['data'].append(
+                    c.p(rdf.value).as_ndarray([c.p(x) for x in index_keys]))
 
         raw_ds = []
         for key, group in groups.items():
@@ -208,10 +211,9 @@ class VariableAggregationFunc(IFunc):
                 if p in {"mint:place", "mint-geo:raster"}:
                     o = sm.get_record_by_id(group['record'].s(p))
                     if p == "mint-geo:raster":
-                        raw_sm['mint-geo:Raster:1'] = {
-                            "properties": []
-                        }
-                        raw_sm['mint:Variable:1']['links'].append(('mint-geo:raster', 'mint-geo:Raster:1'))
+                        raw_sm['mint-geo:Raster:1'] = {"properties": []}
+                        raw_sm['mint:Variable:1']['links'].append(
+                            ('mint-geo:raster', 'mint-geo:Raster:1'))
                         for k, v in o.to_dict().items():
                             if k == '@id':
                                 continue
@@ -227,9 +229,7 @@ class VariableAggregationFunc(IFunc):
                                 "aligned_dims": []
                             })
                     elif p == 'mint:place':
-                        raw_sm['mint:Place:1'] = {
-                            "properties": []
-                        }
+                        raw_sm['mint:Place:1'] = {"properties": []}
                         raw_sm['mint:Variable:1']['links'].append(('mint:place', 'mint:Place:1'))
                         for k, v in o.to_dict().items():
                             if k == '@id':
@@ -266,13 +266,11 @@ class VariableAggregationFunc(IFunc):
                     "type": "dimension",
                     "source": "rdf_value",
                     "target": aid,
-                    "aligned_dims": [{"source": i + 1, "target": 1}]
+                    "aligned_dims": [{
+                        "source": i + 1,
+                        "target": 1
+                    }]
                 })
 
-            raw_ds.append({
-                "data": tbl,
-                "attrs": attrs,
-                "aligns": aligns,
-                "sm": raw_sm
-            })
+            raw_ds.append({"data": tbl, "attrs": attrs, "aligns": aligns, "sm": raw_sm})
         return raw_ds

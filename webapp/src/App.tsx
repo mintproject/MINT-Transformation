@@ -1,11 +1,7 @@
 import React from "react";
-import { inject, observer } from "mobx-react";
-import {
-  Route,
-  BrowserRouter,
-  Switch
-} from "react-router-dom";
-import { IStore } from "./store";
+import {inject, observer} from "mobx-react";
+import {BrowserRouter, Route, Switch} from "react-router-dom";
+import {IStore} from "./store";
 import NotFound404 from "./components/NotFound404";
 import Home from "./components/Home";
 import Adapters from "./components/Adapters";

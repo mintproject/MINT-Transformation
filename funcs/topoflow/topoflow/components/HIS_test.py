@@ -5,12 +5,18 @@
 ##import numpy as NY
 ##import datetime as DT
 
-import numpy
 import socket
+import urllib.error
+import urllib.error
+import urllib.parse
+import urllib.parse
+import urllib.request
+import urllib.request
+
+import numpy
 import suds.client
 import suds.transport
-import urllib.request, urllib.parse, urllib.error
-import urllib.request, urllib.error, urllib.parse
+
 
 #-------------------------------------------------------------------------------
 def HIS_test():

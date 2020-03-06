@@ -9,11 +9,10 @@ Transformation code from CYCLES output to Crop model
 
 import configparser
 import csv
-import os
 import sys
+
 import numpy as np
 import pandas as pd
-from itertools import islice
 
 # configuration parameters
 year = int(sys.argv[1])  # in its present configuration only one year is allowed

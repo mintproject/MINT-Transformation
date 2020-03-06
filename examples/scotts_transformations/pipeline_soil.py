@@ -1,9 +1,7 @@
-import os
-from pathlib import Path
+from eval_soil_climate_defs import BARO, LOL_KURU
 
 from dtran import Pipeline
 from funcs import Topoflow4SoilWriteFunc
-from eval_soil_climate_defs import BARO, LOL_KURU
 
 if __name__ == "__main__":
     import sys

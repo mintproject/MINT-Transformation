@@ -38,12 +38,11 @@
 #-----------------------------------------------------------------------
 
 import numpy as np
-import os
 
 from topoflow.components import evap_base
 
 from topoflow.utils import model_input
-from topoflow.utils import tf_utils
+
 
 #-----------------------------------------------------------------------
 class evap_component( evap_base.evap_component ):
@@ -287,7 +286,6 @@ def RTG_to_RTS( RTG_prefix, new_RTS_file,
     #--------------------------------------------------------------
     import glob
     import os.path
-    import numpy
     import rti_files
 
     #--------------------

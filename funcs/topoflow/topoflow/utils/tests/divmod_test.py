@@ -1,6 +1,8 @@
 
-import numpy
 import time
+
+import numpy
+
 
 def divmod_test(n):
 

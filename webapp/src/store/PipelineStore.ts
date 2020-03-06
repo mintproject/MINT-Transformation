@@ -1,10 +1,8 @@
-import { observable, action } from "mobx";
+import {action, observable} from "mobx";
 import axios from "axios";
-import { AdapterType, flaskUrl, AdapterInputType } from "./AdapterStore";
-import { ErrorStore } from "./ErrorStore";
-import {
-  INode, IEdge,
-} from "react-digraph";
+import {AdapterInputType, AdapterType, flaskUrl} from "./AdapterStore";
+import {ErrorStore} from "./ErrorStore";
+import {IEdge, INode,} from "react-digraph";
 
 // FIXME: settle down on the final format of pipeline object:
 // metadata + list of adapters?

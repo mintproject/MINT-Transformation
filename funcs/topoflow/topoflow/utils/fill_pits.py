@@ -36,21 +36,21 @@
 #
 #-----------------------------------------------------------------------
 
-from numpy import *
-import numpy
-
 import heapq  # (built-in Python package)
 import time
 
-from . import heap_base   # (mine, translated from IDL)
+import numpy
+from numpy import *
+
+from . import heap_base  # (mine, translated from IDL)
 from . import rti_files
+
 
 #-----------------------------------------------------------------------
 def unit_test(SILENT=False):
 
     import CSDMS_base
     from . import rtg_files
-    from . import tf_utils
 
     #------------------------------------------------------------
     # For some reason, the number of pixels that differ between

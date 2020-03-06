@@ -6,8 +6,9 @@
 #------------------------------------------------------
 
 import time
-import numpy
+
 from numpy import *
+
 
 def Speed_Test(n):
     a  = reshape(arange(n*n, dtype='Float64'), (n,n))

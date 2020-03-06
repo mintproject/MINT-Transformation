@@ -52,7 +52,8 @@ import numpy as np
 from topoflow.components import infil_base
 
 from topoflow.utils import model_input
-from topoflow.utils.tf_utils import TF_Print, TF_String
+from topoflow.utils.tf_utils import TF_Print
+
 
 #-----------------------------------------------------------------------
 class infil_component( infil_base.infil_component ):

@@ -38,9 +38,9 @@
 #-----------------------------------------------------------------------
 
 import numpy as np
-
-from topoflow.utils import model_input
 from topoflow.components import snow_base
+from topoflow.utils import model_input
+
 
 #-----------------------------------------------------------------------
 class snow_component( snow_base.snow_component ):

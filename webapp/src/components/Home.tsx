@@ -1,9 +1,10 @@
 import React from "react";
-import { observer, inject } from "mobx-react";
-import { IStore } from "../store";
+import {inject, observer} from "mobx-react";
+import {IStore} from "../store";
 import MyLayout from "./Layout";
 import dtFlow from '../images/dt_flow.jpg';
-import { Typography, Row, Col } from 'antd';
+import {Col, Row, Typography} from 'antd';
+
 const { Title, Paragraph, } = Typography;
 
 const defaultProps = {};

@@ -1,17 +1,12 @@
+import math
+
+import numpy as np
 import xarray
 from drepr import Graph
 from drepr.graph import Node
+from netCDF4 import Dataset
 
 from dtran import IFunc, ArgType
-
-import argparse
-import math
-import os
-import shutil
-from datetime import datetime, timedelta
-
-import numpy as np
-from netCDF4 import Dataset
 
 
 def Closest(lat, lon, path):

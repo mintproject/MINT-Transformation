@@ -47,17 +47,19 @@
 #
 #-----------------------------------------------------------------------
 
-import numpy as np
-import os.path
 import time
-#----------------------
-# Could also do this.
-#----------------------
-# from numpy import where, logical_and, logical_or
 
-from . import d8_global   ### (9/19/14.  Attempt to fix issue.)
-from . import erode_base
+import numpy as np
 from topoflow.utils import rtg_files
+
+from . import d8_global  ### (9/19/14.  Attempt to fix issue.)
+from . import erode_base
+
+
+# ----------------------
+# Could also do this.
+# ----------------------
+# from numpy import where, logical_and, logical_or
 
 # from topoflow.components import d8_global
 # from topoflow.components import erode_base

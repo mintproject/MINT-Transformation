@@ -9,11 +9,11 @@
 #  built-in package "heapq".
 #------------------------------------------------
 
-from numpy import *
-import numpy
-
-import sys
 import time
+
+import numpy
+from numpy import *
+
 
 #-----------------------------------------------------------------------
 #

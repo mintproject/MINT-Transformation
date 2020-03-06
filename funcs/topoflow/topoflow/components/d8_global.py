@@ -16,10 +16,6 @@
 
 import numpy as np
 
-import os        # (for os.chdir(), in unit_test().)
-import os.path
-import time
-
 from topoflow.components import d8_base
 from topoflow.utils      import rtg_files
 

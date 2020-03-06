@@ -1,9 +1,9 @@
 import React from "react";
 import MyLayout from "./Layout";
-import { observer, inject } from "mobx-react";
-import { IStore } from "../store";
-import { Card } from 'antd';
-import { AdapterType } from "../store/AdapterStore";
+import {inject, observer} from "mobx-react";
+import {IStore} from "../store";
+import {Card} from 'antd';
+import {AdapterType} from "../store/AdapterStore";
 import _ from "lodash";
 
 const defaultProps = {};

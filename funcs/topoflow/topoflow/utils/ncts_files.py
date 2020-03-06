@@ -7,14 +7,13 @@
 # Sept 2014 (new version to use netCDF4)
 # May, June 2010
 
-import os
-import sys
 import time
 
+import netCDF4 as nc
 import numpy as np
+
 from . import file_utils
 
-import netCDF4 as nc
 
 #-------------------------------------------------------------------
 # This class is for I/O of time series data to netCDF files.

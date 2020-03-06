@@ -1,8 +1,9 @@
 import * as React from "react";
-import { Link } from "react-router-dom";
-import {  Menu, Layout, Input, Alert, Spin } from 'antd';
-import { inject, observer } from "mobx-react";
-import { IStore } from "../store";
+import {Link} from "react-router-dom";
+import {Alert, Input, Layout, Menu, Spin} from 'antd';
+import {inject, observer} from "mobx-react";
+import {IStore} from "../store";
+
 const { Header, Content, Footer } = Layout;
 const { Search } = Input;
 

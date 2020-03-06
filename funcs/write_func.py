@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 from typing import List, Union, Dict, Optional
 import ujson as json
-from drepr.graph_deprecated import Node, Graph
+from drepr.graph import Node, Graph
 
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc, IFuncType
@@ -20,7 +20,7 @@ class GraphWriteFunc(IFunc):
     func_type = IFuncType.WRITER
     friendly_name: str = "Graph to CSV/JSON"
     inputs = {
-        "data": ArgType.DataSet,
+        "data": ArgType.DataSet(None),
         "main_class": ArgType.String,
         "output_file": ArgType.String,
         "filter": ArgType.String(optional=True),

@@ -1,8 +1,8 @@
-import { createBrowserHistory } from "history";
-import { RouterStore, syncHistoryWithStore } from "mobx-react-router";
-import { PipelineStore } from "./PipelineStore";
-import { AdapterStore } from "./AdapterStore";
-import { ErrorStore } from "./ErrorStore";
+import {createBrowserHistory} from "history";
+import {RouterStore, syncHistoryWithStore} from "mobx-react-router";
+import {PipelineStore} from "./PipelineStore";
+import {AdapterStore} from "./AdapterStore";
+import {ErrorStore} from "./ErrorStore";
 // import { autorun } from "mobx";
 
 export const routingStore = new RouterStore();

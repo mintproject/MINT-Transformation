@@ -1,17 +1,15 @@
 import React from "react";
-import { observer, inject } from "mobx-react";
-import { IStore } from "../store";
-import { message, Upload, Icon, Row, Button, Tabs, Input, Col, Modal } from "antd";
+import {inject, observer} from "mobx-react";
+import {IStore} from "../store";
+import {Button, Col, Icon, Input, message, Modal, Row, Tabs, Upload} from "antd";
 import MyLayout from "./Layout";
-import { UploadedPipelineDataType, NodeType, EdgeType } from "../store/PipelineStore"
+import {EdgeType, NodeType, UploadedPipelineDataType} from "../store/PipelineStore"
 import "antd/dist/antd.css";
-import { UploadFile, UploadChangeParam } from "antd/lib/upload/interface";
-import { RouterProps } from "react-router";
-import { flaskUrl, AdapterType } from "../store/AdapterStore";
+import {UploadChangeParam, UploadFile} from "antd/lib/upload/interface";
+import {RouterProps} from "react-router";
+import {AdapterType, flaskUrl} from "../store/AdapterStore";
 import queryString from 'query-string';
-import {
-  INode, IEdge,
-} from "react-digraph";
+import {IEdge, INode,} from "react-digraph";
 import PipelineGraph from "./PipelineGraph";
 import AdapterInputs from "./AdapterInputs";
 import EdgeDetail from "./EdgeDetail";

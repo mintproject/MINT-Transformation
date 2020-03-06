@@ -39,18 +39,16 @@
 
 #-----------------------------------------------------------------------
 
-import numpy as np
-
-import os
-import socket          # (to get hostname)
-import suds.client
+import socket  # (to get hostname)
 import sys
-import urllib.request, urllib.parse, urllib.error
-# import urllib2
 
+import numpy as np
+import suds.client
 from topoflow.utils import BMI_base
-from topoflow.utils import model_input
 from topoflow.utils import model_output
+
+
+# import urllib2
 
 #-----------------------------------------------------------------------
 class HIS_component(BMI_base.BMI_component):

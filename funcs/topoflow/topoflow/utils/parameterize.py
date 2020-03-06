@@ -11,8 +11,11 @@
 #------------------------------------------------------------------------
 
 import numpy as np
-from . import rtg_files   # (also in utils directory)
-from . import rti_files   # (also in utils directory)
+
+from . import rtg_files  # (also in utils directory)
+from . import rti_files  # (also in utils directory)
+
+
 # from topoflow.utils import rtg_files
 # from topoflow.utils import rti_files
 

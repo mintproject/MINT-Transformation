@@ -7,7 +7,7 @@ from typing import Union
 from drepr import Graph
 
 from dtran import Pipeline, IFunc, ArgType
-from funcs import ReadFunc, GraphWriteFunc
+from funcs import ReadFunc, CSVWriteFunc
 
 
 class TransWrapperFunc(IFunc):
@@ -62,11 +62,11 @@ if __name__ == "__main__":
     }
 
     pipeline = Pipeline(
-        [ReadFunc, ReadFunc, TransWrapperFunc, GraphWriteFunc],
+        [ReadFunc, ReadFunc, TransWrapperFunc, CSVWriteFunc],
         wired=[
             ReadFunc.O._1.data == TransWrapperFunc.I.graph1,
             ReadFunc.O._2.data == TransWrapperFunc.I.graph2,
-            TransWrapperFunc.O.data == GraphWriteFunc.I.graph,
+            TransWrapperFunc.O.data == CSVWriteFunc.I.graph,
         ],
     )
 
@@ -78,9 +78,9 @@ if __name__ == "__main__":
         TransWrapperFunc.I._1.filter: "@type = 'qb:Observation' and sdmx-dimension:refPeriod = '2016-10-12'",
         TransWrapperFunc.I._2.filter: "@type = 'qb:Observation' and sdmx-dimension:refPeriod = '2016-10-12'",
         TransWrapperFunc.I.code: wdir / "cycles-to-crop.py",
-        GraphWriteFunc.I.main_class: "qb:Observation",
-        GraphWriteFunc.I.output_file: wdir / "output.csv",
-        GraphWriteFunc.I.mapped_columns: {},
+        CSVWriteFunc.I.main_class: "qb:Observation",
+        CSVWriteFunc.I.output_file: wdir / "output.csv",
+        CSVWriteFunc.I.mapped_columns: {},
     }
 
     outputs = pipeline.exec(inputs)

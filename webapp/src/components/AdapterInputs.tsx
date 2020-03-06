@@ -1,12 +1,10 @@
 import React from "react";
-import { observer, inject } from "mobx-react";
-import { IStore } from "../store";
-import { Button, Modal } from "antd";
+import {inject, observer} from "mobx-react";
+import {IStore} from "../store";
+import {Button, Modal} from "antd";
 import "antd/dist/antd.css";
-import { AdapterType } from "../store/AdapterStore";
-import {
-  INode, IEdge,
-} from "react-digraph";
+import {AdapterType} from "../store/AdapterStore";
+import {IEdge, INode,} from "react-digraph";
 import _ from "lodash";
 import InputWiredComponent from "./InputComponentWired";
 import InputTextComponent from "./InputComponentText";
@@ -57,7 +55,7 @@ export class AdapterInputsComponent extends React.Component<
   createNodeInput = (referredAdapter: AdapterType, selectedNode: INode, ip: string, idx: number, optional: boolean) => {
     const { graphEdges } = this.props;
     const selectedAdapter = selectedNode.adapter;
-    if (selectedAdapter.inputs[ip].id === "graph") {
+    if (selectedAdapter.inputs[ip].id === "dataset") {
       const wiredEdges = graphEdges.filter(e => e.target === selectedNode.id && e.input === ip);
       // this should be a dropdown to select from
       return <div key={`input-${idx}`} style={{ margin: "20px 20px"}}>

@@ -1,12 +1,10 @@
 import React from "react";
-import { observer, inject } from "mobx-react";
-import { IStore } from "../store";
-import { Button, Dropdown, Menu, Row, Modal, Input } from "antd";
+import {inject, observer} from "mobx-react";
+import {IStore} from "../store";
+import {Button, Dropdown, Input, Menu, Modal, Row} from "antd";
 import "antd/dist/antd.css";
-import { AdapterType } from "../store/AdapterStore";
-import {
-  GraphView, INode, IEdge,
-} from "react-digraph";
+import {AdapterType} from "../store/AdapterStore";
+import {GraphView, IEdge, INode,} from "react-digraph";
 import _ from "lodash";
 import SubMenu from "antd/lib/menu/SubMenu";
 
@@ -125,9 +123,11 @@ export class PipelineGraphComponent extends React.Component<
         id: customName,
         title: `${currentAdapter}`,
         // type: "empty",
-        x: 300 + (maxX + minX)/2,
+        x: 300 + maxX,
         y: (maxY + minY)/2,
-        adapter: this.props.adapters.filter(ad => ad.id === currentAdapter)[0]
+        // FIXME: we need a deep copy!!!!
+        // adapter: this.props.adapters.filter(ad => ad.id === currentAdapter)[0]
+        adapter: JSON.parse(JSON.stringify(this.props.adapters.filter(ad => ad.id === currentAdapter)[0]))
       };
       const newNodes = this.props.graphNodes;
       newNodes.push(newNode);

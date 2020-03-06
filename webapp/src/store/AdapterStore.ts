@@ -1,6 +1,6 @@
-import { observable, action } from "mobx";
+import {action, observable} from "mobx";
 import axios from "axios";
-import { ErrorStore } from "./ErrorStore";
+import {ErrorStore} from "./ErrorStore";
 
 // FIXME: adapter comes from JSON, not db?
 // pipeline serialization should agree with above json

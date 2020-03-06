@@ -15,17 +15,17 @@
 ##        (e.g. d8_code_list, d8_code_map, d8_width_grid)
 #############################################################
 
-from numpy import *
-import numpy
+import os
+import os.path
 
-import os, os.path
+from numpy import *
 
 from . import BMI_base
 from . import pixels
 from . import rtg_files
 from . import tf_utils
-
 from .tf_utils import TF_Print
+
 
 ## from model_output import *
 

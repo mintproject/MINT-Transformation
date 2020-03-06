@@ -20,17 +20,16 @@
 ##        saves the results among its state variables.
 #############################################################
 
-import numpy as np
-
-import os        # (for os.chdir(), in unit_test())
+import os  # (for os.chdir(), in unit_test())
 import os.path
-import time
 
+import numpy as np
 from topoflow.utils import BMI_base
 from topoflow.utils import fill_pits
 from topoflow.utils import model_output
 from topoflow.utils import pixels
 from topoflow.utils import rtg_files
+
 
 #-------------------------------------------
 # For use outside of the TopoFlow package.

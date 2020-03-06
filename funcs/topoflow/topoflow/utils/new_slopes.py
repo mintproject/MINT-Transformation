@@ -20,11 +20,11 @@
 #------------------------------------------------------------------------
 
 import numpy as np
-import copy
-from . import rtg_files   # (also in utils directory)
-from . import rti_files   # (also in utils directory)
-
 from topoflow.components import d8_global
+
+from . import rtg_files  # (also in utils directory)
+from . import rti_files  # (also in utils directory)
+
 
 #---------------------------------------------------------------------------
 def test1():
