@@ -103,10 +103,11 @@ def raster_to_dataset(raster: Raster, inject_class_id: Callable[[str], str] = No
         model['attributes']['variable']['missing_values'].append(raster.nodata)
 
     dsmodel = DRepr.parse(model)
-    alignment = {
+    data = {
         "variable": raster.data,
         "timestamp": timestamp,
-        "nodata": raster.nodata,
+        "lat": raster.get_center_latitude(),
+        "long": raster.get_center_longitude(),
         "gt_x_0": raster.geotransform.x_0,
         "gt_y_0": raster.geotransform.y_0,
         "gt_dx": raster.geotransform.dx,
@@ -118,8 +119,8 @@ def raster_to_dataset(raster: Raster, inject_class_id: Callable[[str], str] = No
     if place:
         for pp in place_parameters:
             if f"mint:{pp}" in place_dict:
-                alignment[f"place_{pp}"] = place.s(f"mint:{pp}")
-    reader = NPDictReader(alignment)
+                data[f"place_{pp}"] = place.s(f"mint:{pp}")
+    reader = NPDictReader(data)
     temp_file = f"resource_{str(uuid.uuid4())}"
     ReaderContainer.get_instance().set(temp_file, reader)
     new_sm = outputs.ArrayBackend.from_drepr(dsmodel, temp_file, inject_class_id)
