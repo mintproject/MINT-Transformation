@@ -89,12 +89,12 @@ class DcatReadFunc(IFunc):
             self.repr = DRepr.parse(dataset_result['metadata']['dataset_repr'])
             self.repr_type = 'dataset_repr'
 
-        if dataset_id == "ea0e86f3-9470-4e7e-a581-df85b4a7075d":
-            self.repr = DRepr.parse_from_file(os.environ['HOME_DIR'] + "/examples/d3m/gpm.yml")
-            self.logger.info("Overwrite GPM")
-        elif dataset_id == "5babae3f-c468-4e01-862e-8b201468e3b5":
-            self.repr = DRepr.parse_from_file(os.environ['HOME_DIR'] + "/examples/d3m/gldas.yml")
-            self.logger.info("Overwrite GLDAS")
+        # if dataset_id == "ea0e86f3-9470-4e7e-a581-df85b4a7075d":
+        #     self.repr = DRepr.parse_from_file(os.environ['HOME_DIR'] + "/examples/d3m/gpm.yml")
+        #     self.logger.info("Overwrite GPM")
+        # elif dataset_id == "5babae3f-c468-4e01-862e-8b201468e3b5":
+        #     self.repr = DRepr.parse_from_file(os.environ['HOME_DIR'] + "/examples/d3m/gldas.yml")
+        #     self.logger.info("Overwrite GLDAS")
 
         self.logger.info(f"Found key '{self.repr_type}'")
         self.logger.info(f"Downloading {len(resource_ids)} resources ...")
