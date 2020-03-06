@@ -140,7 +140,6 @@ class CroppingTransFunc(IFunc):
         return shapes
 
     def _crop_boundbox(self):
-
         self.rasters = CroppingTransFunc.extract_raster(self.dataset, self.variable_name)
         bb = BoundingBox(x_min=self.xmin, y_min=self.ymin, x_max=self.xmax, y_max=self.ymax)
 
@@ -156,7 +155,7 @@ class CroppingTransFunc(IFunc):
         self.results = ShardedBackend(len(self.rasters) * len(self.shapes))
         for r in self.rasters:
             for shape in self.shapes:
-                tempfile_name = f"/tmp/{uuid.uuid1()}.shp"
+                tempfile_name = f"/tmp/{uuid.uuid4()}.shp"
                 CroppingTransFunc.shape_array_to_shapefile(shape, tempfile_name)
                 cropped_raster = r["raster"].crop(
                     vector_file=tempfile_name, resampling_algo=ReSample.BILINEAR
