@@ -15,12 +15,12 @@ from uuid import uuid4
 
 import ujson
 import yaml
-# from dcatreg.dcat_api import DCatAPI
+from funcs.readers.dcat_read_func import DCatAPI
 from flask import Blueprint, jsonify, request
 from webapp.flaskr.config_graph_parser import DiGraphSchema
 
 TMP_DIR = "/tmp/mintdt"
-
+DCAT_URL = os.environ["DCAT_URL"]
 
 def setup_mintdt():
     if not os.path.isdir(TMP_DIR):
@@ -54,7 +54,7 @@ class Pipeline:
     status: str
 
 
-# DCATAPI_INSTANCE = DCatAPI()
+DCATAPI_INSTANCE = DCatAPI(DCAT_URL)
 
 
 pipelines_blueprint = Blueprint("pipelines", "pipelines", url_prefix="/api")

@@ -30,6 +30,7 @@ class IFuncType(Enum):
     UNIT_TRANS = "Unit Conversion Transformation"
     MODEL_TRANS = "Model-specific Transformation"
     CROPPING_TRANS = "Cropping Transformation"
+    AGGREGATION_TRANS = "Aggregation Transformation"
     INTERMEDIATE = "Other Transformation"
 
 
