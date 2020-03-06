@@ -28,15 +28,18 @@ from funcs.readers.dcat_read_func import ShardedBackend
 class VariableAggregationFunc(IFunc):
     id = "aggregation_func"
     description = ''''''
-    func_type = IFuncType.OTHERS
-    friendly_name: str = "Aggregation"
+    func_type = IFuncType.AGGREGATION_TRANS
+    friendly_name: str = "Aggregation Function"
     inputs = {
         "dataset": ArgType.DataSet(None),
         "group_by": ArgType.String,
         "operator": ArgType.String
     }
     outputs = {"data": ArgType.DataSet(None)}
-    example = {}
+    example = {
+        "group_by": "time, lat, long, place",
+        "operator": "count, sum, avg"
+    }
     logger = logging.getLogger(__name__)
 
     def __init__(self, dataset, group_by: list, operator: str):

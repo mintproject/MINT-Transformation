@@ -232,6 +232,40 @@
         }
     },
     {
+        "id": "VariableAggregationFunc",
+        "description": "",
+        "inputs": {
+            "dataset": {
+                "id": "dataset",
+                "val": null,
+                "optional": false
+            },
+            "group_by": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "operator": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {
+            "data": {
+                "id": "dataset",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Aggregation Transformation",
+        "friendly_name": "Aggregation Function",
+        "example": {
+            "group_by": "time, lat, long, place",
+            "operator": "count, sum, avg"
+        }
+    },
+    {
         "id": "DcatWriteFunc",
         "description": " A writer adapter.\n    Write files to DCAT.\n    ",
         "inputs": {

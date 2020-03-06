@@ -10,6 +10,7 @@ from .writers.write_func import CSVWriteFunc
 from .graph_str2str_func import GraphStr2StrFunc
 from .merge_func import MergeFunc
 from .trans_cropping_func import CroppingTransFunc
+from .aggregations.variable_aggregation_func import VariableAggregationFunc
 # from .topoflow.write_topoflow4_climate_func import Topoflow4ClimateWriteFunc, Topoflow4ClimateWritePerMonthFunc
 # from .topoflow.write_topoflow4_soil_func import Topoflow4SoilWriteFunc
 # from .topoflow.nc2geotiff import NC2GeoTiff

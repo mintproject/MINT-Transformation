@@ -15,12 +15,12 @@ from uuid import uuid4
 
 import ujson
 import yaml
-# from dcatreg.dcat_api import DCatAPI
+from funcs.readers.dcat_read_func import DCatAPI
 from flask import Blueprint, jsonify, request
 from webapp.flaskr.config_graph_parser import DiGraphSchema
 
 TMP_DIR = "/tmp/mintdt"
-
+DCAT_URL = os.environ["DCAT_URL"]
 
 def setup_mintdt():
     if not os.path.isdir(TMP_DIR):
@@ -54,7 +54,7 @@ class Pipeline:
     status: str
 
 
-# DCATAPI_INSTANCE = DCatAPI()
+DCATAPI_INSTANCE = DCatAPI(DCAT_URL)
 
 
 pipelines_blueprint = Blueprint("pipelines", "pipelines", url_prefix="/api")
@@ -151,24 +151,24 @@ def upload_pipeline_config():
         return jsonify({"error": str(e)}), 400
 
 
-# @pipelines_blueprint.route('/pipeline/dcat/<dcat_id>', methods=["GET"])
-# def get_dcat_config(dcat_id: str):
-#     # TODO: connect with data catalog
-#     try:
-#         dataset = DCATAPI_INSTANCE.find_dataset_by_id(dcat_id)
-#         dataset_config = dataset["dataset_metadata"].get("config", None)
-#         if dataset_config is None:
-#             return jsonify({
-#                 "error": "This dataset has no config associated!"
-#             }), 400
-#         else:
-#             print(dataset_config)
-#             display_data = DiGraphSchema().dump(dataset_config)
-#             print(display_data)
-#             return jsonify({"data": display_data}), 200
-#     except Exception as e:
-#         print(e)
-#         return jsonify({"error": str(e)}), 400
+@pipelines_blueprint.route('/pipeline/dcat/<dcat_id>', methods=["GET"])
+def get_dcat_config(dcat_id: str):
+    # TODO: connect with data catalog
+    try:
+        dataset = DCATAPI_INSTANCE.find_dataset_by_id(dcat_id)
+        dataset_config = dataset["dataset_metadata"].get("config", None)
+        if dataset_config is None:
+            return jsonify({
+                "error": "This dataset has no config associated!"
+            }), 400
+        else:
+            print(dataset_config)
+            display_data = DiGraphSchema().dump(dataset_config)
+            print(display_data)
+            return jsonify({"data": display_data}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({"error": str(e)}), 400
 
 # ------ fake pipeline -------
 
