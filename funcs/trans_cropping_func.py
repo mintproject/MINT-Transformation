@@ -163,7 +163,8 @@ class CroppingTransFunc(IFunc):
                 )
                 os.remove(tempfile_name)
                 place = shape['place']
-                self.results.add(raster_to_dataset(cropped_raster, self.results.inject_class_id, place=place, timestamp=r["timestamp"]))
+                self.results.add(raster_to_dataset(cropped_raster, self.results.inject_class_id, place=place,
+                                                   timestamp=r["timestamp"]))
 
     def crop_shape_shardedbackend(self):
         # TODO Stub for sharded backend later
