@@ -72,7 +72,7 @@ class CSVWriteFunc(IFunc):
 
         if isinstance(self.data, ShardedBackend):
 
-            for dataset in self.data.datasets[:1]:
+            for dataset in self.data.datasets:
                 id2attrs, attrs = self._sm_traverse(dataset, main_class_node, [])
 
                 main_attrs = attrs
@@ -120,12 +120,18 @@ class CSVWriteFunc(IFunc):
         self, dataset: BaseOutputSM, node: Node, visited: List[Node],
     ) -> (list, set):
         print(f"Called {node.node_id}")
+        count = 0
         id2attrs = defaultdict(lambda: defaultdict(list))
         attrs = set()
+
+        for record in dataset.cid(node.node_id).iter_records():
+            count += 1
+        print("Count: ", count)
 
         for edge in self.sm.iter_outgoing_edges(node.node_id):
             child_node = self.sm.nodes[edge.target_id]
             predicate_url = edge.label
+            print(node.node_id, child_node.node_id)
 
             if isinstance(child_node, LiteralNode) or isinstance(child_node, DataNode):
                 attrs.add(predicate_url)
@@ -141,17 +147,16 @@ class CSVWriteFunc(IFunc):
                     child2tuples, child_attrs = self._sm_traverse(
                         dataset, child_node, visited + [child_node]
                     )
-                    print(node.node_id, predicate_url, child_node.node_id, edge.source_id, edge.target_id)
                     for record in dataset.cid(node.node_id).iter_records():
-                        rid = record.m(predicate_url)
-                        for child_record in dataset.cid(child_node.node_id).iter_records():
-                            if child_record.id == rid:
-                                print("True")
-                                for attr in child2tuples[child_record.id]:
-                                    id2attrs[record.id][
-                                        predicate_url + "---" + attr
-                                    ] = child2tuples[child_record.id][attr]
-                                    attrs.add(predicate_url + "---" + attr)
+                        rids = record.m(predicate_url)
+                        for rid in rids:
+                            child_record = dataset.get_record_by_id(rid)
+                            for attr in child2tuples[child_record.id]:
+                                id2attrs[record.id][
+                                    predicate_url + "---" + attr
+                                ] = child2tuples[child_record.id][attr]
+
+                                attrs.add(predicate_url + "---" + attr)
 
         return id2attrs, list(attrs)
 
