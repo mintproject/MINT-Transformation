@@ -1,8 +1,8 @@
-from flask import Blueprint, jsonify, request
-import json
-import yaml
-from dcatreg.dcat_api import DCatAPI
-from webapp.flaskr.config_graph_parser import DiGraphSchema
+# from flask import Blueprint, jsonify, request
+# import json
+# import yaml
+# from dcatreg.dcat_api import DCatAPI
+# from webapp.flaskr.config_graph_parser import DiGraphSchema
 import glob
 import json
 import os
@@ -15,9 +15,9 @@ from uuid import uuid4
 
 import ujson
 import yaml
-from dcatreg.dcat_api import DCatAPI
+# from dcatreg.dcat_api import DCatAPI
 from flask import Blueprint, jsonify, request
-from flaskr.config_graph_parser import DiGraphSchema
+from webapp.flaskr.config_graph_parser import DiGraphSchema
 
 TMP_DIR = "/tmp/mintdt"
 
@@ -54,7 +54,7 @@ class Pipeline:
     status: str
 
 
-DCATAPI_INSTANCE = DCatAPI()
+# DCATAPI_INSTANCE = DCatAPI()
 
 
 pipelines_blueprint = Blueprint("pipelines", "pipelines", url_prefix="/api")
@@ -151,24 +151,24 @@ def upload_pipeline_config():
         return jsonify({"error": str(e)}), 400
 
 
-@pipelines_blueprint.route('/pipeline/dcat/<dcat_id>', methods=["GET"])
-def get_dcat_config(dcat_id: str):
-    # TODO: connect with data catalog
-    try:
-        dataset = DCATAPI_INSTANCE.find_dataset_by_id(dcat_id)
-        dataset_config = dataset["dataset_metadata"].get("config", None)
-        if dataset_config is None:
-            return jsonify({
-                "error": "This dataset has no config associated!"
-            }), 400
-        else:
-            print(dataset_config)
-            display_data = DiGraphSchema().dump(dataset_config)
-            print(display_data)
-            return jsonify({"data": display_data}), 200
-    except Exception as e:
-        print(e)
-        return jsonify({"error": str(e)}), 400
+# @pipelines_blueprint.route('/pipeline/dcat/<dcat_id>', methods=["GET"])
+# def get_dcat_config(dcat_id: str):
+#     # TODO: connect with data catalog
+#     try:
+#         dataset = DCATAPI_INSTANCE.find_dataset_by_id(dcat_id)
+#         dataset_config = dataset["dataset_metadata"].get("config", None)
+#         if dataset_config is None:
+#             return jsonify({
+#                 "error": "This dataset has no config associated!"
+#             }), 400
+#         else:
+#             print(dataset_config)
+#             display_data = DiGraphSchema().dump(dataset_config)
+#             print(display_data)
+#             return jsonify({"data": display_data}), 200
+#     except Exception as e:
+#         print(e)
+#         return jsonify({"error": str(e)}), 400
 
 # ------ fake pipeline -------
 
@@ -220,9 +220,11 @@ def run_pipeline(name: str, description: str, config: object, id=""):
             "end": {}
         }, fd)
 
+    print("---------------------------------------------")
+    print(f"docker run --name {id} -d -v /tmp:/tmp -v $(pwd):/ws -w /ws mint_dt bash /ws/webapp/scripts/run_pipeline_from_ui.sh {sess_id}")
     # TODO: modify the command to mount directory or add environment variables if needed
     subprocess.Popen(
-        f"docker run --name {id} -d -v /tmp:/tmp -v $(pwd):/ws mint_dt bash /ws/webapp/scripts/run_pipeline_from_ui.sh {sess_id}",
+        f"docker run --name {id} -d -v /tmp:/tmp -v $(pwd):/ws -w /ws mint_dt bash /ws/webapp/scripts/run_pipeline_from_ui.sh {sess_id}",
         shell=True
     )
     return

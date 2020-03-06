@@ -3,7 +3,18 @@ from flask_cors import CORS
 
 from webapp.flaskr.api.adapters import adapters_blueprint
 from webapp.flaskr.api.pipelines import pipelines_blueprint
-import os
+import yaml
+from collections import OrderedDict
+
+
+def represent_dictionary_order(self, dict_data):
+    return self.represent_mapping('tag:yaml.org,2002:map', dict_data.items())
+
+
+def setup_yaml():
+    yaml.add_representer(OrderedDict, represent_dictionary_order)
+
+setup_yaml()
 
 app = Flask(__name__)
 CORS(app)

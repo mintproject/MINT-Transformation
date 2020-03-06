@@ -123,9 +123,11 @@ export class PipelineGraphComponent extends React.Component<
         id: customName,
         title: `${currentAdapter}`,
         // type: "empty",
-        x: 300 + (maxX + minX)/2,
+        x: 300 + maxX,
         y: (maxY + minY)/2,
-        adapter: this.props.adapters.filter(ad => ad.id === currentAdapter)[0]
+        // FIXME: we need a deep copy!!!!
+        // adapter: this.props.adapters.filter(ad => ad.id === currentAdapter)[0]
+        adapter: JSON.parse(JSON.stringify(this.props.adapters.filter(ad => ad.id === currentAdapter)[0]))
       };
       const newNodes = this.props.graphNodes;
       newNodes.push(newNode);

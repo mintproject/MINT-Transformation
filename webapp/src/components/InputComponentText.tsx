@@ -33,6 +33,8 @@ export class InputTextComponent extends React.Component<
   render() {
     const { selectedNode, input, graphNodes, setGraphNodes, referredAdapter } = this.props;
     if (selectedNode === null) { return; }
+    console.log("Look at me! ")
+    console.log(selectedNode.id)
     const selectedAdapter = selectedNode!.adapter;
     return (
       <p

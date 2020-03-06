@@ -23,7 +23,7 @@ class CSVWriteFunc(IFunc):
     func_type = IFuncType.WRITER
     friendly_name: str = "Graph to CSV"
     inputs = {
-        "data": ArgType.DataSet,
+        "data": ArgType.DataSet(None),
         "output_file": ArgType.String,
     }
     outputs = {"output_file": ArgType.String}
