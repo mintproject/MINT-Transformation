@@ -127,7 +127,7 @@ class CSVWriteFunc(IFunc):
     def _sm_traverse(
         self, dataset: BaseOutputSM, node: Node, visited: List[Node],
     ) -> (list, set):
-        print(f"Called {node.node_id}")
+        # print(f"Called {node.node_id}")
         id2attrs = defaultdict(lambda: defaultdict(list))
         attrs = set()
 

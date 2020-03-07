@@ -19,14 +19,14 @@ adapters:
       variable_name: atmosphere_water__precipitation_mass_flux
       dataset: $.gpm_read_func.data
       shape: $.shapefile_read_func.data
-  # agg_by_time_place:
-  #   adapter: funcs.aggregations.variable_aggregation_func.VariableAggregationFunc
-  #   inputs:
-  #     dataset: $.my_crop_func.data
-  #     group_by:
-  #       - { prop: "mint:timestamp", value: exact }
-  #       - { prop: "mint:place", value: exact }
-  #     function: average
+  agg_by_time_place:
+    adapter: funcs.aggregations.variable_aggregation_func.VariableAggregationFunc
+    inputs:
+      dataset: $.my_crop_func.data
+      group_by:
+        - { prop: "mint:timestamp", value: exact }
+        - { prop: "mint:place", value: exact }
+      function: average
   my_writer:
     adapter: funcs.CSVWriteFunc
     inputs:
