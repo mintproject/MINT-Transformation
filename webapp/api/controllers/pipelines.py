@@ -18,7 +18,7 @@ import ujson
 import yaml
 from funcs.readers.dcat_read_func import DCatAPI
 from flask import Blueprint, jsonify, request
-from api.config_graph_parser import DiGraphSchema
+from webapp.api.config_graph_parser import DiGraphSchema
 
 TMP_DIR = "/tmp/mintdt"
 PROJECT_DIR = str(Path(os.path.abspath(__file__)).parent.parent.parent.parent)
