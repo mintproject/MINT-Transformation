@@ -1,8 +1,8 @@
 from flask import Flask, render_template
 from flask_cors import CORS
 
-from webapp.api.controllers.adapters import adapters_blueprint
-from webapp.api.controllers.pipelines import pipelines_blueprint
+from api.controllers.adapters import adapters_blueprint
+from api.controllers.pipelines import pipelines_blueprint
 import yaml
 from collections import OrderedDict
 
