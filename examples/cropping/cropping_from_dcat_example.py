@@ -1,5 +1,5 @@
 from funcs.readers.dcat_read_func import *
-from funcs.trans_cropping_func import CroppingTransFunc
+from funcs.gdal.trans_cropping_func import CroppingTransFunc
 from datetime import datetime
 
 from funcs.writers.write_func import CSVWriteFunc
