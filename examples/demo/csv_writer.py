@@ -29,6 +29,6 @@ temp_dataset = read_local_datasets(
     HOME_DIR + f"/demo/data/gldas/{variable}/{date_pattern}*.nc4",
 )
 
-write_func = CSVWriteFunc(temp_dataset, "cropped_result.csv")
+write_func = CSVWriteFunc(temp_dataset, "data/cropped_result.csv")
 
 write_func.exec()

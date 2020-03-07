@@ -240,12 +240,12 @@
                 "val": null,
                 "optional": false
             },
-            "group_bys": {
+            "group_by": {
                 "id": "var_agg_group_by",
                 "val": null,
                 "optional": false
             },
-            "operator": {
+            "function": {
                 "id": "var_agg_func",
                 "val": null,
                 "optional": false
