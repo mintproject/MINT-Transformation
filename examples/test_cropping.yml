@@ -30,5 +30,5 @@ adapters:
   my_writer:
     adapter: funcs.CSVWriteFunc
     inputs:
-      data: $.my_crop_func.data
+      data: $.agg_by_time_place.data
       output_file: examples/demo/cropped_result.csv
