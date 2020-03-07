@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import csv
+import datetime
 from collections import defaultdict
 from pathlib import Path
 from typing import List, Union, Dict, Optional
@@ -143,6 +144,8 @@ class CSVWriteFunc(IFunc):
                     val = record.m(predicate_url)
                     if not isinstance(val, list):
                         val = [val]
+                    if predicate_url == "mint:timestamp":
+                        val = [datetime.datetime.fromtimestamp(v, tz=datetime.timezone.utc) for v in val]
                     id2attrs[record.id][predicate_label].extend(val)
             else:
                 if child_node not in visited:
