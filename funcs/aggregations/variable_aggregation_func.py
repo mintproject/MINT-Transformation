@@ -164,11 +164,18 @@ class VariableAggregationFunc(IFunc):
                 total = np.zeros_like(values[0].data)
                 for v in values:
                     total += v.data * (v.data != v.nodata.value)
+                if len(group['index_props']) < len(values[0].data.shape):
+                    # one extra dimension at the end, which we need to sum
+                    total = total.sum(axis=-1)
                 result = total
             elif func == AggregationFunc.COUNT:
                 total = np.zeros_like(values[0].data)
                 for v in values:
                     total += (v.data != v.nodata.value).astype(np.int64)
+
+                if len(group['index_props']) < len(values[0].data.shape):
+                    # one extra dimension at the end, which we need to sum
+                    total = total.sum(axis=-1)
                 result = total
             elif func == AggregationFunc.AVG:
                 total = np.zeros_like(values[0].data)
