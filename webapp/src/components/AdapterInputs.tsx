@@ -9,6 +9,7 @@ import _ from "lodash";
 import InputWiredComponent from "./InputComponentWired";
 import InputTextComponent from "./InputComponentText";
 import InputFilePathComponent from "./InputComponentFilePath";
+import InputSelectComponent from "./InputComponentSelect";
 
 interface AdapterInputsProps {
   selectedNode: INode | null,
@@ -85,8 +86,19 @@ export class AdapterInputsComponent extends React.Component<
           />
         </div>
       );
-    }
-    else {
+    } else if (selectedAdapter.inputs[ip].id.includes("var_agg")) {
+      return (
+        <div key={`input-${idx}`} style={{ margin: "20px 20px"}}>
+        {`${ip}: `}
+        {!optional ? <span style={{ color: "red" }}>{`*`}</span> : null}
+        <InputSelectComponent
+          selectedNode={selectedNode}
+          input={ip}
+          referredAdapter={referredAdapter}
+          selectType={selectedAdapter.inputs[ip].id === "var_agg_group_by" ? "groupby" : "aggregation"}
+        />
+      </div>);
+    } else {
       return (
         <div key={`input-${idx}`} style={{ margin: "20px 20px"}}>
           {`${ip}: `}
