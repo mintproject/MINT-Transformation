@@ -14,12 +14,10 @@ import requests
 from dateutil import parser
 from drepr import DRepr
 from drepr.outputs import ArrayBackend, GraphBackend
-
 from dtran.argtype import ArgType
 from dtran.backend import ShardedBackend
 from dtran.ifunc import IFunc, IFuncType
 
-DCAT_URL = os.environ["DCAT_URL"]
 DATA_CATALOG_DOWNLOAD_DIR = os.path.abspath(os.environ["DATA_CATALOG_DOWNLOAD_DIR"])
 Path(DATA_CATALOG_DOWNLOAD_DIR).mkdir(exist_ok=True, parents=True)
 
@@ -54,16 +52,16 @@ class DcatReadFunc(IFunc):
             use_cache: bool = True,
     ):
         self.dataset_id = dataset_id
-        dataset_result = DCatAPI.get_instance(DCAT_URL).find_dataset_by_id(dataset_id)
+        dataset_result = DCatAPI.get_instance().find_dataset_by_id(dataset_id)
 
         assert ("resource_repr" in dataset_result["metadata"]) or (
-                "dataset_repr" in dataset_result["metadata"]
+            "dataset_repr" in dataset_result["metadata"]
         ), "Dataset is missing both 'resource_repr' and 'dataset_repr'"
         assert not (("resource_repr" in dataset_result["metadata"]) and
                     ("dataset_repr" in dataset_result["metadata"])
                     ), "Dataset has both 'resource_repr' and 'dataset_repr'"
 
-        resource_results = DCatAPI.get_instance(DCAT_URL).find_resources_by_dataset_id(
+        resource_results = DCatAPI.get_instance().find_resources_by_dataset_id(
             dataset_id, start_time, end_time)
 
         resource_ids = {}
@@ -86,18 +84,11 @@ class DcatReadFunc(IFunc):
             # TODO: fix me!!
             assert len(resource_results) == 1
             resource_ids[resource_results[0]
-            ["resource_id"]] = resource_results[0]["resource_data_url"]
+                         ["resource_id"]] = resource_results[0]["resource_data_url"]
             resource_types[resource_results[0]
-            ["resource_id"]] = resource_results[0]["resource_type"]
+                           ["resource_id"]] = resource_results[0]["resource_type"]
             self.repr = DRepr.parse(dataset_result["metadata"]["dataset_repr"])
             self.repr_type = "dataset_repr"
-
-        if dataset_id == "ea0e86f3-9470-4e7e-a581-df85b4a7075d":
-            self.repr = DRepr.parse_from_file(os.environ["HOME_DIR"] + "/examples/d3m/gpm.yml")
-            self.logger.info("Overwrite GPM")
-        elif dataset_id == "5babae3f-c468-4e01-862e-8b201468e3b5":
-            self.repr = DRepr.parse_from_file(os.environ["HOME_DIR"] + "/examples/d3m/gldas.yml")
-            self.logger.info("Overwrite GLDAS")
 
         self.logger.info(f"Found key '{self.repr_type}'")
         self.logger.info(f"Downloading {len(resource_ids)} resources ...")
@@ -213,9 +204,9 @@ class DCatAPI:
         self.api_key = None
 
     @staticmethod
-    def get_instance(dcat_url: str):
+    def get_instance():
         if DCatAPI.instance is None:
-            DCatAPI.instance = DCatAPI(dcat_url)
+            DCatAPI.instance = DCatAPI(os.environ["DCAT_URL"])
         return DCatAPI.instance
 
     def find_resources_by_dataset_id(
