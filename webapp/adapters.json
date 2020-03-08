@@ -176,7 +176,7 @@
     },
     {
         "id": "CroppingTransFunc",
-        "description": null,
+        "description": "",
         "inputs": {
             "variable_name": {
                 "id": "string",
@@ -262,7 +262,7 @@
         "friendly_name": "Aggregation Function",
         "example": {
             "group_by": "time, lat, long, place",
-            "operator": "count, sum, average"
+            "function": "count, sum, average"
         }
     },
     {
