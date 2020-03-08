@@ -96,6 +96,8 @@ export class AdapterInputsComponent extends React.Component<
           input={ip}
           referredAdapter={referredAdapter}
           selectType={selectedAdapter.inputs[ip].id === "var_agg_group_by" ? "groupby" : "aggregation"}
+          graphNodes={this.props.graphNodes}
+          setGraphNodes={this.props.setGraphNodes}
         />
       </div>);
     } else {

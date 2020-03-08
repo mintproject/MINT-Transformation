@@ -120,7 +120,9 @@ def create_pipeline():
             "edges": pipeline_edges
             # TODO: Missing comment
         })
-        run_pipeline(pipeline_name, pipeline_description, dict(pipeline_config))
+        # import pdb; pdb.set_trace()
+        print(json.dumps(pipeline_config, indent=2))
+        # run_pipeline(pipeline_name, pipeline_description, dict(pipeline_config))
         # print(json.dumps(pipeline_nodes, indent=2))
         # print(json.dumps(pipeline_edges, indent=2))
         return jsonify({"result": "success"}), 200

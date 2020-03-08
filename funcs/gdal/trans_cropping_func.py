@@ -15,6 +15,7 @@ from fiona.crs import from_epsg
 
 class CroppingTransFunc(IFunc):
     id = "cropping trans"
+    description = ""
 
     inputs = {
         "variable_name": ArgType.String,
