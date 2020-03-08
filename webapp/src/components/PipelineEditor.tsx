@@ -142,7 +142,8 @@ export class PipelineEditorComponent extends React.Component<
 
   createGraphNodes = (nodes: NodeType[]) => {
     return nodes.map((n, idx) => {
-      const title = n.adapter.split(".")[1];
+      const adapterNameList = n.adapter.split(".");
+      const title = adapterNameList[adapterNameList.length - 1];
       const currAdapter = this.props.adapters.filter(ad => ad.id === title)[0];
       return ({
         id: n.id,
