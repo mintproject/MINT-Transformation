@@ -16,7 +16,7 @@ from uuid import uuid4
 
 import ujson
 import yaml
-from funcs.readers.dcat_read_func import DCatAPI
+# from dtran.dcat.api import DCatAPI
 from flask import Blueprint, jsonify, request
 from api.config_graph_parser import DiGraphSchema
 
@@ -57,7 +57,7 @@ class Pipeline:
     status: str
 
 
-DCATAPI_INSTANCE = DCatAPI.get_instance()
+# DCATAPI_INSTANCE = DCatAPI.get_instance()
 
 pipelines_blueprint = Blueprint("pipelines", "pipelines", url_prefix="/api")
 
@@ -151,24 +151,36 @@ def upload_pipeline_config():
         return jsonify({"error": str(e)}), 400
 
 
-# @pipelines_blueprint.route('/pipeline/dcat/<dcat_id>', methods=["GET"])
-# def get_dcat_config(dcat_id: str):
-#     # TODO: connect with data catalog
-#     try:
-#         dataset = DCATAPI_INSTANCE.find_dataset_by_id(dcat_id)
-#         dataset_config = dataset["dataset_metadata"].get("config", None)
-#         if dataset_config is None:
-#             return jsonify({
-#                 "error": "This dataset has no config associated!"
-#             }), 400
-#         else:
-#             print(dataset_config)
-#             display_data = DiGraphSchema().dump(dataset_config)
-#             print(display_data)
-#             return jsonify({"data": display_data}), 200
-#     except Exception as e:
-#         print(e)
-#         return jsonify({"error": str(e)}), 400
+@pipelines_blueprint.route('/pipeline/dcat/<dcat_id>', methods=["GET"])
+def get_dcat_config(dcat_id: str):
+    # TODO: connect with data catalog
+    try:
+        # dataset = DCATAPI_INSTANCE.find_dataset_by_id(dcat_id)
+        # dataset_config = dataset["dataset_metadata"].get("config", None)
+        # if dataset_config is None:
+        #     return jsonify({
+        #         "error": "This dataset has no config associated!"
+        #     }), 400
+        dataset_config = {
+            "version":"1",
+            "adapters": {
+                "my_read_func": {
+                    "inputs": {
+                        "dataset_id": dcat_id
+                    },
+                    "adapter":"funcs.DcatReadFunc",
+                    "comment":"My read func adapter"
+                }
+            }
+        }
+        # else:
+        # print(dataset_config)
+        display_data = DiGraphSchema().dump(dataset_config)
+        # print(display_data)
+        return jsonify({"data": display_data}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({"error": str(e)}), 400
 
 # ------ fake pipeline -------
 
@@ -302,7 +314,7 @@ def list_pipeline_detail(pid: str, id: str):
             status = "finished"
             ujson.dump(data, fd)
             end_log = end_log[0]
-        elif 'Traceback' in run_log or 'error' in run_log.lower():
+        elif 'Traceback' in run_log:
             end_log = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
             status = "failed"
             ujson.dump({
