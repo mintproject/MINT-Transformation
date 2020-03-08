@@ -174,7 +174,7 @@ export class InputSelectComponent extends React.Component<
           value={this.state.groupByValues[i]}
         >
           {_.get(this.allValues, op, []).map((o: string) => {
-            return <Option key={`${op}-${o}`}>{o}</Option>
+            return <Option key={`${o}`}>{o}</Option>
           })}
         </Select>
       </Col>

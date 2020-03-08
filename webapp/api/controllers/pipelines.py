@@ -121,8 +121,8 @@ def create_pipeline():
             # TODO: Missing comment
         })
         # import pdb; pdb.set_trace()
-        print(json.dumps(pipeline_config, indent=2))
-        # run_pipeline(pipeline_name, pipeline_description, dict(pipeline_config))
+        # print(json.dumps(pipeline_config, indent=2))
+        run_pipeline(pipeline_name, pipeline_description, dict(pipeline_config))
         # print(json.dumps(pipeline_nodes, indent=2))
         # print(json.dumps(pipeline_edges, indent=2))
         return jsonify({"result": "success"}), 200
@@ -249,7 +249,7 @@ def list_pipeline_detail(pid: str, id: str):
                 data = json.load(f)
             except ValueError:
                 data = {}
-            if "end" in data and data["end"]:
+            if "status" in data and "end" in data:
                 # if the process has already finished
                 # print(f"Reading from {TMP_DIR}/{id}.json")
                 run_log = subprocess.check_output(f"docker logs {pid}", shell=True)
@@ -261,7 +261,7 @@ def list_pipeline_detail(pid: str, id: str):
                                     end_timestamp=data["end"],
                                     config=data["config"],
                                     output=run_log.decode("utf-8"),
-                                    status="finished")
+                                    status=data["status"])
                 return asdict(pipeline)
 
     # pipeline is still running: remove this json file
@@ -273,6 +273,7 @@ def list_pipeline_detail(pid: str, id: str):
     host_conf_file = f"/tmp/config.{sess_id}.yml"
     host_start_log_file = f"/tmp/run.start.{sess_id}.log"
     host_end_log_file = f"/tmp/run.end.{sess_id}.log"
+    host_run_log_file = f"/tmp/run.{sess_id}.log"
     host_cache = f"{TMP_DIR}/{id}.json"
 
     container_conf_file = "/run/config.yml"  # the file we are going to write the config to
@@ -282,23 +283,34 @@ def list_pipeline_detail(pid: str, id: str):
     subprocess.check_call(
         f"docker cp {id}:{container_conf_file} {host_conf_file} && docker cp {id}:{container_start_log_file} {host_start_log_file} && docker cp {id}:{container_end_log_file} {host_end_log_file}",
         shell=True)
-    run_log = subprocess.check_output(f"docker logs {pid}", shell=True)
+    subprocess.check_output(f"docker logs {pid} &> {host_run_log_file}", shell=True)
     # TODO: deserialize the configuration file and the log file to get the pipeline and return it.
-    with open(host_start_log_file,
-              "r") as f1, open(host_end_log_file,
-                               "r") as f2, open(host_conf_file, "r") as f3, open(host_cache,
-                                                                                 "w") as fd:
+    with open(host_start_log_file, "r") as f1,\
+         open(host_end_log_file, "r") as f2,\
+         open(host_conf_file, "r") as f3,\
+         open(host_run_log_file, "r") as f4, \
+         open(host_cache, "w") as fd:
         start_log = json.load(f1)
         config = yaml.safe_load(f3)
+        run_log = f4.read()
         # import pdb; pdb.set_trace()
         end_log = f2.read().splitlines()
         if len(end_log) > 0:
             print(f2.read().splitlines())
-            data = {"config": config, "start": start_log, "end": end_log[0]}
+            data = {"config": config, "start": start_log, "end": end_log[0], "status": 'finished'}
             print(f"Writing to {TMP_DIR}/{id}.json (again)")
             status = "finished"
             ujson.dump(data, fd)
             end_log = end_log[0]
+        elif 'Traceback' in run_log or 'error' in run_log.lower():
+            end_log = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+            status = "failed"
+            ujson.dump({
+                "config": config,
+                "start": start_log,
+                "end": end_log,
+                "status": status
+            }, fd)
         else:
             ujson.dump({
                 "config": config,
@@ -312,7 +324,7 @@ def list_pipeline_detail(pid: str, id: str):
                             start_timestamp=start_log.get("start_time", ""),
                             end_timestamp=end_log,
                             config=config,
-                            output=run_log.decode("utf-8"),
+                            output=run_log,
                             status=status)
         return asdict(pipeline)
 
