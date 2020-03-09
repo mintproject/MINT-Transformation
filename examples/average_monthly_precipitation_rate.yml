@@ -31,4 +31,4 @@ adapters:
     adapter: funcs.CSVWriteFunc
     inputs:
       data: $.agg_by_time_place.data
-      output_file: data/results/average_monthly_precipitation_rate
+      output_file: ./data/results/average_monthly_precipitation_rate.csv
