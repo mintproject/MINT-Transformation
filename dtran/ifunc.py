@@ -82,8 +82,8 @@ class IFunc(metaclass=IFuncIO):
     def set_preferences(self, preferences: Dict[str, str]) -> None:
         self.preferences = preferences
 
-    def get_preference(self, output: str) -> str:
-        return self.preferences[output]
+    def get_preference(self, output: str) -> Optional[str]:
+        return self.preferences.get(output, None)
 
     @abc.abstractmethod
     def change_metadata(self, metadata: Optional[Dict[str, Metadata]]) -> Dict[str, Metadata]:

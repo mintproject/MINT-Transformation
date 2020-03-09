@@ -182,6 +182,7 @@ class DcatReadFunc(IFunc):
         self.logger.info(f"Download Complete. Skip {n_skip} and download {n_download} resources")
 
     def exec(self) -> dict:
+        # TODO: fix me! incorrect way to choose backend
         if (self.get_preference("data") is None or self.get_preference("data") == "array"):
             backend = ArrayBackend
         else:
