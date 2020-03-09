@@ -19,6 +19,11 @@ from dtran.backend import ShardedBackend
 from dtran.ifunc import IFunc, IFuncType
 
 DATA_CATALOG_DOWNLOAD_DIR = os.path.abspath(os.environ["DATA_CATALOG_DOWNLOAD_DIR"])
+if os.environ['NO_CHECK_CERTIFICATE'].lower().strip() == 'true':
+    DOWNLOAD_CMD = "wget --no-check-certificate"
+else:
+    DOWNLOAD_CMD = "wget"
+
 Path(DATA_CATALOG_DOWNLOAD_DIR).mkdir(exist_ok=True, parents=True)
 
 
@@ -136,7 +141,7 @@ class DcatReadFunc(IFunc):
                     elif resource_types[resource_id].startswith(".tar"):
                         raise NotImplementedError()
                     subprocess.check_call(
-                        f"wget {resource_url} -O {temp_file} && {extract_cmd} && rm {temp_file}",
+                        f"{DOWNLOAD_CMD} {resource_url} -O {temp_file} && {extract_cmd} && rm {temp_file}",
                         shell=True,
                     )
                     # flatten the structure (max two levels)
@@ -167,7 +172,7 @@ class DcatReadFunc(IFunc):
                     else:
                         resource_path = str(files[0])
                 else:
-                    subprocess.check_call(f"wget {resource_url} -O {resource_base_path}",
+                    subprocess.check_call(f"{DOWNLOAD_CMD} {resource_url} -O {resource_base_path}",
                                           shell=True)
                     resource_path = resource_base_path
                 n_download += 1
