@@ -64,6 +64,22 @@ class DCatAPI:
         assert resp.status_code == 200, resp.text
         return resp.json()
 
+    def update_dataset_metadata(self, dataset_id, metadata):
+        provenance_id = "b3e79dc2-8fa1-4203-ac82-b5267925191f"
+        request_headers = {"Content-Type": "application/json", "X-Api-Key": self.get_api_key()}
+        resp = requests.post(
+            f"{self.dcat_url}/datasets/update_dataset",
+            headers=request_headers,
+            json={
+                "dataset_id": dataset_id,
+                "provenance_id": provenance_id,
+                "metadata": metadata
+            },
+        )
+        assert resp.status_code == 200, resp.text
+        parsed_response = DCatAPI.handle_api_response(resp)
+        return parsed_response
+
     def get_api_key(self):
         """
         :return:
