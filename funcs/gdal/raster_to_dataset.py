@@ -9,6 +9,7 @@ raster_model = {
     "version": "2",
     "resources": "container",
     "attributes": {
+        "variable_name": "$.variable_name",
         "variable": {
             "path": "$.variable[:][:]",
             "missing_values": []
@@ -28,17 +29,20 @@ raster_model = {
                       {"type": "dimension", "value": "variable:1 <-> lat:1"},
                       {"type": "dimension", "value": "variable:2 <-> long:1"}
                   ] +
-        [
-        {"type": "dimension", "source": "variable", "target": x, "aligned_dims": []}
-        for x in ["timestamp", "gt_x_0", "gt_y_0", "gt_dx", "gt_dy", "gt_epsg", "gt_x_slope", "gt_y_slope"]
-    ],
+                  [
+                      {"type": "dimension", "source": "variable", "target": x, "aligned_dims": []}
+                      for x in
+                      ["variable_name", "timestamp", "gt_x_0", "gt_y_0", "gt_dx", "gt_dy", "gt_epsg", "gt_x_slope",
+                       "gt_y_slope"]
+                  ],
     "semantic_model": {
         "mint:Variable:1": {
             "properties": [
                 ("rdf:value", "variable"),
                 ("mint-geo:lat", "lat"),
                 ("mint-geo:long", "long"),
-                ("mint:timestamp", "timestamp")
+                ("mint:timestamp", "timestamp"),
+                ("mint:standardName", "variable_name")
             ],
             "links": [
                 ("mint:place", "mint:Place:1"),
@@ -89,7 +93,8 @@ def _update_model(place_dict):
     return updated_model
 
 
-def raster_to_dataset(raster: Raster, inject_class_id: Callable[[str], str] = None, place=None, timestamp=None):
+def raster_to_dataset(raster: Raster, variable_name: str, inject_class_id: Callable[[str], str] = None, place=None,
+                      timestamp=None):
     if place:
         place_dict = place.to_dict()
     else:
@@ -104,6 +109,7 @@ def raster_to_dataset(raster: Raster, inject_class_id: Callable[[str], str] = No
 
     dsmodel = DRepr.parse(model)
     data = {
+        "variable_name": variable_name,
         "variable": raster.data,
         "timestamp": timestamp,
         "lat": raster.get_center_latitude(),
