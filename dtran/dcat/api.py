@@ -30,6 +30,27 @@ class DCatAPI:
             DCatAPI.instance = DCatAPI(dcat_url)
         return DCatAPI.instance
 
+    def delete_datasets(self, provenance_id, dataset_ids):
+        request_headers = {"Content-Type": "application/json", "X-Api-Key": self.get_api_key()}
+
+        deleted_ids = []
+        # Walking through each resource in dataset_obj
+        for resource_id in dataset_ids:
+            resource_defs = {
+                "provenance_id": provenance_id,
+                "dataset_id": resource_id,
+            }
+
+            resp = requests.post(
+                f"{self.dcat_url}/datasets/delete_dataset", headers=request_headers, json=resource_defs
+            )
+
+            parsed_response = DCatAPI.handle_api_response(resp)
+
+            print(f"{resource_id}: {parsed_response}")
+
+        return deleted_ids
+
     def find_resources_by_dataset_id(
             self,
             dataset_id: str,
@@ -183,10 +204,11 @@ class DCatAPI:
         return dataset, resources, variables
 
     def register_special_variables(
-        self, variable_data: Dict
+        self, variable_data: List
     ):
         if not variable_data:
             return []
+
         standard_variables = variable_data.get("standard_variables", [])
         variable_names = variable_data.get("variable_names", [])
         variable_metadata = variable_data.get("variable_metadata", [])

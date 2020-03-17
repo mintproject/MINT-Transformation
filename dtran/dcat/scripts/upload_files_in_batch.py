@@ -40,13 +40,14 @@ def cli():
     ignore_unknown_options=True,
     allow_extra_args=False,
 ))
-@click.option("--server", help="server type: WINGS or OWNCLOUD")
-@click.option("--dir", help="directory of files to be uploaded")
-@click.option("--ext", help="file extension of files to be uploaded")
-@click.pass_context
-def upload_files(server="OWNCLOUD", dir=".", ext="zip", upload_dir=""):
+@click.option("--server", help="server type: WINGS or OWNCLOUD", default="OWNCLOUD")
+@click.option("--dir", help="directory of files to be uploaded", default=".")
+@click.option("--ext", help="file extension of files to be uploaded", default="zip")
+@click.option("--upload_dir", help="uploaded file directory", default="test-dir")
+def upload_files(server, dir, ext, upload_dir):
     """
     Uploads specified files and return a dictionary of their uploaded url.
+    Example: python dtran/dcat/scripts/upload_files_in_batch.py upload_files --server=OWNCLOUD --dir=. --ext=zip --upload_dir=xt-test
     """
     if server not in ["OWNCLOUD", "WINGS"]:
         raise ValueError(f"Should input values: 'WINGS' for MINT Publisher and 'OWNCOULD' for mint data bucket! \
@@ -57,7 +58,7 @@ def upload_files(server="OWNCLOUD", dir=".", ext="zip", upload_dir=""):
 
     files = glob.glob(f"{dir}/*.{ext}")
     file_names = [os.path.basename(fn) for fn in files]
-    res = []
+    res = {}
 
     if server == "OWNCLOUD":
         oc = setup_owncloud(upload_dir)
@@ -75,3 +76,7 @@ def upload_files(server="OWNCLOUD", dir=".", ext="zip", upload_dir=""):
             res[filename] = f"{file_link}"
     with open("./uploaded.json", "w") as f:
         json.dump(res, f, indent=4)
+
+
+if __name__ == "__main__":
+    cli()
