@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import csv
+import datetime
 from collections import defaultdict
 from pathlib import Path
 from typing import List, Union, Dict, Optional
@@ -8,6 +9,7 @@ from typing import List, Union, Dict, Optional
 import ujson as json
 from drepr.models import SemanticModel, Node, LiteralNode, DataNode
 from drepr.outputs.base_output_sm import BaseOutputSM
+from drepr.outputs.namespace import PrefixedNamespace
 
 from dtran.argtype import ArgType
 from dtran.backend import ShardedBackend
@@ -31,12 +33,16 @@ class CSVWriteFunc(IFunc):
         "output_file": "example.csv",
     }
 
-    def __init__(self, data: Union[BaseOutputSM, ShardedBackend], output_file: Union[str, Path]):
+    def __init__(
+        self, data: Union[BaseOutputSM, ShardedBackend], output_file: Union[str, Path]
+    ):
 
         self.data = data
         self.output_file = Path(output_file)
 
         self.sm: SemanticModel = self.data.get_sm()
+
+        self.uri2label = {}
 
     def exec(self) -> dict:
         data_tuples, attr_names = self.tabularize_data()
@@ -114,24 +120,33 @@ class CSVWriteFunc(IFunc):
             if is_main_class:
                 return class_
 
-    def _sm_traverse(self, dataset: BaseOutputSM, node: Node, visited: List[Node], ) -> (list, set):
-        print(f"Called {node.node_id}")
+    def _resolve_predicate_label(self, uri):
+        if uri not in self.uri2label:
+            return uri.split(":", 1)[-1]
+        return self.uri2label[uri]
+
+    def _sm_traverse(
+        self, dataset: BaseOutputSM, node: Node, visited: List[Node],
+    ) -> (list, set):
+        # print(f"Called {node.node_id}")
         id2attrs = defaultdict(lambda: defaultdict(list))
         attrs = set()
 
         for edge in self.sm.iter_outgoing_edges(node.node_id):
             child_node = self.sm.nodes[edge.target_id]
             predicate_url = edge.label
+            predicate_label = self._resolve_predicate_label(predicate_url)
 
             if isinstance(child_node, LiteralNode) or isinstance(child_node, DataNode):
-                attrs.add(predicate_url)
+                attrs.add(predicate_label)
 
                 for record in dataset.cid(node.node_id).iter_records():
                     val = record.m(predicate_url)
                     if not isinstance(val, list):
                         val = [val]
-
-                    id2attrs[record.id][predicate_url].extend(val)
+                    if predicate_url == "mint:timestamp":
+                        val = [datetime.datetime.fromtimestamp(v, tz=datetime.timezone.utc) for v in val]
+                    id2attrs[record.id][predicate_label].extend(val)
             else:
                 if child_node not in visited:
 
@@ -139,17 +154,21 @@ class CSVWriteFunc(IFunc):
                         dataset, child_node, visited + [child_node]
                     )
                     for record in dataset.cid(node.node_id).iter_records():
-                        for child_record in dataset.cid(child_node.node_id).iter_records():
+                        rids = record.m(predicate_url)
+                        for child_idx, rid in enumerate(rids):
+                            child_record = dataset.get_record_by_id(rid)
                             for attr in child2tuples[child_record.id]:
                                 id2attrs[record.id][
-                                    predicate_url + "---" + attr
-                                    ] = child2tuples[child_record.id][attr]
+                                    f"{predicate_label}_{attr}{'_' + str(child_idx) if child_idx > 0 else ''}"
+                                ] = child2tuples[child_record.id][attr]
 
-                                attrs.add(predicate_url + "---" + attr)
+                                attrs.add(
+                                    f"{predicate_label}_{attr}{'_' + str(child_idx) if child_idx > 0 else ''}"
+                                )
 
         return id2attrs, list(attrs)
 
     def change_metadata(
-            self, metadata: Optional[Dict[str, Metadata]]
+        self, metadata: Optional[Dict[str, Metadata]]
     ) -> Dict[str, Metadata]:
         return metadata

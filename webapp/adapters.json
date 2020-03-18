@@ -1,0 +1,387 @@
+[
+    {
+        "id": "ReadFunc",
+        "description": " An entry point in the pipeline.\n    Reads an input file and a yml file describing the D-REPR layout of this file.\n    The data are representated in a Graph object.\n    ",
+        "inputs": {
+            "repr_file": {
+                "id": "file_path",
+                "val": null,
+                "optional": false
+            },
+            "resource_path": {
+                "id": "file_path",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {
+            "data": {
+                "id": "dataset",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Reader",
+        "friendly_name": "Local File Reader",
+        "example": {
+            "repr_file": "./wfp_food_prices_south-sudan.repr.yml",
+            "resources": "./wfp_food_prices_south-sudan.csv"
+        }
+    },
+    {
+        "id": "DcatReadFunc",
+        "description": " An entry point in the pipeline.\n    Fetches a dataset and its metadata from the MINT Data-Catalog.\n    ",
+        "inputs": {
+            "dataset_id": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "start_time": {
+                "id": "datetime",
+                "val": null,
+                "optional": true
+            },
+            "end_time": {
+                "id": "datetime",
+                "val": null,
+                "optional": true
+            },
+            "use_cache": {
+                "id": "boolean",
+                "val": null,
+                "optional": true
+            }
+        },
+        "outputs": {
+            "data": {
+                "id": "dataset",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Reader",
+        "friendly_name": "Data Catalog Reader",
+        "example": {
+            "dataset_id": "ea0e86f3-9470-4e7e-a581-df85b4a7075d",
+            "start_time": "2020-03-02T12:30:55",
+            "end_time": "2020-03-02T12:30:55",
+            "use_cache": "True"
+        }
+    },
+    {
+        "id": "DcatReadNoReprFunc",
+        "description": " An entry point in the pipeline.\n    Fetches a dataset and its metadata from the MINT Data-Catalog.\n    ",
+        "inputs": {
+            "dataset_id": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {
+            "data": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Reader",
+        "friendly_name": " Data Catalog Reader Without repr File",
+        "example": {
+            "dataset_id": "05c43c58-ed42-4830-9b1f-f01059c4b96f"
+        }
+    },
+    {
+        "id": "CSVWriteFunc",
+        "description": " A writer adapter.\n    Generates a csv/json file.\n    ",
+        "inputs": {
+            "data": {
+                "id": "dataset",
+                "val": null,
+                "optional": false
+            },
+            "output_file": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {
+            "output_file": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Writer",
+        "friendly_name": "Graph to CSV",
+        "example": {
+            "output_file": "example.csv"
+        }
+    },
+    {
+        "id": "GraphStr2StrFunc",
+        "description": " A transformation adapter.\n    Maps an existing set of strings (semantic attributes) to a new desired set of strings.\n    ",
+        "inputs": {
+            "data": {
+                "id": "dataset",
+                "val": null,
+                "optional": false
+            },
+            "semantic_type": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "str2str": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {},
+        "func_type": "Other Transformation",
+        "friendly_name": "Semantic Attributes Mapper",
+        "example": {
+            "semantic_type": "qb:Observation--dcat-dimension:thing",
+            "str2str": "ujson.dumps({\"Maize (white) - Retail\": \"maize\"})"
+        }
+    },
+    {
+        "id": "MergeFunc",
+        "description": " A transformation adapter.\n    Merges two graphs into one.\n    ",
+        "inputs": {
+            "data1": {
+                "id": "dataset",
+                "val": null,
+                "optional": false
+            },
+            "data2": {
+                "id": "dataset",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {
+            "data": {
+                "id": "dataset",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Other Transformation",
+        "friendly_name": "Merge Two Graphs Into One",
+        "example": {}
+    },
+    {
+        "id": "CroppingTransFunc",
+        "description": "",
+        "inputs": {
+            "variable_name": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "dataset": {
+                "id": "dataset",
+                "val": null,
+                "optional": false
+            },
+            "shape": {
+                "id": "dataset",
+                "val": null,
+                "optional": true
+            },
+            "xmin": {
+                "id": "number",
+                "val": null,
+                "optional": true
+            },
+            "ymin": {
+                "id": "number",
+                "val": null,
+                "optional": true
+            },
+            "xmax": {
+                "id": "number",
+                "val": null,
+                "optional": true
+            },
+            "ymax": {
+                "id": "number",
+                "val": null,
+                "optional": true
+            }
+        },
+        "outputs": {
+            "data": {
+                "id": "dataset",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Cropping Transformation",
+        "friendly_name": "Cropping function",
+        "example": {
+            "variable_name": "",
+            "xmin": "",
+            "ymin": "",
+            "xmax": "",
+            "ymax": ""
+        }
+    },
+    {
+        "id": "VariableAggregationFunc",
+        "description": "",
+        "inputs": {
+            "dataset": {
+                "id": "dataset",
+                "val": null,
+                "optional": false
+            },
+            "group_by": {
+                "id": "var_agg_group_by",
+                "val": null,
+                "optional": false
+            },
+            "function": {
+                "id": "var_agg_func",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {
+            "data": {
+                "id": "dataset",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Aggregation Transformation",
+        "friendly_name": "Aggregation Function",
+        "example": {
+            "group_by": "time, lat, long, place",
+            "function": "count, sum, average"
+        }
+    },
+    {
+        "id": "DcatWriteFunc",
+        "description": " A writer adapter.\n    Write files to DCAT.\n    ",
+        "inputs": {
+            "resource_path": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "metadata": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {
+            "data": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Writer",
+        "friendly_name": "Data Catalog Writer",
+        "example": {
+            "resource_path": "$.my_graph_write_func.output_file",
+            "metadata": "[{\"name\": \"WFP Food Prices - South Sudan\", \"description\": \"Food price dataset for South Sudan (2012-2019)\"}]"
+        }
+    },
+    {
+        "id": "MosaickTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Mosaick Transformation",
+        "friendly_name": "Generate tiles to cover larger bounding box (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "ClippingTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Clipping Transformation",
+        "friendly_name": "Clip to a smaller bounding box (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "ResampleTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Resampling Transformation",
+        "friendly_name": "Resample to change spatial resolution (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "StackTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Stacking Transformation",
+        "friendly_name": "Stack grids for different times into a single file (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "ExtractTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Extraction Transformation",
+        "friendly_name": "Extract derived grid from grids (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "RegridTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Regridding Transformation",
+        "friendly_name": "Wrap values to different computational grid (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "ReprojectTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Reprojection Transformation",
+        "friendly_name": "Reproject to a different map (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "RescaleTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Rescaling Transformation",
+        "friendly_name": "Change all values by one factor (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "VoidFillingTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Void Filling Transformation",
+        "friendly_name": "Replace all nodata values (WIP)",
+        "example": {},
+        "is_fake": true
+    }
+]

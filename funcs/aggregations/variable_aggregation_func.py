@@ -1,30 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import os, numpy as np
-import logging
-import time
-import uuid
-
-import requests
 import enum
-from datetime import datetime, timezone
+import logging
+import uuid
 from dataclasses import dataclass
-from dateutil import parser
-from typing import Union, List, Dict, Iterable
-from pathlib import Path
+from datetime import datetime, timezone
+from itertools import chain
+from typing import List
+
+import numpy as np
 from drepr import DRepr, outputs
 from drepr.executors.readers.np_dict import NPDictReader
 from drepr.executors.readers.reader_container import ReaderContainer
-from drepr.models import SemanticModel
-from drepr.outputs import ArrayBackend, GraphBackend
-from drepr.outputs.base_lst_output_class import BaseLstOutputClass
-from drepr.outputs.base_output_class import BaseOutputClass
-from drepr.outputs.base_output_sm import BaseOutputSM
-import subprocess
-
-from drepr.outputs.base_record import BaseRecord
-from drepr.outputs.record_id import RecordID
 
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc, IFuncType
@@ -75,20 +63,20 @@ class VariableAggregationFunc(IFunc):
     friendly_name: str = "Aggregation Function"
     inputs = {
         "dataset": ArgType.DataSet(None),
-        "group_bys": ArgType.VarAggGroupBy,
-        "operator": ArgType.VarAggFunc
+        "group_by": ArgType.VarAggGroupBy,
+        "function": ArgType.VarAggFunc
     }
     outputs = {"data": ArgType.DataSet(None)}
     example = {
         "group_by": "time, lat, long, place",
-        "operator": "count, sum, average"
+        "function": "count, sum, average"
     }
     logger = logging.getLogger(__name__)
 
-    def __init__(self, dataset, group_by, operator):
+    def __init__(self, dataset, group_by, function):
         self.dataset = dataset
         self.group_by = GroupBy([GroupByProp(**x) for x in group_by])
-        self.operator = AggregationFunc(operator)
+        self.function = AggregationFunc(function)
 
     def exec(self) -> dict:
         output = {}
@@ -97,9 +85,9 @@ class VariableAggregationFunc(IFunc):
         if isinstance(self.dataset, ShardedBackend):
             # check if the data is partition
             for dataset in reversed(self.dataset.datasets):
-                values += VariableAggregationFunc._aggregate(dataset, self.group_by, self.operator)
+                values += VariableAggregationFunc._aggregate(dataset, self.group_by, self.function)
         else:
-            values = VariableAggregationFunc._aggregate(self.dataset, self.group_by, self.operator)
+            values = VariableAggregationFunc._aggregate(self.dataset, self.group_by, self.function)
 
         if len(values) > 1:
             ds = ShardedBackend(len(values))
@@ -176,11 +164,18 @@ class VariableAggregationFunc(IFunc):
                 total = np.zeros_like(values[0].data)
                 for v in values:
                     total += v.data * (v.data != v.nodata.value)
+                if len(group['index_props']) < len(values[0].data.shape):
+                    # one extra dimension at the end, which we need to sum
+                    total = total.sum(axis=-1)
                 result = total
             elif func == AggregationFunc.COUNT:
                 total = np.zeros_like(values[0].data)
                 for v in values:
                     total += (v.data != v.nodata.value).astype(np.int64)
+
+                if len(group['index_props']) < len(values[0].data.shape):
+                    # one extra dimension at the end, which we need to sum
+                    total = total.sum(axis=-1)
                 result = total
             elif func == AggregationFunc.AVG:
                 total = np.zeros_like(values[0].data)
@@ -190,9 +185,27 @@ class VariableAggregationFunc(IFunc):
                     n_obs += mask
                     total += v.data * mask
 
-                obs_mask = n_obs != 0
-                result = np.zeros_like(values[0].data)
-                result[obs_mask] = total[obs_mask] / n_obs[obs_mask]
+                if len(group['index_props']) < len(values[0].data.shape):
+                    # one extra dimension at the end
+                    # calculate the total
+                    total = (total * n_obs).sum(axis=-1)
+                    # calculate the n_obs
+                    n_obs = n_obs.sum(axis=-1)
+
+                    if len(values[0].data.shape) == 1:
+                        if n_obs == 0:
+                            result = [values[0].nodata.value]
+                        else:
+                            result = [total / n_obs]
+                        result = np.asarray(result)
+                    else:
+                        result = np.zeros(values[0].data.shape[:-1], dtype=np.float32 if values[0].data.dtype == np.float32 else np.float64)
+                        result = total / n_obs
+                        result[n_obs == 0] = values[0].nodata.value
+                else:
+                    obs_mask = n_obs != 0
+                    result = np.zeros(values[0].data.shape, dtype=np.float32 if values[0].data.dtype == np.float32 else np.float64)
+                    result[obs_mask] = total[obs_mask] / n_obs[obs_mask]
 
             attrs = {'rdf_value': "$.rdf_value" + ("[:]" * len(result.shape))}
             aligns = []
@@ -275,5 +288,18 @@ class VariableAggregationFunc(IFunc):
                     }]
                 })
 
+            # remove raster if we don't have it any more
+            has_mintgeo_coor = False
+            for prop in chain(raw_sm['mint:Variable:1']['properties'], raw_sm['mint:Variable:1'].get('static_properties', [])):
+                if prop[0] == 'mint-geo:lat':
+                    has_mintgeo_coor = True
+            if not has_mintgeo_coor:
+                delete_link = []
+                for i, link in enumerate(raw_sm['mint:Variable:1']['links']):
+                    if link[0] == 'mint-geo:raster':
+                        raw_sm.pop(link[1])
+                        delete_link.append(i)
+                for i in reversed(delete_link):
+                    raw_sm['mint:Variable:1']['links'].pop(i)
             raw_ds.append({"data": tbl, "attrs": attrs, "aligns": aligns, "sm": raw_sm})
         return raw_ds

@@ -1,0 +1,26 @@
+{
+  "files": {
+    "main.css": "/static/css/main.161eec72.chunk.css",
+    "main.js": "/static/js/main.cc8d08c8.chunk.js",
+    "main.js.map": "/static/js/main.cc8d08c8.chunk.js.map",
+    "runtime-main.js": "/static/js/runtime-main.3b921ebe.js",
+    "runtime-main.js.map": "/static/js/runtime-main.3b921ebe.js.map",
+    "static/css/2.a317ec87.chunk.css": "/static/css/2.a317ec87.chunk.css",
+    "static/js/2.c52c0666.chunk.js": "/static/js/2.c52c0666.chunk.js",
+    "static/js/2.c52c0666.chunk.js.map": "/static/js/2.c52c0666.chunk.js.map",
+    "index.html": "/index.html",
+    "precache-manifest.dcb5b61c9971823688ffccf039da458f.js": "/precache-manifest.dcb5b61c9971823688ffccf039da458f.js",
+    "service-worker.js": "/service-worker.js",
+    "static/css/2.a317ec87.chunk.css.map": "/static/css/2.a317ec87.chunk.css.map",
+    "static/css/main.161eec72.chunk.css.map": "/static/css/main.161eec72.chunk.css.map",
+    "static/js/2.c52c0666.chunk.js.LICENSE": "/static/js/2.c52c0666.chunk.js.LICENSE",
+    "static/media/dt_flow.jpg": "/static/media/dt_flow.18cbb62c.jpg"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.3b921ebe.js",
+    "static/css/2.a317ec87.chunk.css",
+    "static/js/2.c52c0666.chunk.js",
+    "static/css/main.161eec72.chunk.css",
+    "static/js/main.cc8d08c8.chunk.js"
+  ]
+}

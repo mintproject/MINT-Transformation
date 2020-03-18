@@ -1,3 +1,4 @@
+# https://docs.conda.io/projects/conda-build/en/latest/resources/package-spec.html#package-match-specifications
 name: mintdt
 channels:
   - conda-forge
@@ -5,28 +6,29 @@ channels:
 dependencies:
   - python=3.7
   - pip
-  - gdal
+  - gdal=3.0.4
   - scipy
-  - pydap
+  - pydap=3.2.2
   - numpy
-  - dask
+  - dask=2.11.0
   - pip:
-      - drepr
+      - drepr>=2.9.2
       - ujson
-      - netCDF4
+      - netCDF4>=1.5.3
       - arpeggio
       - rdflib
       - flask
       - flask_cors
       - requests
       - tqdm
-      - marshmallow
-      - xarray
-      - networkx
-      - python-dateutil
-      - click
+      - marshmallow==3.5
+      - xarray==0.15
+      - networkx==2.4
+      - python-dateutil==2.8
+      - click==7.0
       - ccut
       - matplotlib
-      - fiona
-      - python-dotenv
-      - peewee
+      - fiona==1.8
+      - python-dotenv==0.12
+      - peewee==3.13
+      - pyocclient=

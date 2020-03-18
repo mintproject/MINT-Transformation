@@ -6,22 +6,211 @@ import os
 import shutil
 import subprocess
 import time
+import requests
 from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
+from typing import Union, Dict
+from functools import partial
+from playhouse.kv import KeyValue
+from peewee import SqliteDatabase, Model, UUIDField, IntegerField, BooleanField, DoesNotExist
 
-import requests
-from dateutil import parser
 from drepr import DRepr
 from drepr.outputs import ArrayBackend, GraphBackend
-
 from dtran.argtype import ArgType
-from dtran.backend import ShardedBackend
+from dtran.backend import ShardedBackend, ShardedClassID, LazyLoadBackend
 from dtran.ifunc import IFunc, IFuncType
 
-DCAT_URL = os.environ["DCAT_URL"]
 DATA_CATALOG_DOWNLOAD_DIR = os.path.abspath(os.environ["DATA_CATALOG_DOWNLOAD_DIR"])
+if os.environ['NO_CHECK_CERTIFICATE'].lower().strip() == 'true':
+    DOWNLOAD_CMD = "wget --no-check-certificate"
+else:
+    DOWNLOAD_CMD = "wget"
+
 Path(DATA_CATALOG_DOWNLOAD_DIR).mkdir(exist_ok=True, parents=True)
+
+UNITS_MAPPING = {
+    'PB': 1 << 50,
+    'TB': 1 << 40,
+    'GB': 1 << 30,
+    'MB': 1 << 20,
+    'KB': 1 << 10,
+    'B': 1
+}
+
+
+class Resource(Model):
+    resource_id = UUIDField(unique=True)
+    ref_count = IntegerField(default=0, index=True)
+    is_downloading = BooleanField(default=False)
+
+    class Meta:
+        database = SqliteDatabase(os.path.join(DATA_CATALOG_DOWNLOAD_DIR, 'dcat_read_func.db'), timeout=10)
+
+
+class ResourceManager:
+    instance = None
+
+    def __init__(self):
+        self.max_capacity = 100 * UNITS_MAPPING['GB']
+        self.max_clear_size = 10 * UNITS_MAPPING['GB']
+        assert self.max_capacity >= self.max_clear_size, "max_capacity cannot be less than max_clear_size"
+        self.poll_interval = 10
+        self.compressed_resource_types = {".zip", ".tar.gz", ".tar"}
+        self.db = Resource._meta.database
+        self.db.connect()
+        self.db.create_tables([Resource], safe=True)
+        self.db.close()
+        self.kv = KeyValue(database=self.db)
+        with self.db.atomic('EXCLUSIVE'):
+            # initializing current_size of DATA_CATALOG_DOWNLOAD_DIR in the database
+            if 'current_size' not in self.kv:
+                self.kv['current_size'] = sum(f.stat().st_size for f in Path(DATA_CATALOG_DOWNLOAD_DIR).rglob('*'))
+
+    @staticmethod
+    def get_instance():
+        if ResourceManager.instance is None:
+            ResourceManager.instance = ResourceManager()
+        return ResourceManager.instance
+
+    def download(self, resource_id: str, resource_metadata: Dict[str, str], should_redownload: bool) -> str:
+        is_compressed = resource_metadata['resource_type'] in self.compressed_resource_types
+        if is_compressed:
+            if resource_metadata['resource_type'].startswith(".tar"):
+                raise NotImplementedError()
+            path = os.path.join(DATA_CATALOG_DOWNLOAD_DIR, resource_id)
+        else:
+            path = os.path.join(DATA_CATALOG_DOWNLOAD_DIR, resource_id + '.dat')
+
+        download = True
+        with self.db.atomic('EXCLUSIVE'):
+            try:
+                # if resource already exists
+                resource = Resource.select().where(Resource.resource_id == resource_id).get()
+                resource.ref_count += 1
+                if not should_redownload:
+                    # TODO: comparing timestamp before skipping download
+                    download = False
+            except DoesNotExist:
+                resource = Resource.create(resource_id=resource_id, ref_count=1, is_downloading=True)
+
+            if download:
+                required_size = 0
+                if resource.ref_count > 1:
+                    # adjust required_size when the resource is to be redownloaded
+                    required_size -= Path(path).stat().st_size
+                    if is_compressed:
+                        required_size -= sum(f.stat().st_size for f in Path(path).rglob('*'))
+                try:
+                    required_size += int(requests.head(resource_metadata['resource_data_url']).headers['Content-Length'])
+                except KeyError:
+                    pass
+                if self.max_capacity - self.kv['current_size'] < required_size:
+                    # clear files to make space
+                    self.kv['current_size'] -= self.clear()
+                    assert self.max_capacity - self.kv['current_size'] >= required_size, "Not enough disk space"
+                self.kv['current_size'] += required_size
+            resource.save()
+
+        if download:
+            if resource.ref_count > 1:
+                # block until all other processes accessing the resource are finished
+                DcatReadFunc.logger.debug(f"Waiting for some other process/thread to free resource {resource_id} ...")
+                while resource.ref_count > 1:
+                    time.sleep(self.poll_interval)
+                    with self.db.atomic('EXCLUSIVE'):
+                        resource = Resource.select().where(Resource.resource_id == resource_id).get()
+                        if resource.ref_count == 1:
+                            # setting is_downloading before redownload
+                            resource.is_downloading = True
+                            resource.save()
+                # clear old resource before redownload
+                if is_compressed:
+                    shutil.rmtree(str(path))
+                else:
+                    Path(path).unlink()
+            DcatReadFunc.logger.debug(f"Downloading resource {resource_id} ...")
+            if is_compressed:
+                temp_path = path + resource_metadata['resource_type']
+                subprocess.check_call(f"wget {resource_metadata['resource_data_url']} -O {temp_path}", shell=True)
+                self.uncompress(resource_metadata['resource_type'], path)
+                # adjust required_size when the resource is compressed
+                required_size = -Path(temp_path).stat().st_size
+                required_size += sum(f.stat().st_size for f in Path(path).rglob('*')) + Path(path).stat().st_size
+                Path(temp_path).unlink()
+            else:
+                subprocess.check_call(f"wget {resource_metadata['resource_data_url']} -O {path}", shell=True)
+                required_size = 0
+
+            with self.db.atomic('EXCLUSIVE'):
+                self.kv['current_size'] += required_size
+                resource = Resource.select().where(Resource.resource_id == resource_id).get()
+                resource.is_downloading = False
+                resource.save()
+        else:
+            DcatReadFunc.logger.debug(f"Skipping resource {resource_id}, found in cache")
+            if resource.is_downloading:
+                # block until some other process is done downloading the resource
+                DcatReadFunc.logger.debug(f"Waiting for other process/thread to finish downloading resource {resource_id} ...")
+                while resource.is_downloading:
+                    time.sleep(self.poll_interval)
+                    with self.db.atomic('EXCLUSIVE'):
+                        resource = Resource.select().where(Resource.resource_id == resource_id).get()
+
+        return self.path(resource_id, path, is_compressed)
+
+    def unlink(self, resource_id):
+        with self.db.atomic('EXCLUSIVE'):
+            resource = Resource.select().where(Resource.resource_id == resource_id).get()
+            resource.ref_count -= 1
+            resource.save()
+
+    def clear(self) -> int:
+        size = 0
+        for resource in Resource.select().where(Resource.ref_count == 0).order_by(Resource.id):
+            DcatReadFunc.logger.debug(f"Clearing resource {resource.resource_id}")
+            path = Path(os.path.join(DATA_CATALOG_DOWNLOAD_DIR, resource.resource_id + '.dat'))
+            if path.exists():
+                size += path.stat().st_size
+                path.unlink()
+            else:
+                path = Path(os.path.join(DATA_CATALOG_DOWNLOAD_DIR, resource.resource_id))
+                size += sum(f.stat().st_size for f in path.rglob('*')) + path.stat().st_size
+                shutil.rmtree(str(path))
+            resource.delete_instance()
+            if size >= self.max_clear_size:
+                return size
+
+    def uncompress(self, resource_type: str, path: Union[Path, str]):
+        subprocess.check_call(f"unzip {path + resource_type} -d {path}", shell=True)
+        # flatten the structure (max two levels)
+        for fpath in Path(path).iterdir():
+            if fpath.is_dir():
+                for sub_file in fpath.iterdir():
+                    new_file = os.path.join(path, sub_file.name)
+                    if os.path.exists(new_file):
+                        raise Exception("Invalid resource. Shouldn't overwrite existing file")
+                    os.rename(str(sub_file), new_file)
+                shutil.rmtree(str(fpath))
+
+    def path(self, resource_id: str, path: Union[Path, str], is_compressed: bool) -> str:
+        if not is_compressed:
+            return path
+        # we need to look in the folder and find the resource
+        files = [
+            fpath for fpath in Path(path).iterdir()
+            if fpath.is_file() and not fpath.name.startswith(".")
+        ]
+        if len(files) == 0:
+            raise Exception(f"The compressed resource {resource_id} is empty")
+        elif len(files) != 1:
+            # this indicates the shapefile
+            files = [f for f in files if f.name.endswith(".shp")]
+            if len(files) != 1:
+                raise Exception(
+                    f"Cannot handle compressed resource {resource_id} because it has more than one resource"
+                )
+        return str(files[0])
 
 
 class DcatReadFunc(IFunc):
@@ -35,169 +224,95 @@ class DcatReadFunc(IFunc):
         "dataset_id": ArgType.String,
         "start_time": ArgType.DateTime(optional=True),
         "end_time": ArgType.DateTime(optional=True),
-        "use_cache": ArgType.Boolean(optional=True),
+        "lazy_load_enabled": ArgType.Boolean(optional=True),
+        "should_redownload": ArgType.Boolean(optional=True),
     }
     outputs = {"data": ArgType.DataSet(None)}
     example = {
         "dataset_id": "ea0e86f3-9470-4e7e-a581-df85b4a7075d",
         "start_time": "2020-03-02T12:30:55",
         "end_time": "2020-03-02T12:30:55",
-        "use_cache": "True"
+        "lazy_load_enabled": "True",
+        "should_redownload": "False"
     }
     logger = logging.getLogger(__name__)
 
-    def __init__(
-            self,
-            dataset_id: str,
-            start_time: datetime = None,
-            end_time: datetime = None,
-            use_cache: bool = True,
-    ):
+    def __init__(self,
+                 dataset_id: str,
+                 start_time: datetime = None,
+                 end_time: datetime = None,
+                 lazy_load_enabled: bool = True,
+                 should_redownload: bool = False
+                 ):
         self.dataset_id = dataset_id
-        dataset_result = DCatAPI.get_instance(DCAT_URL).find_dataset_by_id(dataset_id)
+        self.lazy_load_enabled = lazy_load_enabled
+        self.should_redownload = should_redownload
+        self.resource_manager = ResourceManager.get_instance()
+        dataset = DCatAPI.get_instance().find_dataset_by_id(dataset_id)
 
-        assert ("resource_repr" in dataset_result["metadata"]) or (
-                "dataset_repr" in dataset_result["metadata"]
-        ), "Dataset is missing both 'resource_repr' and 'dataset_repr'"
-        assert not (("resource_repr" in dataset_result["metadata"]) and
-                    ("dataset_repr" in dataset_result["metadata"])
-                    ), "Dataset has both 'resource_repr' and 'dataset_repr'"
+        assert ('resource_repr' in dataset['metadata']) or ('dataset_repr' in dataset['metadata']), \
+            "Dataset is missing both 'resource_repr' and 'dataset_repr'"
+        assert not (('resource_repr' in dataset['metadata']) and ('dataset_repr' in dataset['metadata'])), \
+            "Dataset has both 'resource_repr' and 'dataset_repr'"
 
-        resource_results = DCatAPI.get_instance(DCAT_URL).find_resources_by_dataset_id(
-            dataset_id, start_time, end_time)
+        resources = DCatAPI.get_instance().find_resources_by_dataset_id(dataset_id, start_time, end_time)
 
-        resource_ids = {}
-        resource_types = {}
-        if "resource_repr" in dataset_result["metadata"]:
-            self.repr = DRepr.parse(dataset_result["metadata"]["resource_repr"])
-            for resource in resource_results:
-                if start_time or end_time:
-                    temporal_coverage = resource["resource_metadata"]["temporal_coverage"]
-                    temporal_coverage["start_time"] = parser.parse(temporal_coverage["start_time"])
-                    temporal_coverage["end_time"] = parser.parse(temporal_coverage["end_time"])
-                    if (start_time and start_time > temporal_coverage["end_time"]) or (
-                            end_time and end_time < temporal_coverage["start_time"]):
-                        continue
-
-                resource_ids[resource["resource_id"]] = resource["resource_data_url"]
-                resource_types[resource["resource_id"]] = resource["resource_type"]
-            self.repr_type = "resource_repr"
+        self.resources = OrderedDict()
+        if 'resource_repr' in dataset['metadata']:
+            self.drepr = DRepr.parse(dataset['metadata']['resource_repr'])
+            for resource in resources:
+                self.resources[resource['resource_id']] = {key: resource[key] for key in
+                                                           {'resource_data_url', 'resource_type'}}
+            self.repr_type = 'resource_repr'
         else:
             # TODO: fix me!!
-            assert len(resource_results) == 1
-            resource_ids[resource_results[0]
-            ["resource_id"]] = resource_results[0]["resource_data_url"]
-            resource_types[resource_results[0]
-            ["resource_id"]] = resource_results[0]["resource_type"]
-            self.repr = DRepr.parse(dataset_result["metadata"]["dataset_repr"])
-            self.repr_type = "dataset_repr"
+            assert len(resources) == 1
+            self.resources[resources[0]['resource_id']] = {key: resources[0][key] for key in
+                                                           {'resource_data_url', 'resource_type'}}
+            self.drepr = DRepr.parse(dataset['metadata']['dataset_repr'])
+            self.repr_type = 'dataset_repr'
 
-        if dataset_id == "ea0e86f3-9470-4e7e-a581-df85b4a7075d":
-            self.repr = DRepr.parse_from_file(os.environ["HOME_DIR"] + "/examples/d3m/gpm.yml")
-            self.logger.info("Overwrite GPM")
-        elif dataset_id == "5babae3f-c468-4e01-862e-8b201468e3b5":
-            self.repr = DRepr.parse_from_file(os.environ["HOME_DIR"] + "/examples/d3m/gldas.yml")
-            self.logger.info("Overwrite GLDAS")
-
-        self.logger.info(f"Found key '{self.repr_type}'")
-        self.logger.info(f"Downloading {len(resource_ids)} resources ...")
-        self.resources = OrderedDict()
-        n_skip = 0
-        n_download = 0
-        compression_formats = {".zip", ".tar.gz", ".tar"}
-        for resource_id, resource_url in resource_ids.items():
-            is_compressed_resource = resource_types[resource_id] in compression_formats
-            if is_compressed_resource:
-                resource_base_path = os.path.join(DATA_CATALOG_DOWNLOAD_DIR, f"{resource_id}")
-                resource_exist = os.path.exists(resource_base_path)
-            else:
-                resource_base_path = os.path.join(DATA_CATALOG_DOWNLOAD_DIR, f"{resource_id}.dat")
-                resource_exist = os.path.exists(resource_base_path)
-
-            if use_cache and resource_exist:
-                self.logger.debug(f"Skipping resource {resource_id}, found in cache")
-                if is_compressed_resource:
-                    # we need to look in the folder and find the resource
-                    files = [
-                        fpath for fpath in Path(resource_base_path).iterdir()
-                        if fpath.is_file() and not fpath.name.startswith(".")
-                    ]
-                    if len(files) == 0:
-                        raise Exception(f"The compressed resource {resource_id} is empty")
-                    elif len(files) != 1:
-                        # this indicates the shapefile
-                        files = [f for f in files if f.name.endswith(".shp")]
-                        if len(files) != 1:
-                            raise Exception(
-                                f"Cannot handle compressed resource {resource_id} because it has more than one resource"
-                            )
-                        resource_path = str(files[0])
-                    else:
-                        resource_path = str(files[0])
-                else:
-                    resource_path = resource_base_path
-                n_skip += 1
-            else:
-                if is_compressed_resource:
-                    temp_file = resource_base_path + resource_types[resource_id]
-                    if resource_types[resource_id] == ".zip":
-                        extract_cmd = f"unzip {temp_file} -d {resource_base_path}"
-                    elif resource_types[resource_id].startswith(".tar"):
-                        raise NotImplementedError()
-                    subprocess.check_call(
-                        f"wget {resource_url} -O {temp_file} && {extract_cmd} && rm {temp_file}",
-                        shell=True,
-                    )
-                    # flatten the structure (max two levels)
-                    for fpath in Path(resource_base_path).iterdir():
-                        if fpath.is_dir():
-                            for sub_file in fpath.iter_dir():
-                                new_file = os.path.join(resource_base_path, fpath.name)
-                                if os.path.exists(new_file):
-                                    raise Exception(
-                                        "Invalid resource. Shouldn't overwrite existing file")
-                                os.rename(str(sub_file), new_file)
-                            shutil.rmtree(str(fpath))
-                    # we need to look in the folder and find the resource
-                    files = [
-                        fpath for fpath in Path(resource_base_path).iterdir()
-                        if fpath.is_file() and not fpath.name.startswith(".")
-                    ]
-                    if len(files) == 0:
-                        raise Exception(f"The compressed resource {resource_id} is empty")
-                    elif len(files) != 1:
-                        # this indicates the shapefile
-                        files = [f for f in files if f.name.endswith(".shp")]
-                        if len(files) != 1:
-                            raise Exception(
-                                f"Cannot handle compressed resource {resource_id} because it has more than one resource"
-                            )
-                        resource_path = str(files[0])
-                    else:
-                        resource_path = str(files[0])
-                else:
-                    subprocess.check_call(f"wget {resource_url} -O {resource_base_path}",
-                                          shell=True)
-                    resource_path = resource_base_path
-                n_download += 1
-
-            self.resources[resource_id] = resource_path
-
-        self.logger.info(f"Download Complete. Skip {n_skip} and download {n_download} resources")
+        self.logger.debug(f"Found key '{self.repr_type}'")
 
     def exec(self) -> dict:
-        if (self.get_preference("data") is None or self.get_preference("data") == "array"):
+        # TODO: fix me! incorrect way to choose backend
+        if self.get_preference("data") is None or self.get_preference("data") == 'array':
             backend = ArrayBackend
         else:
             backend = GraphBackend
 
-        if self.repr_type == "dataset_repr":
-            return {"data": backend.from_drepr(self.repr, list(self.resources.values())[0])}
+        if self.lazy_load_enabled:
+            if self.repr_type == 'dataset_repr':
+                resource_id, resource_metadata = list(self.resources.items())[0]
+                return {"data": LazyLoadBackend(backend, self.drepr, partial(self.resource_manager.download,
+                                                                             resource_id, resource_metadata,
+                                                                             self.should_redownload),
+                                                self.resource_manager.unlink)}
+            else:
+                dataset = ShardedBackend(len(self.resources))
+                for resource_id, resource_metadata in self.resources.items():
+                    dataset.add(LazyLoadBackend(backend, self.drepr, partial(self.resource_manager.download,
+                                                                             resource_id, resource_metadata,
+                                                                             self.should_redownload),
+                                                self.resource_manager.unlink, partial(ShardedClassID, dataset.count)))
+                return {"data": dataset}
         else:
-            dataset = ShardedBackend(len(self.resources))
-            for resource in self.resources.values():
-                dataset.add(backend.from_drepr(self.repr, resource, dataset.inject_class_id))
-            return {"data": dataset}
+            if self.repr_type == 'dataset_repr':
+                resource_id, resource_metadata = list(self.resources.items())[0]
+                return {"data": backend.from_drepr(self.drepr,
+                                                   self.resource_manager.download(resource_id, resource_metadata, self.should_redownload))}
+            else:
+                dataset = ShardedBackend(len(self.resources))
+                for resource_id, resource_metadata in self.resources.items():
+                    dataset.add(
+                        backend.from_drepr(self.drepr, self.resource_manager.download(resource_id, resource_metadata, self.should_redownload),
+                                           dataset.inject_class_id))
+                return {"data": dataset}
+
+    def __del__(self):
+        if not self.lazy_load_enabled:
+            for resource_id, resource_metadata in self.resources.items():
+                self.resource_manager.unlink(resource_id)
 
     def validate(self) -> bool:
         return True
@@ -213,9 +328,9 @@ class DCatAPI:
         self.api_key = None
 
     @staticmethod
-    def get_instance(dcat_url: str):
+    def get_instance():
         if DCatAPI.instance is None:
-            DCatAPI.instance = DCatAPI(dcat_url)
+            DCatAPI.instance = DCatAPI(os.environ["DCAT_URL"])
         return DCatAPI.instance
 
     def find_resources_by_dataset_id(
@@ -246,6 +361,7 @@ class DCatAPI:
             headers=request_headers,
             json=query,
         )
+
         assert resp.status_code == 200, resp.text
         return resp.json()["resources"]
 

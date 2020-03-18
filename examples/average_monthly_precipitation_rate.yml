@@ -1,0 +1,34 @@
+version: "1"
+adapters:
+  gpm_read_func:
+    comment: My gpm read func adapter
+    adapter: funcs.DcatReadFunc
+    inputs:
+      dataset_id: ea0e86f3-9470-4e7e-a581-df85b4a7075d
+      start_time: "2018-01-01 00:00:00"
+      end_time: "2018-03-01 00:00:00"
+  shapefile_read_func:
+    comment: My shape file read func adapter
+    adapter: funcs.DcatReadFunc
+    inputs:
+      dataset_id: 74e6f707-d5e9-4cbd-ae26-16ffa21a1d84
+  my_crop_func:
+    comment: My cropping func adapter
+    adapter: funcs.CroppingTransFunc
+    inputs:
+      variable_name: atmosphere_water__precipitation_mass_flux
+      dataset: $.gpm_read_func.data
+      shape: $.shapefile_read_func.data
+  agg_by_time_place:
+    adapter: funcs.aggregations.variable_aggregation_func.VariableAggregationFunc
+    inputs:
+      dataset: $.my_crop_func.data
+      group_by:
+        - { prop: "mint:timestamp", value: exact }
+        - { prop: "mint:place", value: exact }
+      function: average
+  my_writer:
+    adapter: funcs.CSVWriteFunc
+    inputs:
+      data: $.agg_by_time_place.data
+      output_file: ./data/results/average_monthly_precipitation_rate.csv
