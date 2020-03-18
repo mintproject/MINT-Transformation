@@ -3,6 +3,7 @@
 import subprocess
 from pathlib import Path
 from typing import Union
+import os
 
 import ujson as json
 
@@ -53,6 +54,41 @@ class DcatWriteFunc(IFunc):
         response = self.dcat.register_datasets(self.PROVENANCE_ID, self.metadata)
 
         print(response)
+        return {"data": response}
+
+    def validate(self) -> bool:
+        return True
+
+
+class DcatWriteMetadataFunc(IFunc):
+    id = "dcat_write_metadata_func"
+    description = """ A data catalog metadata writer adapter.
+    """
+    func_type = IFuncType.WRITER
+    inputs = {
+        "metadata": ArgType.String,
+        "dataset_id": ArgType.String
+    }
+    outputs = {"data": ArgType.String}
+    friendly_name: str = "Data Catalog Metadata Writer"
+    example = {
+        "metadata": '[{"name": "WFP Food Prices - South Sudan", "description": "Food price dataset for South Sudan (2012-2019)"}]',
+        "dataset_id": "ea0e86f3-9470-4e7e-a581-df85b4a7075d"
+    }
+
+    PROVENANCE_ID = "b3e79dc2-8fa1-4203-ac82-b5267925191f"
+
+    def __init__(
+        self, metadata: str, dataset_id: str
+    ):
+        self.metadata = json.loads(metadata)
+        self.dataset_id = dataset_id
+        self.dcat = DCatAPI.get_instance()
+
+    def exec(self) -> dict:
+        response = self.dcat.update_dataset_metadata(
+            self.PROVENANCE_ID, self.dataset_id, self.metadata
+        )
         return {"data": response}
 
     def validate(self) -> bool:

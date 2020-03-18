@@ -1,0 +1,10 @@
+{
+  "standard_variables": [
+    {
+      "ontology": "ScientificVariablesOntology",
+      "name": "precipitation_leg_volume_flux",
+      "uri": "http://www.geoscienceontology.org/svo/svl/variable/1.0.0/#atmosphere%40role%7Esource_water%40role%7Emain_precipitation__precipitation_leq_volume_flux"
+    }
+  ],
+  "variable_names": ["test-var"]
+}
