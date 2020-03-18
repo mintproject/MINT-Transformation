@@ -14,7 +14,7 @@ dependencies:
   - pip:
       - drepr>=2.9.2
       - ujson
-      - netCDF4==1.5
+      - netCDF4>=1.5.3
       - arpeggio
       - rdflib
       - flask
