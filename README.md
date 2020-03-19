@@ -10,6 +10,12 @@ A framework to construct a transformation pipeline based on some specification f
 
 ## Usage
 
+Run the pipeline:
+
+```
+dotenv run python -m dtran.main exec_pipeline --config ./examples/cropping_weather_dataset.yml
+```
+
 ### Developers:
 
 See the first revision of a demo notebook in file `demo.ipynb`.

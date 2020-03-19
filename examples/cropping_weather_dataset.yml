@@ -1,0 +1,25 @@
+version: "1"
+adapters:
+  weather_dataset:
+    comment: GPM is ea0e86f3-9470-4e7e-a581-df85b4a7075d, GLDAS is 5babae3f-c468-4e01-862e-8b201468e3b5
+    adapter: funcs.DcatReadFunc
+    inputs:
+#      dataset_id: ea0e86f3-9470-4e7e-a581-df85b4a7075d
+      dataset_id: 5babae3f-c468-4e01-862e-8b201468e3b5
+      lazy_load_enabled: false
+      start_time: "2018-01-01 00:00:00"
+      end_time: "2018-01-01 03:00:00"
+#  crop_func:
+#    comment: crop to ethiopia
+#    adapter: funcs.CroppingTransFunc
+#    inputs:
+#      dataset: $.weather_dataset.data
+#      xmin: 32.75418
+#      ymin: 3.22206
+#      xmax: 47.98942
+#      ymax: 15.15943
+  netcdf_writer:
+    adapter: funcs.NetCDFWriteFunc
+    inputs:
+      dataset: $.weather_dataset.data
+      output_file: ./data/results/ethiopia.nc4

@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 from datetime import datetime
 from typing import List, Dict
@@ -25,9 +26,9 @@ class DCatAPI:
         self.api_key = None
 
     @staticmethod
-    def get_instance(dcat_url: str):
+    def get_instance():
         if DCatAPI.instance is None:
-            DCatAPI.instance = DCatAPI(dcat_url)
+            DCatAPI.instance = DCatAPI(os.environ['DCAT_URL'])
         return DCatAPI.instance
 
     def delete_datasets(self, provenance_id, dataset_ids):
