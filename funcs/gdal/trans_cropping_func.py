@@ -79,7 +79,7 @@ class CroppingTransFunc(IFunc):
         with fiona.open(
                 fname,
                 "w",
-                crs="+datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat",
+                crs=epsg,
                 driver=driver,
                 schema=schema,
         ) as shapefile:
