@@ -8,6 +8,9 @@ import {GraphView, IEdge, INode,} from "react-digraph";
 import _ from "lodash";
 import SubMenu from "antd/lib/menu/SubMenu";
 
+// import Cytoscape from "./Cytoscape";
+// import CytoscapeComponent from 'react-cytoscapejs';
+
 const GraphConfig =  {
   NodeTypes: {
     empty: { // required to show empty nodes
@@ -30,7 +33,15 @@ const GraphConfig =  {
           <circle cx="25" cy="25" r="8" fill="currentColor"> </circle>
         </symbol>
       )
-    }
+    },
+    multiEdge: {  // required to show multiple edges
+      shapeId: "#multiEdge",
+      shape: (
+        <symbol viewBox="0 0 50 50" id="multiEdge" key="0">
+          <circle cx="25" cy="25" r="8" fill="red"> </circle>
+        </symbol>
+      )
+    },
   }
 }
 
@@ -301,9 +312,22 @@ export class PipelineGraphComponent extends React.Component<
 
   render() {
     const { graphNodes, graphEdges, selectedNode } = this.props;
-    // FIXME: forced rerendering?
+    // FIXME: forced rerendering? against lazy loading
     console.log(`Number of edges is: ${graphEdges.length}`);
+    console.log(graphEdges)
     const selected = selectedNode ? selectedNode.id : "";
+  //   let cyStyle = {
+  //     height: '1000px',
+  //     width: '1000px',
+  //     margin: '20px 0px'
+  //   };
+
+  //   const elements = [
+  //     { data: { id: 'one', label: 'Node 1' }, position: { x: 200, y: 200 } },
+  //     { data: { id: 'two', label: 'Node 2' }, position: { x: 100, y: 100 } },
+  //     { data: { source: 'one', target: 'two', label: 'Edge from Node1 to Node2' } }
+  //  ];
+  
     return (
       <React.Fragment>
         <Row style={{ margin: "20px 10px"}}>
@@ -517,6 +541,10 @@ export class PipelineGraphComponent extends React.Component<
           }   
         </Row>
         <Row style={{ margin: "20px 10px", height: "100%" }}>
+          {/* <CytoscapeComponent
+            elements={elements}
+            style={ { width: '600px', height: '600px' } }
+          /> */}
           <GraphView
             ref='GraphView'
             nodeKey="id"

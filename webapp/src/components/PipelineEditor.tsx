@@ -172,10 +172,19 @@ export class PipelineEditorComponent extends React.Component<
   }
 
   createGraphEdges = (edges: EdgeType[]) => {
-    return edges.map(e => ({
-      ...e,
-      type: "emptyEdge",
-    }))
+    return edges.map(e => {
+      const sameSourceSameTaregt = edges.filter(ed => ed.source === e.source && ed.target === e.target);
+      if (sameSourceSameTaregt.indexOf(e) > 0) {
+        return ({
+          ...e,
+          type: "multiEdge",
+        });
+      }
+      return ({
+        ...e,
+        type: "emptyEdge",
+      });
+    })
   }
 
   createEdges = (edges: IEdge[]) => {
@@ -294,6 +303,7 @@ export class PipelineEditorComponent extends React.Component<
                     selectedEdge={this.props.selectedEdge}
                     graphNodes={this.props.graphNodes}
                     adapters={this.props.adapters}
+                    graphEdges={this.props.graphEdges}
                   />}
                 </Row>
               </Col>
