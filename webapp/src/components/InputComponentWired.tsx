@@ -30,7 +30,7 @@ export class InputWiredComponent extends React.Component<
   InputWiredState
 > {
   createEdgeMenu = () => {
-    const { graphNodes, graphEdges, selectedNode, setGraphEdges, input, wiredEdges } = this.props;
+    const { graphNodes, selectedNode, setGraphEdges, input, wiredEdges } = this.props;
     const possibleNodes = graphNodes.filter(n => n.id !== selectedNode!.id);
     var menuList = [];
     for (let i = 0; i < possibleNodes.length; i ++) {

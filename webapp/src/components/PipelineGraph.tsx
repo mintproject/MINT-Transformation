@@ -128,7 +128,7 @@ export class PipelineGraphComponent extends React.Component<
     });
     return (<Menu onClick={({ item }) => {
       const currentAdapter = item.props.eventKey;
-      const { maxX, maxY, minX, minY, maxId } = this.findBoundingBoxGraphNodes();
+      const { maxX, maxY, minY, maxId } = this.findBoundingBoxGraphNodes();
       const customName = `Adapter_${maxId + 1}`;
       const newNode: INode = {
         id: customName,
