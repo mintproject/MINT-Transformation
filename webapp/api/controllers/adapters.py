@@ -276,7 +276,7 @@ def setup_adapters():
             "friendly_name": ad.get_adapter_friendly_name(),
             "example": ad.get_adapter_example()
         } for ad in adapter_list]
-        # results = results + FAKE_ADAPTERS
+        results = results + FAKE_ADAPTERS
         json.dump(results, f, indent=4)
     print("Finish loading in all adapters!")
 

@@ -299,5 +299,265 @@
             "resource_path": "$.my_graph_write_func.output_file",
             "metadata": "[{\"name\": \"WFP Food Prices - South Sudan\", \"description\": \"Food price dataset for South Sudan (2012-2019)\"}]"
         }
+    },
+    {
+        "id": "NC2GeoTiff",
+        "description": "Convert all netcdf file in one folder to geotiff file in another folder",
+        "inputs": {
+            "input_dir": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "output_dir": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "var_name": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "no_data": {
+                "id": "number",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {},
+        "func_type": "Writer",
+        "friendly_name": "Netcdf to Geotiff Converter",
+        "example": {
+            "input_dir": "/path/to/input/file",
+            "output_dir": "/path/to/output/file",
+            "var_name": "some_variable_name",
+            "no_data": "0.0"
+        }
+    },
+    {
+        "id": "Topoflow4ClimateWriteFunc",
+        "description": " A reader-transformation-writer multi-adapter.\n    Creates an RTS (and RTI) file from NetCDF (climate) files.\n    ",
+        "inputs": {
+            "input_dir": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "temp_dir": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "output_file": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "var_name": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "DEM_bounds": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "DEM_xres_arcsecs": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "DEM_yres_arcsecs": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {
+            "output_file": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "func_type": "Model-specific Transformation",
+        "friendly_name": "Topoflow Climate",
+        "example": {
+            "input_dir": "$.my_dcat_read_func.data",
+            "temp_dir": "/data/mint/sample_grid_baro",
+            "output_file": "/data/mint/sample_baro/climate_all.rt",
+            "var_name": "HQprecipitation",
+            "DEM_bounds": "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999",
+            "DEM_xres_arcsecs": "30",
+            "DEM_yres_arcsecs": "30"
+        }
+    },
+    {
+        "id": "Topoflow4ClimateWritePerMonthFunc",
+        "description": " A reader-transformation-writer multi-adapter.\n    Creates RTS (and RTI) files per month from NetCDF (climate) files.\n    ",
+        "inputs": {
+            "grid_dir": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "date_regex": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "output_file": {
+                "id": "file_path",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {},
+        "func_type": "Model-specific Transformation",
+        "friendly_name": "Topoflow Climate Per Month",
+        "example": {
+            "grid_dir": "/data/mint/gpm_grid_baro",
+            "date_regex": "3B-HHR-E.MS.MRG.3IMERG.(?P<year>\\d{4})(?P<month>\\d{2})(?P<day>\\d{2})",
+            "output_file": "/data/mint/baro/climate.rts"
+        }
+    },
+    {
+        "id": "Topoflow4SoilWriteFunc",
+        "description": " A reader-transformation-writer multi-adapter.\n    Creates Bin (and RTI) files from tiff (soil) files.\n    ",
+        "inputs": {
+            "input_dir": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "output_dir": {
+                "id": "file_path",
+                "val": null,
+                "optional": false
+            },
+            "layer": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "DEM_bounds": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "DEM_xres_arcsecs": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "DEM_yres_arcsecs": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            }
+        },
+        "outputs": {},
+        "func_type": "Model-specific Transformation",
+        "friendly_name": "Topoflow Soil",
+        "example": {
+            "input_dir": "/ws/oct_eval_data/soilGrids/",
+            "output_dir": "/ws/examples/scotts_transformations/tmp/soil_BARO_l1",
+            "layer": "5",
+            "DEM_bounds": "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999",
+            "DEM_xres_arcsecs": "30",
+            "DEM_yres_arcsecs": "30"
+        }
+    },
+    {
+        "id": "MosaickTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Mosaick Transformation",
+        "friendly_name": "Generate tiles to cover larger bounding box (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "ClippingTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Clipping Transformation",
+        "friendly_name": "Clip to a smaller bounding box (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "ResampleTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Resampling Transformation",
+        "friendly_name": "Resample to change spatial resolution (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "StackTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Stacking Transformation",
+        "friendly_name": "Stack grids for different times into a single file (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "ExtractTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Extraction Transformation",
+        "friendly_name": "Extract derived grid from grids (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "RegridTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Regridding Transformation",
+        "friendly_name": "Wrap values to different computational grid (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "ReprojectTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Reprojection Transformation",
+        "friendly_name": "Reproject to a different map (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "RescaleTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Rescaling Transformation",
+        "friendly_name": "Change all values by one factor (WIP)",
+        "example": {},
+        "is_fake": true
+    },
+    {
+        "id": "VoidFillingTrans",
+        "description": "",
+        "inputs": {},
+        "outputs": {},
+        "func_type": "Void Filling Transformation",
+        "friendly_name": "Replace all nodata values (WIP)",
+        "example": {},
+        "is_fake": true
     }
 ]
