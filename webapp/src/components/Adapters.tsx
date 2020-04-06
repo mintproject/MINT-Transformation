@@ -1,6 +1,6 @@
 import React from "react";
 import MyLayout from "./Layout";
-import {inject, observer, PropTypes} from "mobx-react";
+import {inject, observer } from "mobx-react";
 import {IStore} from "../store";
 import {Card, Row, Col} from 'antd';
 import {AdapterType} from "../store/AdapterStore";
