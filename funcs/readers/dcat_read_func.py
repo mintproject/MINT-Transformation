@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Union, Dict
 from functools import partial
 from playhouse.kv import KeyValue
-from peewee import SqliteDatabase, Model, UUIDField, IntegerField, BooleanField, BigIntegerField, DoesNotExist
+from peewee import SqliteDatabase, Model, UUIDField, IntegerField, BooleanField, DoesNotExist
 
 from drepr import DRepr
 from drepr.outputs import ArrayBackend, GraphBackend
@@ -43,7 +43,6 @@ class Resource(Model):
     resource_id = UUIDField(unique=True)
     ref_count = IntegerField(default=0, index=True)
     is_downloading = BooleanField(default=False)
-    size = BigIntegerField(default=0)
 
     class Meta:
         database = SqliteDatabase(os.path.join(DATA_CATALOG_DOWNLOAD_DIR, 'dcat_read_func.db'), timeout=10)
@@ -62,21 +61,11 @@ class ResourceManager:
         self.db.connect()
         self.db.create_tables([Resource], safe=True)
         self.db.close()
-        self.kv = KeyValue(database=self.db, value_field=BigIntegerField())
+        self.kv = KeyValue(database=self.db)
         with self.db.atomic('EXCLUSIVE'):
             # initializing current_size of DATA_CATALOG_DOWNLOAD_DIR in the database
             if 'current_size' not in self.kv:
                 self.kv['current_size'] = sum(f.stat().st_size for f in Path(DATA_CATALOG_DOWNLOAD_DIR).rglob('*'))
-            else:
-                for resource in Resource.select():
-                    if resource.is_downloading:
-                        continue
-                    path = Path(os.path.join(DATA_CATALOG_DOWNLOAD_DIR, str(resource.resource_id) + '.dat'))
-                    if not path.exists():
-                        path = Path(os.path.join(DATA_CATALOG_DOWNLOAD_DIR, str(resource.resource_id)))
-                        if not path.exists():
-                            self.kv['current_size'] -= resource.size
-                            resource.delete_instance()
 
     @staticmethod
     def get_instance():
@@ -103,17 +92,17 @@ class ResourceManager:
                     # TODO: comparing timestamp before skipping download
                     download = False
             except DoesNotExist:
-                resource = Resource.create(resource_id=resource_id, ref_count=1, is_downloading=True, size=0)
+                resource = Resource.create(resource_id=resource_id, ref_count=1, is_downloading=True)
 
             if download:
                 required_size = 0
                 if resource.ref_count > 1:
                     # adjust required_size when the resource is to be redownloaded
-                    required_size -= resource.size
+                    required_size -= Path(path).stat().st_size
+                    if is_compressed:
+                        required_size -= sum(f.stat().st_size for f in Path(path).rglob('*'))
                 try:
-                    resource.size = int(requests.head(resource_metadata['resource_data_url']).headers['Content-Length'])
-                    print('getting content-length', resource.size)
-                    required_size += resource.size
+                    required_size += int(requests.head(resource_metadata['resource_data_url']).headers['Content-Length'])
                 except KeyError:
                     pass
                 if self.max_capacity - self.kv['current_size'] < required_size:
@@ -146,7 +135,7 @@ class ResourceManager:
                 subprocess.check_call(f"wget {resource_metadata['resource_data_url']} -O {temp_path}", shell=True)
                 self.uncompress(resource_metadata['resource_type'], path)
                 # adjust required_size when the resource is compressed
-                required_size = -resource.size
+                required_size = -Path(temp_path).stat().st_size
                 required_size += sum(f.stat().st_size for f in Path(path).rglob('*')) + Path(path).stat().st_size
                 Path(temp_path).unlink()
             else:
@@ -156,7 +145,6 @@ class ResourceManager:
             with self.db.atomic('EXCLUSIVE'):
                 self.kv['current_size'] += required_size
                 resource = Resource.select().where(Resource.resource_id == resource_id).get()
-                resource.size += required_size
                 resource.is_downloading = False
                 resource.save()
         else:
@@ -181,12 +169,12 @@ class ResourceManager:
         size = 0
         for resource in Resource.select().where(Resource.ref_count == 0).order_by(Resource.id):
             DcatReadFunc.logger.debug(f"Clearing resource {resource.resource_id}")
-            path = Path(os.path.join(DATA_CATALOG_DOWNLOAD_DIR, str(resource.resource_id) + '.dat'))
+            path = Path(os.path.join(DATA_CATALOG_DOWNLOAD_DIR, resource.resource_id + '.dat'))
             if path.exists():
                 size += path.stat().st_size
                 path.unlink()
             else:
-                path = Path(os.path.join(DATA_CATALOG_DOWNLOAD_DIR, str(resource.resource_id)))
+                path = Path(os.path.join(DATA_CATALOG_DOWNLOAD_DIR, resource.resource_id))
                 size += sum(f.stat().st_size for f in path.rglob('*')) + path.stat().st_size
                 shutil.rmtree(str(path))
             resource.delete_instance()
@@ -236,15 +224,15 @@ class DcatReadFunc(IFunc):
         "dataset_id": ArgType.String,
         "start_time": ArgType.DateTime(optional=True),
         "end_time": ArgType.DateTime(optional=True),
-        "lazy_load_enabled": ArgType.Boolean(optional=False),
-        "should_redownload": ArgType.Boolean(optional=False),
+        "lazy_load_enabled": ArgType.Boolean(optional=True),
+        "should_redownload": ArgType.Boolean(optional=True),
     }
     outputs = {"data": ArgType.DataSet(None)}
     example = {
         "dataset_id": "ea0e86f3-9470-4e7e-a581-df85b4a7075d",
         "start_time": "2020-03-02T12:30:55",
         "end_time": "2020-03-02T12:30:55",
-        "lazy_load_enabled": "False",
+        "lazy_load_enabled": "True",
         "should_redownload": "False"
     }
     logger = logging.getLogger(__name__)
@@ -253,7 +241,7 @@ class DcatReadFunc(IFunc):
                  dataset_id: str,
                  start_time: datetime = None,
                  end_time: datetime = None,
-                 lazy_load_enabled: bool = False,
+                 lazy_load_enabled: bool = True,
                  should_redownload: bool = False
                  ):
         self.dataset_id = dataset_id
