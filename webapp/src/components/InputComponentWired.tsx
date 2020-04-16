@@ -30,7 +30,7 @@ export class InputWiredComponent extends React.Component<
   InputWiredState
 > {
   createEdgeMenu = () => {
-    const { graphNodes, graphEdges, selectedNode, setGraphEdges, input, wiredEdges } = this.props;
+    const { graphNodes, selectedNode, setGraphEdges, input, wiredEdges } = this.props;
     const possibleNodes = graphNodes.filter(n => n.id !== selectedNode!.id);
     var menuList = [];
     for (let i = 0; i < possibleNodes.length; i ++) {
@@ -44,19 +44,45 @@ export class InputWiredComponent extends React.Component<
     return <Menu onClick={({ item }) => {
       const { eventKey } = item.props;
       const data = eventKey.split("-");
-      var newEdges = graphEdges
+      let newEdges = this.props.graphEdges;
       if (data[1] === "null" && data[2] === "null") {
-        newEdges = newEdges.filter(e => !(e.target === selectedNode!.id && e.input === input))
+        let oldEdges = newEdges.filter(e => (e.target === selectedNode!.id && e.input === input));
+        if (oldEdges.length === 0) { return; }
+        let oldEdge = oldEdges[0];
+        newEdges = newEdges.filter(e => !(e.target === selectedNode!.id && e.input === input));
+        let sameSourceSameTarget = newEdges.filter(
+          ed => ed.source === oldEdge.source && ed.target === oldEdge.target
+        );
+        let newEdgeType = "emptyEdge";
+        if (sameSourceSameTarget.length > 1) {
+          console.log("Adding an edge: multiEdge!")
+          newEdgeType = "multiEdge";
+        }
+        sameSourceSameTarget.forEach(ed => {
+          ed.type = newEdgeType
+        })
       } else {
         if (wiredEdges.length > 0) {
           // remove old wiring
           newEdges = newEdges.filter(e => !wiredEdges.includes(e))
         }
+        let sameSourceSameTarget = newEdges.filter(
+          ed => ed.source === data[1] && ed.target === selectedNode!.id
+        );
+        let newEdgeType = "emptyEdge";
+        if (sameSourceSameTarget.length > 0) {
+          console.log("Adding an edge: multiEdge!")
+          newEdgeType = "multiEdge";
+        }
+        sameSourceSameTarget.forEach(ed => {
+          ed.type = newEdgeType
+        })
         newEdges.push({
           target: selectedNode!.id,
           source: data[1],
           input: input,
-          output: data[2]
+          output: data[2],
+          type: newEdgeType
         });
       }
       setGraphEdges(newEdges);

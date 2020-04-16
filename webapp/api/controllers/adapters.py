@@ -18,11 +18,11 @@ KEY_EXAMPLE = "example"
 
 FAKE_ADAPTERS = [
     {
-        "id": "MosaickTrans",
+        "id": "MosaicTrans",
         "description": "",
         "inputs": {},
         "outputs": {},
-        "func_type": "Mosaick Transformation",
+        "func_type": "Mosaic Transformation",
         "friendly_name": "Generate tiles to cover larger bounding box (WIP)",
         "example": {},
         "is_fake": True

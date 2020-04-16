@@ -1,10 +1,11 @@
 import React from "react";
 import MyLayout from "./Layout";
-import {inject, observer} from "mobx-react";
+import {inject, observer } from "mobx-react";
 import {IStore} from "../store";
-import {Card} from 'antd';
+import {Card, Row, Col} from 'antd';
 import {AdapterType} from "../store/AdapterStore";
 import _ from "lodash";
+import "./Adapters.css";
 
 const defaultProps = {};
 interface AdapterProps extends Readonly<typeof defaultProps> {
@@ -36,23 +37,44 @@ export class AdapterComponent extends React.Component<
     // this component renders all existing adapters
     // TODO: similar UI between adapters and pipeline?
     // FIXME: not exactly sure how to manage state and onChange and class props
-    const isCardLoading: boolean = this.props.adapters.length === 0;
+    // const isCardLoading: boolean = this.props.adapters.length === 0;
+    const { adapters } = this.props;
+    let adapterMatrix: AdapterType[][] = [];
+    for (let idx = 0; idx < adapters.length; idx++) {
+      if (idx % 3 === 0) {
+        adapterMatrix[idx/3] = [adapters[idx]]
+      } else {
+        adapterMatrix[Math.floor(idx/3)].push(adapters[idx])
+      }
+    }
+    // console.log(adapterMatrix.map((row, rowIdx) => (row.map((ad, idx) => `row-${rowIdx}-col-${idx}`))));
     return (
       <MyLayout>
-        {this.props.adapters.map((ad, index) => 
+        {adapterMatrix.map((row, rowIdx) => (<Row
+          key={`row-${rowIdx}`}
+          style={{ height: "100%", width: "100%" }}
+        >
+          {row.map((ad, index) => (
+          <Col
+            key={`col-${index}-row-${rowIdx}`}
+            span={8} style={{ height: "100%" }}
+          >
             <Card
-              title={ad.id}
+              title={ad.friendly_name || ad.id}
               bordered={true}
-              loading={isCardLoading}
               style={{ margin: "10px 10px" }}
               key={`card-${index}`}
-              hoverable
+              className="flip-card"
+              bodyStyle={{ height: "100%", width: "100%" }}
             >
-              <pre>
-                • <b><u>Function Name</u></b>: {ad.id}<br/>
-                • <b><u>Friendly Name</u></b>: {ad.friendly_name}<br/>
+            <div className="flip-card-inner">
+              <p className="flip-card-front">
+                {/* • <b><u>Function Name</u></b>: {ad.id}<br/>
+                • <b><u>Friendly Name</u></b>: {ad.friendly_name}<br/> */}
                 • <b><u>Function Type</u></b>: {ad.func_type}<br/>
-                • <b><u>Description</u></b>: {ad.description}<br/>
+                • <b><u>Description</u></b>: {ad.description.split("\n").join(" ")}<br/>
+              </p>
+              <p className="flip-card-back">
                 • <b><u>Inputs</u></b>: {_.isEmpty(ad.inputs) ? <p>None</p> :Object.keys(ad.inputs).map(
                   (inputKey, idx) => (<pre key={`input-${idx}`}>
                     <b><u>{inputKey}</u></b>:<br/>
@@ -65,9 +87,11 @@ export class AdapterComponent extends React.Component<
                       Type: <input value={ad.outputs[outputKey].id} readOnly/>;<br/>
                       Optional: <input value={JSON.stringify(ad.outputs[outputKey].optional)} readOnly/>
                   </pre>))}<br/>
-              </pre>
+              </p>
+              </div>
             </Card>
-        )}
+          </Col>))}
+        </Row>))}
       </MyLayout>
   ); }
 }
