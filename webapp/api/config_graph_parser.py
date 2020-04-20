@@ -60,6 +60,7 @@ class DiGraphSchema(Schema):
         digraph['version'] = data['version']
         if 'description' in data:
             digraph['description'] = data['description']
+        tmp_nodes_dict, tmp_edges_list = {}, []
         digraph['nodes'] = []
         digraph['edges'] = []
         for name, adapter in data['adapters'].items():
@@ -97,10 +98,46 @@ class DiGraphSchema(Schema):
                     edge['target'] = name
                     edge['input'] = input
                     digraph['edges'].append(edge)
+                    tmp_edges_list.append((edge['source'], edge['target']))
                 else:
                     node['inputs'][input]['val'] = value
-            digraph['nodes'].append(node)
+            # digraph['nodes'].append(node)
+            tmp_nodes_dict[name] = node
 
+        # Topological sort nodes and edges in lexical order
+        topo_graph_count = {k: 0 for k in tmp_nodes_dict}
+        topo_graph_edges = {}
+        for ed_src, ed_tgt in tmp_edges_list:
+            topo_graph_count[ed_tgt] += 1
+            if ed_src not in topo_graph_edges:
+                topo_graph_edges[ed_src] = [ed_tgt]
+            else:
+                topo_graph_edges[ed_src].append(ed_tgt)
+        # print(topo_graph_count)
+        # print(topo_graph_edges)
+        index_count = len(topo_graph_count.keys())
+        added_nodes = []
+        for index in range(index_count):
+            print(f"looping at {index}")
+            start_nodes = [n for n, c in topo_graph_count.items() if c == 0 and n not in added_nodes]
+            print(f"start nodes are {start_nodes}")
+            if not start_nodes:
+                raise ValueError("Something is wrong")
+            start_node = start_nodes[0]
+            node = tmp_nodes_dict[start_node]
+            digraph['nodes'].append(node)
+            # update topo_graph_count
+            if start_node not in topo_graph_edges:
+                continue
+            for ed_tgt in topo_graph_edges[start_node]:
+                if topo_graph_count[ed_tgt] == 0:
+                    raise ValueError("Something is WRONG")
+                else:
+                    topo_graph_count[ed_tgt] -= 1
+            print(f"current topo_graph_count is {topo_graph_count}")
+            added_nodes.append(start_node)
+
+        # print(digraph)
         return digraph
 
 
