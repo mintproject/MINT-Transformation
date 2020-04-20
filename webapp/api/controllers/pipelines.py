@@ -16,13 +16,12 @@ from uuid import uuid4
 
 import ujson
 import yaml
-# from dtran.dcat.api import DCatAPI
+from dtran.dcat.api import DCatAPI
 from flask import Blueprint, jsonify, request
 from api.config_graph_parser import DiGraphSchema
 
 TMP_DIR = "/tmp/mintdt"
 PROJECT_DIR = str(Path(os.path.abspath(__file__)).parent.parent.parent.parent)
-
 
 def setup_mintdt():
     if not os.path.isdir(TMP_DIR):
@@ -154,26 +153,23 @@ def upload_pipeline_config():
 @pipelines_blueprint.route('/pipeline/dcat/<dcat_id>', methods=["GET"])
 def get_dcat_config(dcat_id: str):
     # TODO: connect with data catalog
+    dcat_instance = DCatAPI.get_instance()
     try:
-        # dataset = DCATAPI_INSTANCE.find_dataset_by_id(dcat_id)
-        # dataset_config = dataset["dataset_metadata"].get("config", None)
-        # if dataset_config is None:
-        #     return jsonify({
-        #         "error": "This dataset has no config associated!"
-        #     }), 400
-        dataset_config = {
-            "version":"1",
-            "adapters": {
-                "my_read_func": {
-                    "inputs": {
-                        "dataset_id": dcat_id
-                    },
-                    "adapter":"funcs.DcatReadFunc",
-                    "comment":"My read func adapter"
+        dataset = dcat_instance.find_dataset_by_id(dcat_id)
+        dataset_config = dataset["metadata"].get("config", None)
+        if dataset_config is None:
+            dataset_config = {
+                "version":"1",
+                "adapters": {
+                    "my_read_func": {
+                        "inputs": {
+                            "dataset_id": dcat_id
+                        },
+                        "adapter":"funcs.DcatReadFunc",
+                        "comment":"My read func adapter"
+                    }
                 }
             }
-        }
-        # else:
         # print(dataset_config)
         display_data = DiGraphSchema().dump(dataset_config)
         # print(display_data)
@@ -220,8 +216,7 @@ def run_pipeline(name: str, description: str, config: object, id=""):
                 "description": description,
                 "start_time": start_time.strftime("%Y-%m-%dT%H:%M:%S"),
                 # "config": config
-            },
-            f)
+            }, f)
         # print(f"Writing to {TMP_DIR}/{id}.json")
         ujson.dump(
             {

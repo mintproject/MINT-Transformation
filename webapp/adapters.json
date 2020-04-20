@@ -71,7 +71,7 @@
             "dataset_id": "ea0e86f3-9470-4e7e-a581-df85b4a7075d",
             "start_time": "2020-03-02T12:30:55",
             "end_time": "2020-03-02T12:30:55",
-            "lazy_load_enabled": "True",
+            "lazy_load_enabled": "False",
             "should_redownload": "False"
         }
     },
@@ -125,6 +125,31 @@
         "example": {
             "output_file": "example.csv"
         }
+    },
+    {
+        "id": "NetCDFWriteFunc",
+        "description": "Write dataset to NetCDF4 format. Following CF 1.0 convention",
+        "inputs": {
+            "dataset": {
+                "id": "dataset",
+                "val": null,
+                "optional": false
+            },
+            "output_file": {
+                "id": "string",
+                "val": null,
+                "optional": false
+            },
+            "output_drepr_file": {
+                "id": "string",
+                "val": null,
+                "optional": true
+            }
+        },
+        "outputs": {},
+        "func_type": "Others",
+        "friendly_name": null,
+        "example": {}
     },
     {
         "id": "GraphStr2StrFunc",
