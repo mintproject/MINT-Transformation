@@ -1,4 +1,4 @@
-from funcs.trans_cropping_func import *
+from funcs.gdal.trans_cropping_func import *
 from drepr import DRepr, outputs
 
 curr_dir = "./"
