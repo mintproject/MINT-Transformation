@@ -25,6 +25,8 @@ class CroppingTransFunc(IFunc):
         "ymin": ArgType.Number(optional=True),
         "xmax": ArgType.Number(optional=True),
         "ymax": ArgType.Number(optional=True),
+        "region_label": ArgType.String(optional=True)
+        # TODO When implementing validator, make sure bounding box inputs always has region label
     }
 
     outputs = {"data": ArgType.DataSet(None)}
@@ -37,9 +39,10 @@ class CroppingTransFunc(IFunc):
         "ymin": "",
         "xmax": "",
         "ymax": "",
+        "region_label": ""
     }
 
-    def __init__(self, dataset, variable_name: str = "", shape=None, xmin=0, ymin=0, xmax=0, ymax=0):
+    def __init__(self, dataset, variable_name: str = "", shape=None, xmin=0, ymin=0, xmax=0, ymax=0, region_label=""):
         self.variable_name = variable_name
         self.dataset = dataset
         self.shape_sm = shape
@@ -47,6 +50,7 @@ class CroppingTransFunc(IFunc):
         self.ymin = ymin
         self.xmax = xmax
         self.ymax = ymax
+        self.region_label = region_label
 
         self.use_temp = True
         if self.shape_sm is None:
@@ -105,7 +109,6 @@ class CroppingTransFunc(IFunc):
         for c in classes:
             for raster_id, sc in c.group_by(mint_geo_ns.raster):
                 var_record = next(sc.iter_records())
-                print(var_record.to_dict())
                 var_name = variable_name  # TODO Case where no variable name is given and none exists in schema?
                 if not variable_name:
                     # Extract variable name if we did not filter
@@ -160,7 +163,7 @@ class CroppingTransFunc(IFunc):
         for r in self.rasters:
             cropped_raster = r["raster"].crop(bounds=bb, resampling_algo=ReSample.BILINEAR)
             self.results.add(raster_to_dataset(cropped_raster, r["variable_name"], self.results.inject_class_id,
-                                               timestamp=r["timestamp"]))
+                                               timestamp=r["timestamp"], region_label=self.region_label))
 
     def _crop_shape_dataset(self):
         self.rasters = CroppingTransFunc.extract_raster(self.dataset, self.variable_name)

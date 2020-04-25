@@ -73,8 +73,6 @@ place_parameters = ['region', 'zone', 'district']
 def _update_model(place_dict):
     updated_model = copy.deepcopy(raster_model)
     updated_place_parameters = [pp for pp in place_parameters if f"mint:{pp}" in place_dict]
-    if len(updated_place_parameters) == 0:
-        return updated_model
 
     updated_model['attributes'].update({
         f"place_{pp}": f"$.place_{pp}" for pp in updated_place_parameters
@@ -94,11 +92,16 @@ def _update_model(place_dict):
 
 
 def raster_to_dataset(raster: Raster, variable_name: str, inject_class_id: Callable[[str], str] = None, place=None,
+                      region_label="",
                       timestamp=None):
+    used_region_label = False
     if place:
         place_dict = place.to_dict()
     else:
-        place_dict = {}
+        assert region_label
+        used_region_label = True
+        place_dict = {"mint:region": [region_label]}
+
     model = _update_model(place_dict)
     if isinstance(raster.nodata, (float, np.float32, np.float64)):
         model['attributes']['variable']['missing_values'].append(float(raster.nodata))
@@ -122,10 +125,12 @@ def raster_to_dataset(raster: Raster, variable_name: str, inject_class_id: Calla
         "gt_x_slope": raster.geotransform.x_slope,
         "gt_y_slope": raster.geotransform.y_slope
     }
-    if place:
-        for pp in place_parameters:
-            if f"mint:{pp}" in place_dict:
-                data[f"place_{pp}"] = place.s(f"mint:{pp}")
+    for pp in place_parameters:
+        if f"mint:{pp}" in place_dict:
+            if used_region_label:
+                data[f"place_{pp}"] = region_label
+                continue
+            data[f"place_{pp}"] = place.s(f"mint:{pp}")
     reader = NPDictReader(data)
     temp_file = f"resource_{str(uuid.uuid4())}"
     ReaderContainer.get_instance().set(temp_file, reader)
