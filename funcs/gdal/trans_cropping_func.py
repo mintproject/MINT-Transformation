@@ -18,13 +18,15 @@ class CroppingTransFunc(IFunc):
     description = ""
 
     inputs = {
-        "variable_name": ArgType.String,
         "dataset": ArgType.DataSet(None),
+        "variable_name": ArgType.String(optional=True),
         "shape": ArgType.DataSet(None, optional=True),
         "xmin": ArgType.Number(optional=True),
         "ymin": ArgType.Number(optional=True),
         "xmax": ArgType.Number(optional=True),
         "ymax": ArgType.Number(optional=True),
+        "region_label": ArgType.String(optional=True)
+        # TODO When implementing validator, make sure bounding box inputs always has region label
     }
 
     outputs = {"data": ArgType.DataSet(None)}
@@ -37,9 +39,10 @@ class CroppingTransFunc(IFunc):
         "ymin": "",
         "xmax": "",
         "ymax": "",
+        "region_label": ""
     }
 
-    def __init__(self, variable_name: str, dataset, shape=None, xmin=0, ymin=0, xmax=0, ymax=0):
+    def __init__(self, dataset, variable_name: str = "", shape=None, xmin=0, ymin=0, xmax=0, ymax=0, region_label=""):
         self.variable_name = variable_name
         self.dataset = dataset
         self.shape_sm = shape
@@ -47,6 +50,7 @@ class CroppingTransFunc(IFunc):
         self.ymin = ymin
         self.xmax = xmax
         self.ymax = ymax
+        self.region_label = region_label
 
         self.use_temp = True
         if self.shape_sm is None:
@@ -79,7 +83,7 @@ class CroppingTransFunc(IFunc):
         with fiona.open(
                 fname,
                 "w",
-                crs="+datum=WGS84 +ellps=WGS84 +no_defs +proj=longlat",
+                crs=epsg,
                 driver=driver,
                 schema=schema,
         ) as shapefile:
@@ -98,17 +102,28 @@ class CroppingTransFunc(IFunc):
 
         rasters = []
 
-        for c in sm.c(mint_ns.Variable).filter(
-                outputs.FCondition(mint_ns.standardName, "==", variable_name)):
+        classes = sm.c(mint_ns.Variable)
+        if variable_name:
+            classes = classes.filter(outputs.FCondition(mint_ns.standardName, "==", variable_name))
+
+        for c in classes:
             for raster_id, sc in c.group_by(mint_geo_ns.raster):
+                var_record = next(sc.iter_records())
+                var_name = variable_name  # TODO Case where no variable name is given and none exists in schema?
+                if not variable_name:
+                    # Extract variable name if we did not filter
+                    if sc.p(mint_ns.standardName) is not None:
+                        var_name = var_record.s(mint_ns.standardName)
+
                 if sc.p(mint_ns.timestamp) is not None:
-                    timestamp = next(sc.iter_records()).s(mint_ns.timestamp)
+                    timestamp = var_record.s(mint_ns.timestamp)
                 else:
                     timestamp = None
 
                 data = sc.p(rdf_ns.value).as_ndarray(
                     [sc.p(mint_geo_ns.lat), sc.p(mint_geo_ns.long)])
                 gt_info = sm.get_record_by_id(raster_id)
+
                 gt = GeoTransform(
                     x_0=gt_info.s(mint_geo_ns.x_0),
                     y_0=gt_info.s(mint_geo_ns.y_0),
@@ -121,7 +136,7 @@ class CroppingTransFunc(IFunc):
                     int(gt_info.s(mint_geo_ns.epsg)),
                     data.nodata.value if data.nodata is not None else None,
                 )
-                rasters.append({"raster": raster, "timestamp": timestamp})
+                rasters.append({"raster": raster, "timestamp": timestamp, "variable_name": var_name})
 
         return rasters
 
@@ -147,7 +162,8 @@ class CroppingTransFunc(IFunc):
         self.results = ShardedBackend(len(self.rasters))
         for r in self.rasters:
             cropped_raster = r["raster"].crop(bounds=bb, resampling_algo=ReSample.BILINEAR)
-            self.results.add(raster_to_dataset(cropped_raster, self.results.inject_class_id, timestamp=r["timestamp"]))
+            self.results.add(raster_to_dataset(cropped_raster, r["variable_name"], self.results.inject_class_id,
+                                               timestamp=r["timestamp"], region_label=self.region_label))
 
     def _crop_shape_dataset(self):
         self.rasters = CroppingTransFunc.extract_raster(self.dataset, self.variable_name)
@@ -163,8 +179,9 @@ class CroppingTransFunc(IFunc):
                 )
                 os.remove(tempfile_name)
                 place = shape['place']
-                self.results.add(raster_to_dataset(cropped_raster, self.results.inject_class_id, place=place,
-                                                   timestamp=r["timestamp"]))
+                self.results.add(
+                    raster_to_dataset(cropped_raster, r["variable_name"], self.results.inject_class_id, place=place,
+                                      timestamp=r["timestamp"]))
 
     def crop_shape_shardedbackend(self):
         # TODO Stub for sharded backend later
