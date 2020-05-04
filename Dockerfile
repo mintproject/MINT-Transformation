@@ -1,4 +1,4 @@
-FROM continuumio/miniconda3:4.7.12
+FROM continuumio/miniconda3:4.8.2
 
 # add linux build essentials
 RUN apt-get update && apt-get install -y build-essential tree

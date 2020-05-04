@@ -31,4 +31,4 @@ dependencies:
       - fiona==1.8
       - python-dotenv==0.12
       - peewee==3.13
-      - pyocclient=
+      - pyocclient
