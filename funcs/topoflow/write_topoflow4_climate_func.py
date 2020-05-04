@@ -53,16 +53,16 @@ class Topoflow4ClimateWriteFunc(IFunc):
         }
         self.var_name = var_name
         self.input_dir = str(input_dir)
-        self.crop_region_dir = str(temp_dir)
+        self.temp_dir = str(temp_dir)
         self.output_file = str(output_file)
 
     def exec(self) -> dict:
-        for path in [self.input_dir, self.crop_region_dir]:
+        for path in [self.input_dir, self.temp_dir]:
             Path(path).mkdir(exist_ok=True, parents=True)
 
         Path(self.output_file).parent.mkdir(exist_ok=True, parents=True)
 
-        create_rts_from_nc_files(self.input_dir, self.crop_region_dir, self.output_file, self.DEM, self.var_name, IN_MEMORY=True)
+        create_rts_from_nc_files(self.input_dir, self.temp_dir, self.output_file, self.DEM, self.var_name, IN_MEMORY=True)
         return {"output_file": self.output_file}
 
     def validate(self) -> bool:
