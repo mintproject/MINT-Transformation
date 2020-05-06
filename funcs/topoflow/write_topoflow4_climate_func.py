@@ -12,6 +12,7 @@ import os
 import osr
 from funcs.topoflow.nc2geotiff import nc2geotiff
 from tqdm import tqdm
+from zipfile import ZipFile
 
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc, IFuncType
@@ -21,7 +22,7 @@ from funcs.topoflow.rti_files import generate_rti_file
 class Topoflow4ClimateWriteFunc(IFunc):
     id = "topoflow4_climate_write_func"
     description = ''' A reader-transformation-writer multi-adapter.
-    Creates an RTS (and RTI) file from NetCDF (climate) files.
+    Creates a zip file of RTS (and RTI) file from NetCDF (climate) files.
     '''
     inputs = {
         "input_dir": ArgType.String,
@@ -38,7 +39,7 @@ class Topoflow4ClimateWriteFunc(IFunc):
     example = {
         "input_dir": "$.my_dcat_read_func.data",
         "temp_dir": "/data/mint/sample_grid_baro",
-        "output_file": "/data/mint/sample_baro/climate_all.rt",
+        "output_file": "/data/mint/sample_baro/climate_all.zip",
         "var_name": "HQprecipitation",
         "DEM_bounds": "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999",
         "DEM_xres_arcsecs": "30",
@@ -418,7 +419,7 @@ def write_grid_files_to_rts(grid_files: List[str], rts_output_file: str):
 
 #   fix_gpm_file_as_geotiff()
 # -------------------------------------------------------------------
-def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, rts_file, DEM_info: dict,
+def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, zip_file, DEM_info: dict,
                              var_name,
                              IN_MEMORY=False, VERBOSE=False):
     # ------------------------------------------------------
@@ -493,11 +494,13 @@ def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, rts_file, DEM_info: dict
     # Open RTS file to write
     # -------------------------
     print(">>> write to files")
+    file_name = os.path.basename(zip_file)
+    rts_file = f"{temp_bin_dir}/{file_name.replace('.zip', '.rts')}"
     grid_files = sorted(glob.glob(join(temp_bin_dir, '*.npz')))
     write_grid_files_to_rts(grid_files, rts_file)
 
     # Generate RTI file
-    rti_fname = rts_file.replace('.rts', '.rti')
+    rti_fname = f"{temp_bin_dir}/{file_name.replace('.zip', '.rti')}"
     generate_rti_file(rts_file, rti_fname, DEM_ncols, DEM_nrows, DEM_xres, DEM_yres, pixel_geom=0)
 
     print(' ')
@@ -506,3 +509,9 @@ def create_rts_from_nc_files(nc_dir_path, temp_bin_dir, rts_file, DEM_info: dict
     print('n_grids   =', count)
     print('Finished saving data to rts file and generating a matching rti file.')
     print(' ')
+
+    print(f'Zipping {rts_file} and {rti_fname}...')
+    with ZipFile(zip_file, 'w') as z:
+        z.write(rts_file, os.path.basename(rts_file))
+        z.write(rti_fname, os.path.basename(rti_fname))
+    print(f"Zipping is complete. Please check {zip_file}")

@@ -6,7 +6,7 @@ adapters:
     inputs:
       input_dir: "/tmp/demo/input"
       temp_dir: "/tmp/demo/tmp"
-      output_file: "/tmp/demo/output/climate_all.rts"
+      output_file: "/tmp/demo/output/climate_all.zip"
       var_name: precipitation
       DEM_bounds: "23.995416666666, 6.532916666667, 28.020416666666, 9.566250000000"
       DEM_xres_arcsecs: "30"
