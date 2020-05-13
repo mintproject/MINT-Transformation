@@ -1,11 +1,11 @@
 # MINT Data Transformations
 
-A framework to construct a transformation pipeline based on some specification from users. Our framework supports general transformation libraries (e.g. GLAL, xarray, pandas) or functions. We also 
+A framework to construct a transformation pipeline based on some specification from users. 
 
 Spatial Transformations (from GDAL): cropping, regirdding, resampling, etc.
 Model-specific Transformations: Topoflow, PIHM, Cycles, Econ, etc.
 
-Link to (Wiki)[https://github.com/mintproject/MINT-Transformation/wiki]
+Link to [Wiki](https://github.com/mintproject/MINT-Transformation/wiki)
 
 ## Installation
 
