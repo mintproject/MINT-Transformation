@@ -33,7 +33,7 @@ Run the pipeline:
 ```
 docker run --rm -v $(pwd):/ws -v /tmp:/tmp -it mint_dt [config_path]
 ```
-
+External files should be stored in `/tmp`
 ## Deployment
 
 See the first revision of a demo notebook in file [`demo.ipynb`](https://github.com/mintproject/MINT-Transformation/blob/master/examples/demo.ipynb).
