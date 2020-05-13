@@ -23,10 +23,8 @@ Run the pipeline:
 dotenv run python -m dtran.main exec_pipeline --config [config_path]
 ```
 
-You can replace `config_path` with any configuration file found in the [examples](https://github.com/mintproject/MINT-Transformation/tree/master/examples) folder. Some example transformations are:
+You can replace `config_path` with any configuration file found in the [examples](https://github.com/mintproject/MINT-Transformation/tree/master/examples) folder. The supported transformations includes:
 - [Topoflow](https://github.com/mintproject/MINT-Transformation/blob/master/examples/topoflow4/topoflow_climate.yml)
-- [Pihm2Cycles](https://github.com/mintproject/MINT-Transformation/blob/master/examples/pihm2cycles/config.yml)
-- [Weather data cropping](https://github.com/mintproject/MINT-Transformation/blob/master/examples/cropping_weather_dataset.yml)
 ### With Docker container:
 Run the pipeline:
 
