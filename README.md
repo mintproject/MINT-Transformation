@@ -10,10 +10,8 @@ cd MINT-Transformation
 conda env create -f environment.yml
 ```
 
-
-
 ## Usage
-
+### With Conda Environment
 Activate conda enviroment:
 ```
 conda activate mintdt
@@ -29,15 +27,19 @@ You can replace `config_path` with any configuration file found in the [examples
 - [Topoflow](https://github.com/mintproject/MINT-Transformation/blob/master/examples/topoflow4/topoflow_climate.yml)
 - [Pihm2Cycles](https://github.com/mintproject/MINT-Transformation/blob/master/examples/pihm2cycles/config.yml)
 - [Weather data cropping](https://github.com/mintproject/MINT-Transformation/blob/master/examples/cropping_weather_dataset.yml)
+### With Docker container:
+Run the pipeline:
 
+```
+docker run --rm -v $(pwd):/ws -v /tmp:/tmp -it mint_dt [config_path]
+```
 
-### Developers:
+## Deployment
 
 See the first revision of a demo notebook in file [`demo.ipynb`](https://github.com/mintproject/MINT-Transformation/blob/master/examples/demo.ipynb).
 
-### General Users:
 
-#### Start Server
+### Start Server
 
 Run the following command from the root folder:
 
@@ -47,7 +49,7 @@ PYTHONPATH=$(pwd)/webapp:$(pwd) dotenv run python webapp/api/app.py
 
 Open URL `http://0.0.0.0:10010` on your browser
 
-## Running using Docker
+### Running using Docker
 
 Build image
 
