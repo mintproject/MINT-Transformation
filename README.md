@@ -20,11 +20,12 @@ conda activate mintdt
 Run the pipeline:
 
 ```
-dotenv run python -m dtran.main exec_pipeline --config [config_path]
+dotenv -f [env_path] run python -m dtran.main exec_pipeline --config [config_path]
 ```
+Arguments:
+  * `env_path`: Path of .env file ([sample](https://github.com/mintproject/MINT-Transformation/blob/master/.env.docker)).
+  * `config_path`: Path to the transformation pipeline configuration file ([Topoflow example](https://github.com/mintproject/MINT-Transformation/blob/master/examples/topoflow4/topoflow_climate.yml)).
 
-You can replace `config_path` with any configuration file found in the [examples](https://github.com/mintproject/MINT-Transformation/tree/master/examples) folder. The supported transformations includes:
-- [Topoflow](https://github.com/mintproject/MINT-Transformation/blob/master/examples/topoflow4/topoflow_climate.yml)
 ### With Docker container:
 Run the pipeline:
 
