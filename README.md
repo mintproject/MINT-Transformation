@@ -11,8 +11,15 @@ conda env create -f environment.yml
 ```
 
 ## Usage
-### With Conda Environment
-Activate conda enviroment:
+
+### Setup 
+```
+mkdir /tmp
+chmod 1777 /tmp
+```
+
+### With Conda environment
+Activate Conda enviroment:
 ```
 conda activate mintdt
 ```
@@ -32,7 +39,6 @@ Run the pipeline:
 ```
 docker run --rm -v $(pwd):/ws -v /tmp:/tmp mint_dt [config_path]
 ```
-External files should be stored in `/tmp`
 ## Deployment
 
 See the first revision of a demo notebook in file [`demo.ipynb`](https://github.com/mintproject/MINT-Transformation/blob/master/examples/demo.ipynb).
