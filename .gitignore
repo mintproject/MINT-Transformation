@@ -84,7 +84,7 @@ celerybeat-schedule
 *.sage.py
 
 # Environments
-environ.env
+*.env
 .venv
 env/
 venv/
@@ -114,5 +114,3 @@ examples/demo/data
 *node_modules*
 
 data
-.env.docker
-environ.env
