@@ -31,7 +31,7 @@ You can replace `config_path` with any configuration file found in the [examples
 Run the pipeline:
 
 ```
-docker run --rm -v $(pwd):/ws -v /tmp:/tmp -it mint_dt [config_path]
+docker run --rm -v $(pwd):/ws -v /tmp:/tmp mint_dt [config_path]
 ```
 External files should be stored in `/tmp`
 ## Deployment
