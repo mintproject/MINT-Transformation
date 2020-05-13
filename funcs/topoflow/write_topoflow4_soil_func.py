@@ -24,7 +24,7 @@ class Topoflow4SoilWriteFunc(IFunc):
     inputs = {
         "input_dir": ArgType.String,
         "output_dir": ArgType.FilePath,
-        "layer": ArgType.String,
+        "layer": ArgType.Number,
         "DEM_bounds": ArgType.String,
         "DEM_xres_arcsecs": ArgType.String,
         "DEM_yres_arcsecs": ArgType.String,

@@ -5,8 +5,8 @@ adapters:
     adapter: funcs.Topoflow4SoilWriteFunc
     inputs:
       layer: 1
-      input_dir: /data/mint/isric_soil
-      output_dir: "/data/mint/topoflow/baro/isric_soil/"
+      input_dir: "/tmp/demo/alwero_gldas_2008_30"
+      output_dir: "/tmp/demo/output"
       DEM_bounds: "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999"
       DEM_xres_arcsecs: "30"
       DEM_yres_arcsecs: "30"
