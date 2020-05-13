@@ -53,7 +53,7 @@ dotenv -f [env_path] run python -m dtran.main exec_pipeline --config [config_pat
 ```
 Arguments:
   * `env_path`: Path of .env file ([sample](https://github.com/mintproject/MINT-Transformation/blob/master/.env.docker)).
-  * `config_path`: Path to the transformation pipeline configuration file ([Topoflow example](https://github.com/mintproject/MINT-Transformation/blob/master/examples/topoflow4/topoflow_climate.yml)).
+  * `config_path`: Path to the transformation pipeline configuration file ([Topoflow config](https://github.com/mintproject/MINT-Transformation/blob/master/examples/topoflow4/topoflow_climate.yml)/[Sample input](https://drive.google.com/file/d/1NQsWHwctdiF8UfMGqaxuc9lpDSVxOcvG/view)).
 
 **With docker**
 
