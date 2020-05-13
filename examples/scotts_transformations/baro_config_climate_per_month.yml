@@ -1,9 +1,0 @@
-version: "1"
-adapters:
-  my_topo_climate_per_month_write_func:
-    comment: My topoflow climate peer month write adapter
-    adapter: funcs.Topoflow4ClimateWritePerMonthFunc
-    inputs:
-      grid_dir: "/data/mint/gpm_grid_baro"
-      date_regex: '3B-HHR-E.MS.MRG.3IMERG.(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'
-      output_file: "/data/mint/baro/climate.rts"
