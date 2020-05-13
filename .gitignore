@@ -114,5 +114,5 @@ examples/demo/data
 *node_modules*
 
 data
-.env
+.env.docker
 environ.env
