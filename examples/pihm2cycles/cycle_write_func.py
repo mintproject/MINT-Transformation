@@ -10,8 +10,8 @@ from dtran import ArgType, IFunc
 class CyclesWriteFunc(IFunc):
     id = "cycle_write_func"
     inputs = {
-        "reinit_graph": ArgType.Graph(None),
-        "soil_graph": ArgType.Graph(None),
+        "reinit_graph": ArgType.DataSet(None),
+        "soil_graph": ArgType.DataSet(None),
         "reinit_file": ArgType.FilePath,
         "soil_file": ArgType.FilePath,
     }

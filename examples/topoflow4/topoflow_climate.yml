@@ -4,7 +4,7 @@ adapters:
     comment: My topoflow climate write adapter
     adapter: funcs.Topoflow4ClimateWriteFunc
     inputs:
-      input_dir: "/tmp/demo/input"
+      input_dir: "/tmp/demo/input/weather"
       temp_dir: "/tmp/demo/tmp"
       output_file: "/tmp/demo/output/climate_all.zip"
       var_name: precipitation

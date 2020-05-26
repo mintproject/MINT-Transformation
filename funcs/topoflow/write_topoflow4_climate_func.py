@@ -4,12 +4,14 @@ import glob
 import re
 from os.path import join
 from pathlib import Path
-from typing import Union, List
+from typing import Union, List, Optional, Dict
 
 import gdal  # # ogr
 import numpy as np
 import os
 import osr
+
+from dtran.metadata import Metadata
 from funcs.topoflow.nc2geotiff import nc2geotiff
 from tqdm import tqdm
 from zipfile import ZipFile
@@ -111,6 +113,10 @@ class Topoflow4ClimateWritePerMonthFunc(IFunc):
 
     def validate(self) -> bool:
         return True
+
+    def change_metadata(self, metadata: Optional[Dict[str, Metadata]]) -> Dict[str, Metadata]:
+        return metadata
+
 
 # -------------------------------------------------------------------
 def get_raster_bounds(ds, VERBOSE=False):

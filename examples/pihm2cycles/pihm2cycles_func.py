@@ -2,7 +2,6 @@ import json
 from datetime import timedelta
 
 from drepr import Graph
-from drepr.graph import Node
 
 from dtran import IFunc, ArgType
 
@@ -10,14 +9,14 @@ from dtran import IFunc, ArgType
 class Pihm2CyclesFunc(IFunc):
     id = "pihm2cycles_func"
     inputs = {
-        "pihm_data_graph": ArgType.Graph(None),
-        "pihm_soil_graph": ArgType.Graph(None),
-        "pid_graph": ArgType.Graph(None),
+        "pihm_data_graph": ArgType.DataSet(None),
+        "pihm_soil_graph": ArgType.DataSet(None),
+        "pid_graph": ArgType.DataSet(None),
         "cycles_layers": ArgType.String,
         "patch_id": ArgType.Number,
         "gw_depth": ArgType.Number,
     }
-    outputs = {"reinit_graph": ArgType.Graph(None), "cycle_soil_graph": ArgType.Graph(None)}
+    outputs = {"reinit_graph": ArgType.DataSet(None), "cycle_soil_graph": ArgType.DataSet(None)}
 
     def __init__(
         self,

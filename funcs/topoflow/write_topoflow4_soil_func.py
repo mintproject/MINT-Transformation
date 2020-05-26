@@ -4,7 +4,7 @@
 # https://csdms.colorado.edu/wiki/Model_help:TopoFlow-Soil_Properties_Page
 
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional, Dict
 
 import gdal  ## ogr
 import numpy as np
@@ -12,19 +12,20 @@ from scipy.special import gamma
 
 from dtran import IFunc, ArgType
 from dtran.ifunc import IFuncType
+from dtran.metadata import Metadata
 from funcs.topoflow.rti_files import generate_rti_file
 from funcs.topoflow.write_topoflow4_climate_func import gdal_regrid_to_dem_grid
 
 
 class Topoflow4SoilWriteFunc(IFunc):
     id = "topoflow4_soil_write_func"
-    description = ''' A reader-transformation-writer multi-adapter.
+    description = """ A reader-transformation-writer multi-adapter.
     Creates Bin (and RTI) files from tiff (soil) files.
-    '''
+    """
     inputs = {
         "input_dir": ArgType.String,
         "output_dir": ArgType.FilePath,
-        "layer": ArgType.String,
+        "layer": ArgType.Number,
         "DEM_bounds": ArgType.String,
         "DEM_xres_arcsecs": ArgType.String,
         "DEM_yres_arcsecs": ArgType.String,
@@ -35,13 +36,21 @@ class Topoflow4SoilWriteFunc(IFunc):
     example = {
         "input_dir": "/ws/oct_eval_data/soilGrids/",
         "output_dir": "/ws/examples/scotts_transformations/tmp/soil_BARO_l1",
-        "layer": "5",
+        "layer": 5,
         "DEM_bounds": "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999",
         "DEM_xres_arcsecs": "30",
-        "DEM_yres_arcsecs": "30"
+        "DEM_yres_arcsecs": "30",
     }
 
-    def __init__(self, input_dir: str, output_dir: Union[str, Path], layer: str, DEM_bounds: str, DEM_xres_arcsecs: str, DEM_yres_arcsecs: str):
+    def __init__(
+        self,
+        input_dir: str,
+        output_dir: Union[str, Path],
+        layer: str,
+        DEM_bounds: str,
+        DEM_xres_arcsecs: str,
+        DEM_yres_arcsecs: str,
+    ):
         self.DEM = {
             "bounds": [float(x.strip()) for x in DEM_bounds.split(",")],
             "xres": float(DEM_xres_arcsecs) / 3600.0,
@@ -52,114 +61,141 @@ class Topoflow4SoilWriteFunc(IFunc):
         self.layer = layer
 
     def exec(self) -> dict:
-        save_soil_hydraulic_vars(input_dir=self.input_dir,
-                                 output_dir=self.output_dir,
-                                 DEM_info=self.DEM,
-                                 layer=self.layer)
+        save_soil_hydraulic_vars(
+            input_dir=self.input_dir,
+            output_dir=self.output_dir,
+            DEM_info=self.DEM,
+            layer=self.layer,
+        )
         return {}
 
     def validate(self) -> bool:
         return True
 
+    def change_metadata(
+        self, metadata: Optional[Dict[str, Metadata]]
+    ) -> Dict[str, Metadata]:
+        return metadata
+
+
 # -------------------------------------------------------------------
 def save_soil_hydraulic_vars(input_dir, output_dir, DEM_info: dict, layer=1):
     (C, S, OM, D) = read_soil_grid_files(input_dir, DEM_info, layer=layer)
     DEM_nrows, DEM_ncols = C.shape[0], C.shape[1]
-    topsoil = (layer == 1)
-    subsoil = not(topsoil)
-    
+    topsoil = layer == 1
+    subsoil = not (topsoil)
+
     (theta_s, K_s, alpha, n, L) = get_wosten_vars(C, S, OM, D, topsoil)
-    (psi_B, c, lam, eta, G ) = get_tBC_from_vG_vars(alpha, n, L)
-     
-    #---------------------------------   
+    (psi_B, c, lam, eta, G) = get_tBC_from_vG_vars(alpha, n, L)
+
+    # ---------------------------------
     # Basic soil hydraulic variables
-    #---------------------------------
-    Ks_file   = output_dir + '_2D-Ks.bin'
-    qs_file   = output_dir + '_2D-qs.bin'
-    pB_file   = output_dir + '_2D-pB.bin'
-    #-------------------------------------------
+    # ---------------------------------
+    Ks_file = output_dir + "_2D-Ks.bin"
+    qs_file = output_dir + "_2D-qs.bin"
+    pB_file = output_dir + "_2D-pB.bin"
+    # -------------------------------------------
     # The transitional Brooks-Corey parameters
-    #-------------------------------------------
-    c_file    = output_dir + '_2D-c.bin'    
-    lam_file  = output_dir + '_2D-lam.bin'
-    G_file    = output_dir + '_2D-G.bin'
+    # -------------------------------------------
+    c_file = output_dir + "_2D-c.bin"
+    lam_file = output_dir + "_2D-lam.bin"
+    G_file = output_dir + "_2D-G.bin"
     ## eta_file  = output_dir + '_2D-eta.bin'
-    # c_file    = output_dir + '_2D-tBC-c.bin'    
+    # c_file    = output_dir + '_2D-tBC-c.bin'
     # lam_file  = output_dir + '_2D-tBC-lam.bin'
     # G_file    = output_dir + '_2D-tBC-G.bin'
     ## eta_file  = output_dir + '_2D-tBC-eta.bin'
-    #-------------------------------
+    # -------------------------------
     # The van Genuchten parameters
-    #-------------------------------
-    a_file    = output_dir + '_2D-vG-alpha.bin'
-    n_file    = output_dir + '_2D-vG-n.bin'
-    L_file    = output_dir + '_2D-vG-L.bin'
+    # -------------------------------
+    a_file = output_dir + "_2D-vG-alpha.bin"
+    n_file = output_dir + "_2D-vG-n.bin"
+    L_file = output_dir + "_2D-vG-L.bin"
 
-    #-------------------------------    
+    # -------------------------------
     # Write all variables to files
-    #-------------------------------
-    Ks_unit = open(Ks_file, 'wb')
-    K_s = np.float32( K_s )  
-    K_s.tofile( Ks_unit )
+    # -------------------------------
+    Ks_unit = open(Ks_file, "wb")
+    K_s = np.float32(K_s)
+    K_s.tofile(Ks_unit)
     Ks_unit.close()
-    #----------------------------------
-    qs_unit = open(qs_file, 'wb')
-    theta_s = np.float32( theta_s )
-    theta_s.tofile( qs_unit )
+    # ----------------------------------
+    qs_unit = open(qs_file, "wb")
+    theta_s = np.float32(theta_s)
+    theta_s.tofile(qs_unit)
     qs_unit.close()
-    #----------------------------------
-    pB_unit = open(pB_file, 'wb')
-    psi_B   = np.float32( psi_B )
-    psi_B.tofile( pB_unit)
+    # ----------------------------------
+    pB_unit = open(pB_file, "wb")
+    psi_B = np.float32(psi_B)
+    psi_B.tofile(pB_unit)
     pB_unit.close()
-    #----------------------------------
-    c_unit = open(c_file, 'wb')
-    c = np.float32( c )
-    c.tofile( c_unit )
+    # ----------------------------------
+    c_unit = open(c_file, "wb")
+    c = np.float32(c)
+    c.tofile(c_unit)
     c_unit.close()
-    #----------------------------------
-    lam_unit = open(lam_file, 'wb')
-    lam = np.float32( lam )
-    lam.tofile( lam_unit)
+    # ----------------------------------
+    lam_unit = open(lam_file, "wb")
+    lam = np.float32(lam)
+    lam.tofile(lam_unit)
     lam_unit.close()
-    #----------------------------------
-    G_unit = open(G_file, 'wb')
-    G = np.float32( G )
-    G.tofile( G_unit )
+    # ----------------------------------
+    G_unit = open(G_file, "wb")
+    G = np.float32(G)
+    G.tofile(G_unit)
     G_unit.close()
-    #----------------------------------
+    # ----------------------------------
     # eta_unit = open(eta_file, 'wb')
     # eta = np.float32( eta )
     # eta.tofile( eta_unit )
     # eta_unit.close()
-    #----------------------------------
-    a_unit = open(a_file, 'wb')
-    alpha = np.float32( alpha )
-    alpha.tofile( a_unit )
+    # ----------------------------------
+    a_unit = open(a_file, "wb")
+    alpha = np.float32(alpha)
+    alpha.tofile(a_unit)
     a_unit.close()
-    #----------------------------------
-    n_unit = open(n_file, 'wb')
-    n = np.float32( n )
-    n.tofile( n_unit)
+    # ----------------------------------
+    n_unit = open(n_file, "wb")
+    n = np.float32(n)
+    n.tofile(n_unit)
     n_unit.close()
-    #----------------------------------
-    L_unit = open(L_file, 'wb')
-    L = np.float32( L )
-    L.tofile( L_unit )
+    # ----------------------------------
+    L_unit = open(L_file, "wb")
+    L = np.float32(L)
+    L.tofile(L_unit)
     L_unit.close()
 
-    for fpath in [Ks_file, qs_file, pB_file, c_file, lam_file, G_file, a_file, n_file, L_file]:
-        generate_rti_file(fpath, fpath.replace(".bin", ".rti"), DEM_ncols,
-                          DEM_nrows, DEM_info["xres"], DEM_info['yres'], pixel_geom=0)
+    for fpath in [
+        Ks_file,
+        qs_file,
+        pB_file,
+        c_file,
+        lam_file,
+        G_file,
+        a_file,
+        n_file,
+        L_file,
+    ]:
+        generate_rti_file(
+            fpath,
+            fpath.replace(".bin", ".rti"),
+            DEM_ncols,
+            DEM_nrows,
+            DEM_info["xres"],
+            DEM_info["yres"],
+            pixel_geom=0,
+        )
+
 
 # -------------------------------------------------------------------
-def read_soil_grid_files(input_dir, DEM_info: dict,
-                         res_str='1km', layer=1):
+def read_soil_grid_files(input_dir, DEM_info: dict, res_str="1km", layer=1):
 
     layer_str = str(layer)
     match_files = []
     for fpath in Path(input_dir).iterdir():
-        if fpath.name.find(f"_M_sl{layer_str}_{res_str}") != -1 and (fpath.name.endswith(".tiff") or fpath.name.endswith(".TIF")):
+        if fpath.name.find(f"_M_sl{layer_str}_{res_str}") != -1 and (
+            fpath.name.endswith(".tiff") or fpath.name.endswith(".TIF")
+        ):
             match_files.append(fpath)
 
     C_file = [str(x) for x in match_files if x.name.find("CLYPPT_") != -1][0]
@@ -167,63 +203,71 @@ def read_soil_grid_files(input_dir, DEM_info: dict,
     OM_file = [str(x) for x in match_files if x.name.find("ORCDRC_") != -1][0]
     D_file = [str(x) for x in match_files if x.name.find("BLDFIE_") != -1][0]
 
-    #-------------------------------------------------------------
+    # -------------------------------------------------------------
     # Read soil property data from a set TIF files, clip and resample
     # to a DEM grid to be used by TopoFlow.
     # These basic soil properties are needed to compute several
     # soil hydraulic properties using the pedotransfer functions
     # (PTFs) in Wosten (1998).
-    #-------------------------------------------------------------
+    # -------------------------------------------------------------
     # Read percent clay
     # Read percent silt
     # Read percent organic matter
     # Read bulk density
-    #-------------------------------------------------------------
+    # -------------------------------------------------------------
     # Values are available for 7 different depths:
     #   0.0, 0.05, 0.15, 0.30, 0.60, 1.00, 2.00
     #   sl1, sl2,  sl3,  sl4,  sl5,  sl6,  sl7
-    #--------------------------------------------------- 
+    # ---------------------------------------------------
 
     out_nodata = -9999.0
 
     results = []
     for file in [C_file, S_file, OM_file, D_file]:
         f = gdal.Open(file)
-        results.append(gdal_regrid_to_dem_grid(f, '/tmp/TEMP.tif',
-                                               out_nodata, DEM_info['bounds'], DEM_info['xres'], DEM_info['yres'],
-                                               RESAMPLE_ALGO='bilinear'))
+        results.append(
+            gdal_regrid_to_dem_grid(
+                f,
+                "/tmp/TEMP.tif",
+                out_nodata,
+                DEM_info["bounds"],
+                DEM_info["xres"],
+                DEM_info["yres"],
+                RESAMPLE_ALGO="bilinear",
+            )
+        )
         f = None
 
     (C, S, OM, D) = results
 
-    #------------------------------------------------
+    # ------------------------------------------------
     # Wosten C = clay mass fraction, [kg/kg], as %.
     # Same units in ISRIC and Wosten.
-    #------------------------------------------------
+    # ------------------------------------------------
     # Wosten S = silt mass fraction, [kg/kg], as %.
     # Same units in ISRIC and Wosten.
-    #----------------------------------------------------------
+    # ----------------------------------------------------------
     # Wosten OM = organic matter mass fraction, [kg/kg], as %
-    # ISRIC units = [g / kg]  
+    # ISRIC units = [g / kg]
     # Convert ISIRC [g / kg] to Wosten [%].
-    #--------------------------------------------------
+    # --------------------------------------------------
     # First convert [g/kg] to [kg/kg] (mass fraction),
     # Then multiply by 100 to convert [kg/kg] to %.
     # Note:  mass fraction [kg/kg] is in [0,1].
-    #--------------------------------------------------
+    # --------------------------------------------------
     # OM [g/kg] * (1 kg / 1000 g) = (OM/1000) [kg/kg]
     # (OM/1000) [kg/kg] * 100 = (OM/10) %.
-    #--------------------------------------------------
-    OM = (OM / 10.0)
-    #--------------------------------------
+    # --------------------------------------------------
+    OM = OM / 10.0
+    # --------------------------------------
     # Wosten D = bulk density, [g / cm^3]
-    #-------------------------------------------------
+    # -------------------------------------------------
     # Convert ISRIC [kg / m^3] to Wosten [g / cm^3]
-    #-------------------------------------------------
+    # -------------------------------------------------
     # D [kg / m^3] * (1000 g / 1 kg) * (1 m / 100 cm)^3
     # D [kg / m^3] * (1 / 1000) = D [g / cm^3]
-    #----------------------------------------------------
-    D = (D / 1000.0)
+    # ----------------------------------------------------
+    D = D / 1000.0
 
     # -------------------------------------------------
     # Replace zero values with another nodata value.
@@ -243,76 +287,77 @@ def read_soil_grid_files(input_dir, DEM_info: dict,
     # Density of pure gold      = 19.20 [g / cm^3]
     # -------------------------------------------------
     nodata = get_nodata_values()
-    C[C <= 0] = nodata['C']  # [%]
-    S[S <= 0] = nodata['S']  # [%]
-    OM[OM <= 0] = nodata['OM']  # [%]
-    D[D <= 0] = nodata['D']  # [g / cm^3]
+    C[C <= 0] = nodata["C"]  # [%]
+    S[S <= 0] = nodata["S"]  # [%]
+    OM[OM <= 0] = nodata["OM"]  # [%]
+    D[D <= 0] = nodata["D"]  # [g / cm^3]
 
-    #--------------------------------------
+    # --------------------------------------
     # Check if grid values are reasonable
-    #--------------------------------------
-    w1 = np.logical_or( C < 0, C > 100.0 )
+    # --------------------------------------
+    w1 = np.logical_or(C < 0, C > 100.0)
     n1 = w1.sum()
-    if (n1 > 0):
+    if n1 > 0:
         cmin = C.min()
         cmax = C.max()
-        print('WARNING in read_soil_grid_files:')
-        print('   Some values in C grid are out of range.')
-        print('   min(C) = ' + str(cmin) )
-        print('   max(C) = ' + str(cmax) )
+        print("WARNING in read_soil_grid_files:")
+        print("   Some values in C grid are out of range.")
+        print("   min(C) = " + str(cmin))
+        print("   max(C) = " + str(cmax))
         print()
-    #--------------------------------------------------------
-    w2 = np.logical_or( S < 0, S > 100.0 )
+    # --------------------------------------------------------
+    w2 = np.logical_or(S < 0, S > 100.0)
     n2 = w2.sum()
-    if (n2 > 0):
+    if n2 > 0:
         Smin = S.min()
         Smax = S.max()
-        print('WARNING in read_soil_grid_files:')
-        print('   Some values in S grid are out of range.')
-        print('   min(S) = ' + str(Smin) )
-        print('   max(S) = ' + str(Smax) )
+        print("WARNING in read_soil_grid_files:")
+        print("   Some values in S grid are out of range.")
+        print("   min(S) = " + str(Smin))
+        print("   max(S) = " + str(Smax))
         print()
-    #--------------------------------------------------------
-    w3 = np.logical_or( OM < 0, OM > 100.0 )
+    # --------------------------------------------------------
+    w3 = np.logical_or(OM < 0, OM > 100.0)
     n3 = w3.sum()
-    if (n3 > 0):
+    if n3 > 0:
         OMmin = OM.min()
         OMmax = OM.max()
-        print('WARNING in read_soil_grid_files:')
-        print('   Some values in OM grid are out of range.')
-        if (OMmin < 0):
-            print('   min(OM) = ' + str(OMmin) )
-            print('   Possible nodata value.')
-        if (OMmax > 100):
-            print('   max(OM) = ' + str(OMmax) )
+        print("WARNING in read_soil_grid_files:")
+        print("   Some values in OM grid are out of range.")
+        if OMmin < 0:
+            print("   min(OM) = " + str(OMmin))
+            print("   Possible nodata value.")
+        if OMmax > 100:
+            print("   max(OM) = " + str(OMmax))
             ## print('   Possible nodata value.')
         print()
-    #-------------------------------------------------------- 
-    w4 = np.logical_or( D < 0, D > 2.65 )
+    # --------------------------------------------------------
+    w4 = np.logical_or(D < 0, D > 2.65)
     n4 = w4.sum()
-    if (n4 > 0):
+    if n4 > 0:
         Dmin = D.min()
         Dmax = D.max()
-        print('WARNING in read_soil_grid_files:')
-        print('   Some values in D grid are out of range.')
-        if (Dmin < 0):
-            print('   min(D) = ' + str(Dmin) )
-            print('   Possible nodata value.')
-        if (Dmax > 2.65):
-            print('   max(D) = ' + str(Dmax) )
+        print("WARNING in read_soil_grid_files:")
+        print("   Some values in D grid are out of range.")
+        if Dmin < 0:
+            print("   min(D) = " + str(Dmin))
+            print("   Possible nodata value.")
+        if Dmax > 2.65:
+            print("   max(D) = " + str(Dmax))
             ## print('   Possible nodata value.')
         print()
 
-    #---------------------------------------
+    # ---------------------------------------
     # C[ C <= 0 ]   = 0.001  # [%]
     # S[ S <= 0 ]   = 0.001  # [%]
     # OM[ OM <= 0 ] = 0.001  # [%]
     # D[ D <= 0]    = 0.001  # [g / cm^3]
-      
-    #------------------------------------
+
+    # ------------------------------------
     # Return Wosten input vars as tuple
-    #------------------------------------   
+    # ------------------------------------
     return (C, S, OM, D)
+
 
 # -------------------------------------------------------------------
 def wosten_theta_s(C, S, OM, D, topsoil, FORCE_RANGE=True):
@@ -330,17 +375,17 @@ def wosten_theta_s(C, S, OM, D, topsoil, FORCE_RANGE=True):
     p4 = (-0.0000733 * OM * C) - (0.000619 * D * C)
     p5 = (-0.001183 * D * OM) - (0.0001664 * topsoil * S)
 
-    theta_s = (p1 + p2 + p3 + p4 + p5)
+    theta_s = p1 + p2 + p3 + p4 + p5
 
     # --------------------------
     # Propagate nodata values
     # --------------------------
     nd_values = get_nodata_values()
-    C_nodata = nd_values['C']
-    S_nodata = nd_values['S']
-    OM_nodata = nd_values['OM']
-    D_nodata = nd_values['D']
-    theta_nodata = nd_values['theta']
+    C_nodata = nd_values["C"]
+    S_nodata = nd_values["S"]
+    OM_nodata = nd_values["OM"]
+    D_nodata = nd_values["D"]
+    theta_nodata = nd_values["theta"]
     w1 = np.logical_or(OM == OM_nodata, D == D_nodata)
     w2 = np.logical_or(C == C_nodata, S == S_nodata)
     theta_s[w1] = theta_nodata
@@ -351,27 +396,27 @@ def wosten_theta_s(C, S, OM, D, topsoil, FORCE_RANGE=True):
     # --------------------------------------
     w1 = np.logical_or(theta_s < 0.0, theta_s > 1.0)
     n1 = w1.sum()
-    if (n1 > 0):
+    if n1 > 0:
         qmin = theta_s.min()
         qmax = theta_s.max()
-        print('WARNING in wosten_theta_s:')
-        print('   Some values are not in [0, 1].')
-        if (qmin < 0.0):
-            print('   min(theta_s) = ' + str(qmin))
-            print('   Possible nodata value.')
-        if (qmax > 1.0):
-            print('   max(theta_s) = ' + str(qmax))
+        print("WARNING in wosten_theta_s:")
+        print("   Some values are not in [0, 1].")
+        if qmin < 0.0:
+            print("   min(theta_s) = " + str(qmin))
+            print("   Possible nodata value.")
+        if qmax > 1.0:
+            print("   max(theta_s) = " + str(qmax))
 
         # -------------------------------
         # Option to replace bad values
         # -------------------------------
-        if (FORCE_RANGE):
-            print('   Forcing bad values into range.')
-            wneg = (theta_s < 0.0)
-            wpos = (theta_s > 0.0)
+        if FORCE_RANGE:
+            print("   Forcing bad values into range.")
+            wneg = theta_s < 0.0
+            wpos = theta_s > 0.0
             theta_s[wneg] = theta_s[wpos].min()
-            w1 = (theta_s > 1.0)
-            w2 = (theta_s < 1.0)
+            w1 = theta_s > 1.0
+            w2 = theta_s < 1.0
             theta_s[w1] = theta_s[w2].max()
         print()
 
@@ -418,15 +463,15 @@ def wosten_K_s(C, S, OM, D, topsoil):
     Ks_max = 864000.0
     w1 = np.logical_or(Ks < 0.0, Ks > Ks_max)
     n1 = w1.sum()
-    if (n1 > 0):
+    if n1 > 0:
         Ksmin = Ks.min()
         Ksmax = Ks.max()
-        print('ERROR in wosten_K_s:')
-        print('   Some values are out of range.')
-        if (Ksmin < 0.0):
-            print('   min(K_s) = ' + str(Ksmin))
-        if (Ksmax > Ks_max):
-            print('   max(K_s) = ' + str(Ksmax))
+        print("ERROR in wosten_K_s:")
+        print("   Some values are out of range.")
+        if Ksmin < 0.0:
+            print("   min(K_s) = " + str(Ksmin))
+        if Ksmax > Ks_max:
+            print("   max(K_s) = " + str(Ksmax))
         print()
 
     # --------------------------------------------
@@ -497,30 +542,30 @@ def wosten_alpha(C, S, OM, D, topsoil, FORCE_RANGE=True):
     alpha_max = -0.004
     w1 = np.logical_or(alpha < alpha_min, alpha > alpha_max)
     n1 = w1.sum()
-    if (n1 > 0):
+    if n1 > 0:
         amin = alpha.min()
         amax1 = alpha.max()
         amax2 = alpha[alpha != 0].max()
-        print('WARNING in wosten_alpha:')
-        print('   Some values are out of typical range.')
-        print('   Typical range: -0.15 to -0.004 [1/cm]')
-        if (amin < alpha_min):
-            print('   min(alpha) = ' + str(amin))
-        if (amax2 > alpha_max):
-            print('   max(alpha) = ' + str(amax2) + ' (excl. zero)')
-        if (amax1 == 0):
-            print('   max(alpha) = ' + str(amax1) + ' (incl. zero)')
+        print("WARNING in wosten_alpha:")
+        print("   Some values are out of typical range.")
+        print("   Typical range: -0.15 to -0.004 [1/cm]")
+        if amin < alpha_min:
+            print("   min(alpha) = " + str(amin))
+        if amax2 > alpha_max:
+            print("   max(alpha) = " + str(amax2) + " (excl. zero)")
+        if amax1 == 0:
+            print("   max(alpha) = " + str(amax1) + " (incl. zero)")
 
         # -------------------------------
         # Option to replace bad values
         # -------------------------------
-        if (FORCE_RANGE):
-            print('   Forcing bad values into range.')
-            wneg = (alpha < 0)
-            wbig = (alpha >= 0)
+        if FORCE_RANGE:
+            print("   Forcing bad values into range.")
+            wneg = alpha < 0
+            wbig = alpha >= 0
             alpha[wbig] = alpha[wneg].max()
             # ------------------------------------
-            wbad = (alpha < -0.5)  #######################
+            wbad = alpha < -0.5  #######################
             w2 = np.invert(wbad)
             alpha[wbad] = alpha[w2].max()
         print()
@@ -575,7 +620,7 @@ def wosten_n(C, S, OM, D, topsoil, FORCE_RANGE=True):
     p4 = (-0.0709 * np.log(OM)) - (44.6 * np.log(D))
     p5 = (-0.02264 * D * C) + (0.0896 * D * OM) + (0.00718 * topsoil * C)
 
-    n = (np.exp(p1 + p2 + p3 + p4 + p5) + 1)
+    n = np.exp(p1 + p2 + p3 + p4 + p5) + 1
 
     # --------------------------------------
     # Check if grid values are reasonable
@@ -586,24 +631,24 @@ def wosten_n(C, S, OM, D, topsoil, FORCE_RANGE=True):
     if n1 > 0:
         nmin = n.min()
         nmax = n.max()
-        print('ERROR in wosten_n:')
-        print('   Some values are out of range.')
-        print('   Typical range: 1.0 to 3.0 [unitless].')
-        if (nmin < 1.0):
-            print('   min(n) = ' + str(nmin))
-        if (nmax > 3.0):
-            print('   max(n) = ' + str(nmax))
+        print("ERROR in wosten_n:")
+        print("   Some values are out of range.")
+        print("   Typical range: 1.0 to 3.0 [unitless].")
+        if nmin < 1.0:
+            print("   min(n) = " + str(nmin))
+        if nmax > 3.0:
+            print("   max(n) = " + str(nmax))
         # -------------------------------
         # Option to replace bad values
         # -------------------------------
-        if (FORCE_RANGE):
-            print('   Forcing bad values into range.')
-            w1 = (n <= 1.0)
+        if FORCE_RANGE:
+            print("   Forcing bad values into range.")
+            w1 = n <= 1.0
             n[w1] = 1.001
             ## w2 = np.invert( w1 )
             ## n[ w1 ] = n[ w2 ].min()
             # ------------------------------------
-            w3 = (n > 3.0)  ########### MAYBE 2.0 ??
+            w3 = n > 3.0  ########### MAYBE 2.0 ??
             n[w3] = 1.3  ###########
             ## w4 = np.invert( w3 )
             ## n[ w3 ] = n[ w4 ].max()
@@ -628,7 +673,7 @@ def wosten_L(C, S, OM, D, topsoil):
     p2 = -0.2316 * np.log(OM) - (0.03544 * D * C)
     p3 = (0.00283 * D * S) + (0.0488 * D * OM)
 
-    s1 = (p1 + p2 + p3)
+    s1 = p1 + p2 + p3
     L = 10 * (np.exp(s1) - 1) / (np.exp(s1) + 1)
 
     # --------------------------------------
@@ -638,16 +683,16 @@ def wosten_L(C, S, OM, D, topsoil):
     # -----------------------------------------------------
     w1 = np.logical_or(L < -10, L > 10)
     n1 = w1.sum()
-    if (n1 > 0):
+    if n1 > 0:
         Lmin = L.min()
         Lmax = L.max()
-        print('ERROR in wosten_L:')
-        print('   Some values are out of range.')
-        print('   Typical range: -10 to 10 [unitless].')
-        if (L < -10.0):
-            print('   min(L) = ' + str(Lmin))
-        if (L > 10.0):
-            print('   max(L) = ' + str(Lmax))
+        print("ERROR in wosten_L:")
+        print("   Some values are out of range.")
+        print("   Typical range: -10 to 10 [unitless].")
+        if L < -10.0:
+            print("   min(L) = " + str(Lmin))
+        if L > 10.0:
+            print("   max(L) = " + str(Lmax))
         print()
 
     return L
@@ -666,6 +711,8 @@ def get_wosten_vars(C, S, OM, D, topsoil):
     L = wosten_L(C, S, OM, D, topsoil)
 
     return (theta_s, K_s, alpha, n, L)
+
+
 #   wosten_L()
 # -------------------------------------------------------------------
 def capillary_length_G(c, eta, n, inv_alpha, TBC=True):
@@ -682,7 +729,7 @@ def capillary_length_G(c, eta, n, inv_alpha, TBC=True):
     # According to Table 8.1 (p. 136) in R.E. Smith (2002) book,
     # G ranges from about 82 mm for sand to 2230 mm for clay.
     # -------------------------------------------------------------
-    if (TBC):
+    if TBC:
         psi_B = inv_alpha
         G = -psi_B * gamma(1 + 1 / c) * gamma((eta - 1) / c) / gamma(eta / c)
 
@@ -725,7 +772,7 @@ def capillary_length_G(c, eta, n, inv_alpha, TBC=True):
         ## w2 = (m == 0)
         ## G[w2] = 0.0   # (already the case)
         # --------------------------------------------
-        w3 = (m == 1)
+        w3 = m == 1
         G[w3] = -inv_alpha[w3]
 
     # --------------------------------------
@@ -748,7 +795,7 @@ def capillary_length_G(c, eta, n, inv_alpha, TBC=True):
     w1 = np.logical_or(G < G_min, G > G_max)
     ## w1 = np.logical_or( G < 0, G > -2*psi_B )  ### (psi_B is grid)
     n1 = w1.sum()
-    if (n1 > 0):
+    if n1 > 0:
         Gmin = G.min()
         Gmax = G.max()
         # Gmin = np.nanmin(G)
@@ -756,13 +803,13 @@ def capillary_length_G(c, eta, n, inv_alpha, TBC=True):
         ## Gmin = np.nanmin(G[ np.isfinite(G) ])
         ## Gmax = np.nanmax(G[ np.isfinite(G) ])
 
-        print('WARNING in get_tBC_from_vG_vars:')
-        print('   Some values in G grid are out of range.')
-        print('   Typical range: 0.08 to 2.3 [m].')
-        if (Gmin < G_min):
-            print('   min(G) = ' + str(Gmin) + ' [m]')
-        if (Gmax > G_max):
-            print('   max(G) = ' + str(Gmax) + ' [m]')
+        print("WARNING in get_tBC_from_vG_vars:")
+        print("   Some values in G grid are out of range.")
+        print("   Typical range: 0.08 to 2.3 [m].")
+        if Gmin < G_min:
+            print("   min(G) = " + str(Gmin) + " [m]")
+        if Gmax > G_max:
+            print("   max(G) = " + str(Gmax) + " [m]")
         print()
 
     return G
@@ -826,15 +873,15 @@ def get_tBC_from_vG_vars(alpha, n, L):
     # (n > 1) => (lambda > 0)
     # (n > 1) => (eta > 2)
     # ---------------------------------------------------------
-    w1 = (alpha != 0)
+    w1 = alpha != 0
     w2 = np.invert(w1)
     inv_alpha = np.zeros(alpha.shape, alpha.dtype)
-    inv_alpha[w1] = (1.0 / alpha[w1])  # (Do this only once here.)
+    inv_alpha[w1] = 1.0 / alpha[w1]  # (Do this only once here.)
     inv_alpha[w2] = -9999.0
     # --------------------------
     psi_B = inv_alpha
     c = n
-    lam = (n - 1)
+    lam = n - 1
     eta = 3 * n - 1
 
     TBC = False
@@ -842,6 +889,7 @@ def get_tBC_from_vG_vars(alpha, n, L):
     G = capillary_length_G(c, eta, n, inv_alpha, TBC=TBC)
 
     return (psi_B, c, lam, eta, G)
+
 
 def get_nodata_values():
     # -------------------------------------------------
@@ -862,13 +910,14 @@ def get_nodata_values():
     # Density of pure gold      = 19.20 [g / cm^3]
     # -------------------------------------------------
     nd_values = {
-        'C': 101.0,  # [%]
-        'S': 101.0,  # [%]
-        'X': 101.0,  # [%]
-        'OM': 101.0,  # [%]
-        'D': 10.0,  # [g / cm^3]
+        "C": 101.0,  # [%]
+        "S": 101.0,  # [%]
+        "X": 101.0,  # [%]
+        "OM": 101.0,  # [%]
+        "D": 10.0,  # [g / cm^3]
         # ------------------------------
-        'theta': -9999.0}  # unitless, in [0,1]
+        "theta": -9999.0,
+    }  # unitless, in [0,1]
 
     #     nd_values = {
     #     'C'  : -9999.0,  # [%]

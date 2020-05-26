@@ -32,7 +32,7 @@ adapters:
       resources: ./resources/cycles_soil.csv
   my_pihm_cycles_func:
     comment: My pihm to cycles func
-    adapter: pihm2cycles_func.Pihm2CyclesFunc
+    adapter: funcs.Pihm2CyclesFunc
     inputs:
       pihm_data_graph: $.my_merge_func.data
       pihm_soil_graph: $.my_read_func_3.data
@@ -42,7 +42,7 @@ adapters:
       gw_depth: 30
   my_cycles_write_func:
     comment: My cycles write func
-    adapter: cycle_write_func.CyclesWriteFunc
+    adapter: funcs.CyclesWriteFunc
     inputs:
       reinit_graph: $.my_pihm_cycles_func.reinit_graph
       soil_graph: $.my_pihm_cycles_func.cycle_soil_graph
