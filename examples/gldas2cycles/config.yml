@@ -1,0 +1,14 @@
+version: "1"
+adapters:
+  gldas2cycles_func:
+    comment: GLDAS2Cycles adapter
+    adapter: funcs.Gldas2CyclesFunc
+    inputs:
+      start_date: "2000-01-01"
+      end_date: "2000-01-01"
+      gldas_path: "/tmp/input/gldas/"
+      output_path: "/tmp/output/"
+      output_prefix: "prefix"
+      latitude: -1 # use coord_file when lat = -1 or long = -1
+      longitude: -1 # use coord_file when lat = -1 or long = -1
+      coord_file: "/tmp/input/oromia.csv"
