@@ -12,7 +12,7 @@ from dtran.ifunc import IFuncType
 from dtran.metadata import Metadata
 
 
-class Gldas2Cycles(IFunc):
+class Gldas2CyclesFunc(IFunc):
     id = "topoflow4_climate_write_func"
     description = """ A reader-transformation-writer multi-adapter.
     Creates an RTS (and RTI) file from NetCDF (climate) files.
@@ -22,8 +22,8 @@ class Gldas2Cycles(IFunc):
         "end_date": ArgType.String,
         "gldas_path": ArgType.FilePath,
         "output_prefix": ArgType.String,
-        "latitude": ArgType.String,
-        "longitude": ArgType.String,
+        "latitude": ArgType.Number,
+        "longitude": ArgType.Number,
         "coord_file": ArgType.FilePath,
     }
     outputs = {"output_files": ArgType.FilePath}
@@ -208,7 +208,7 @@ def gldas2cycles(
     end_date = datetime.strptime(end_date, "%Y-%m-%d")
     data_path = gldas_path
 
-    if latitude and longitude:
+    if latitude == -1 or longitude == -1:
         coords = [(latitude, longitude, output_prefix)]
     elif coord_file:
         coords = []
