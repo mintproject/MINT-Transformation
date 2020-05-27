@@ -16,4 +16,5 @@ from .dcat_write_func import DcatWriteFunc
 from .topoflow.nc2geotiff import NC2GeoTiff
 from .topoflow.write_topoflow4_climate_func import Topoflow4ClimateWriteFunc, Topoflow4ClimateWritePerMonthFunc
 from .topoflow.write_topoflow4_soil_func import Topoflow4SoilWriteFunc
+from .cycles.gldas2cycles import Gldas2CyclesFunc
 # from .topoflow.dcat_read__tf4_climate_trans__upload import DcatReadTopoflow4ClimateUploadFunc

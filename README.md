@@ -1,8 +1,21 @@
 # MINT Data Transformations
 
-A framework to construct a transformation pipeline based on some specification from users.
+A framework to construct a transformation pipeline based on some specification from users. 
 
-## Installation
+Spatial Transformations (from GDAL): cropping, regirdding, resampling, etc.
+Model-specific Transformations: Topoflow, PIHM, Cycles, Econ, etc.
+
+Table of Contents
+=================
+
+  * [Installation](#installation)
+  * [Usage](#usage)
+    * [Command line application](#command-line-application)
+    * [Web application](#web-application)
+  * [Wiki](https://github.com/mintproject/MINT-Transformation/wiki)
+
+Installation
+============
 
 The easiest way to install and use the software is using docker:
 
@@ -32,11 +45,13 @@ mkdir /tmp
 chmod 1777 /tmp
 ```
 
-## Usage
+Usage
+=====
 
 You can use the software through the command line application or through the web application.
 
-### Command line application
+Command line application
+------------------------
 
 **With conda environment**
 
@@ -61,7 +76,8 @@ Arguments:
 docker run --rm -v $(pwd):/ws -v /tmp:/tmp mint_dt [config_path]
 ```
 
-### Web application
+Web application
+---------------
 
 **With conda environment**
 1. Start the server by running the following command from the root folder:
