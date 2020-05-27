@@ -214,7 +214,6 @@ def gldas2cycles(
     end_date = datetime.strptime(end_date, "%Y-%m-%d")
     data_path = gldas_path
 
-
     if latitude != -1 and longitude != -1:
         coords = [(latitude, longitude, f"{output_prefix}.weather")]
     elif coord_file:
