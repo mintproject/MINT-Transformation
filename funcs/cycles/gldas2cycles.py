@@ -12,7 +12,7 @@ from dtran.ifunc import IFuncType
 from dtran.metadata import Metadata
 
 
-class Gldas2Cycles(IFunc):
+class Gldas2CyclesFunc(IFunc):
     id = "topoflow4_climate_write_func"
     description = """ A reader-transformation-writer multi-adapter.
     Creates an RTS (and RTI) file from NetCDF (climate) files.
@@ -21,10 +21,11 @@ class Gldas2Cycles(IFunc):
         "start_date": ArgType.String,
         "end_date": ArgType.String,
         "gldas_path": ArgType.FilePath,
+        "output_path": ArgType.FilePath,
         "output_prefix": ArgType.String,
-        "latitude": ArgType.String,
-        "longitude": ArgType.String,
-        "coord_file": ArgType.FilePath,
+        "latitude": ArgType.Number(optional=True),
+        "longitude": ArgType.Number(optional=True),
+        "coord_file": ArgType.FilePath(optional=True),
     }
     outputs = {"output_files": ArgType.FilePath}
     friendly_name: str = "Gldas2Cycles"
@@ -32,11 +33,12 @@ class Gldas2Cycles(IFunc):
     example = {
         "start_date": "2000-01-01",
         "end_date": "2018-01-31",
-        "gldas_path": "/tmp/gldas",
+        "gldas_path": "/tmp/input/gldas",
+        "output_path": "/tmp/output",
         "output_prefix": "output_prefix",
-        "latitude": "30.3",
-        "longitude": "125.2",
-        "coord_file": "/tmp/coord.txt",
+        "latitude": 30.3,
+        "longitude": 125.2,
+        "coord_file": "/tmp/input/oromia.csv",
     }
 
     def __init__(
@@ -44,6 +46,7 @@ class Gldas2Cycles(IFunc):
         start_date,
         end_date,
         gldas_path,
+        output_path,
         output_prefix,
         latitude=None,
         longitude=None,
@@ -52,6 +55,7 @@ class Gldas2Cycles(IFunc):
         self.coord_file = coord_file
         self.longitude = longitude
         self.latitude = latitude
+        self.output_path = output_path
         self.output_prefix = output_prefix
         self.gldas_path = gldas_path
         self.end_date = end_date
@@ -65,12 +69,13 @@ class Gldas2Cycles(IFunc):
             self.start_date,
             self.end_date,
             self.gldas_path,
+            self.output_path,
             self.output_prefix,
             self.latitude,
             self.longitude,
             self.coord_file,
         )
-        return {"output_file": output_file}
+        return {"output_files": output_file}
 
     def change_metadata(
         self, metadata: Optional[Dict[str, Metadata]]
@@ -198,6 +203,7 @@ def gldas2cycles(
     start_date,
     end_date,
     gldas_path,
+    output_path,
     output_prefix,
     latitude=None,
     longitude=None,
@@ -208,15 +214,16 @@ def gldas2cycles(
     end_date = datetime.strptime(end_date, "%Y-%m-%d")
     data_path = gldas_path
 
-    if latitude and longitude:
-        coords = [(latitude, longitude, output_prefix)]
+
+    if latitude != -1 and longitude != -1:
+        coords = [(latitude, longitude, f"{output_prefix}.weather")]
     elif coord_file:
         coords = []
         with open(coord_file) as fp:
             for cnt, line in enumerate(fp):
                 li = line.strip()
                 if not (li.startswith("#") or li.startswith("L")):
-                    nums = line.split()
+                    nums = line.split(",")
                     lat = float(nums[0])
                     lon = float(nums[1])
                     coords.append((lat, lon, "%s-%d.weather" % (output_prefix, cnt)))
@@ -247,7 +254,7 @@ def gldas2cycles(
             memoize[(lat_str, lon_str)] = fname
 
         # fname = "met" + lat_str + "x" + lon_str + ".weather"
-        outfp = open(fname, "w")
+        outfp = open(os.path.join(output_path, fname), "w")
         outfp.write("LATITUDE %.2f\n" % (grid_lat))
         outfp.write("ALTITUDE %.2f\n" % (elevation))
         outfp.write("SCREENING_HEIGHT 2\n")
