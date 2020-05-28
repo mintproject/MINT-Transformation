@@ -24,25 +24,31 @@ class GroupByProp:
     prop: str
     value: str
 
-    def timestamp2key(self, value):
-        if self.value == "exact":
-            return int(value * 1000)
+    def to_key(self, value):
+        if self.prop == "mint:timestamp":
+            if self.value == "exact":
+                return int(value * 1000)
+            else:
+                dt = datetime.fromtimestamp(value, tz=timezone.utc)
+                if self.value == "minute":
+                    dt = dt.replace(second=0, microsecond=0)
+                elif self.value == "hour":
+                    dt = dt.replace(minute=0, second=0, microsecond=0)
+                elif self.value == "day":
+                    dt = dt.replace(hour=0, minute=0, second=0, microsecond=0)
+                elif self.value == "month":
+                    dt = dt.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                elif self.value == "year":
+                    dt = dt.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+                return int(dt.timestamp() * 1000)
         else:
-            dt = datetime.fromtimestamp(value, tz=timezone.utc)
-            if self.value == "minute":
-                dt = dt.replace(minute=0, second=0, microsecond=0)
-            elif self.value == "hour":
-                dt = dt.replace(hour=0, minute=0, second=0, microsecond=0)
-            elif self.value == "date":
-                dt = dt.replace(day=0, hour=0, minute=0, second=0, microsecond=0)
-            elif self.value == "month":
-                dt = dt.replace(month=0, day=0, hour=0, minute=0, second=0, microsecond=0)
-            elif self.value == "year":
-                dt = dt.replace(year=0, month=0, day=0, hour=0, minute=0, second=0, microsecond=0)
-            return int(dt.timestamp() * 1000)
+            return value
 
-    def key2timestamp(self, key):
-        return float(key / 1000)
+    def from_key(self, key):
+        if self.prop == "mint:timestamp":
+            return float(key / 1000)
+        else:
+            return key
 
 
 @dataclass
@@ -79,15 +85,16 @@ class VariableAggregationFunc(IFunc):
         self.function = AggregationFunc(function)
 
     def exec(self) -> dict:
-        output = {}
-        values = []
+        groups = {}
 
         if isinstance(self.dataset, ShardedBackend):
             # check if the data is partition
             for dataset in reversed(self.dataset.datasets):
-                values += VariableAggregationFunc._aggregate(dataset, self.group_by, self.function)
+                VariableAggregationFunc._group_by(dataset, self.group_by, groups)
         else:
-            values = VariableAggregationFunc._aggregate(self.dataset, self.group_by, self.function)
+            VariableAggregationFunc._group_by(self.dataset, self.group_by, groups)
+
+        values = VariableAggregationFunc._aggregate(groups, self.function)
 
         if len(values) > 1:
             ds = ShardedBackend(len(values))
@@ -127,25 +134,24 @@ class VariableAggregationFunc(IFunc):
         return True
 
     @staticmethod
-    def _aggregate(sm, group_by: GroupBy, func: AggregationFunc):
-        """Aggregate the data"""
-        # TODO: fix me, this is currently implement a corner case
+    def _group_by(sm, group_by: GroupBy, groups: dict):
         rdf = sm.ns(outputs.Namespace.RDF)
         mint_geo = sm.ns("https://mint.isi.edu/geo")
         mint = sm.ns("https://mint.isi.edu/")
-        groups = {}
         for c in sm.c(mint.Variable):
             index_keys = [p.prop for p in group_by.group_props if c.p(p.prop).ndarray_size() != 1]
             first_record = next(c.iter_records())
+            key_props = [p for p in group_by.group_props if c.p(p.prop).ndarray_size() == 1]
             sub_key = tuple([
-                first_record.s(p.prop) if c.p(p.prop).ndarray_size() == 1 else None
-                for p in group_by.group_props
+                p.to_key(first_record.s(p.prop)) for p in key_props
             ])
             assert 'mint:timestamp' not in index_keys
             if sub_key not in groups:
                 groups[sub_key] = {
                     "key": sub_key,
+                    "dataset": sm,
                     "record": first_record,
+                    "key_props": key_props,
                     "carried_props": [
                         p for p, po in c.predicates.items() if po.ndarray_size() == 1
                     ],
@@ -156,6 +162,10 @@ class VariableAggregationFunc(IFunc):
                 groups[sub_key]['data'].append(
                     c.p(rdf.value).as_ndarray([c.p(x) for x in index_keys]))
 
+    @staticmethod
+    def _aggregate(groups: dict, func: AggregationFunc):
+        """Aggregate the data"""
+        # TODO: fix me, this is currently implement a corner case
         raw_ds = []
         for key, group in groups.items():
             # because the rest is group by exact value, we don't need to do anything
@@ -188,7 +198,7 @@ class VariableAggregationFunc(IFunc):
                 if len(group['index_props']) < len(values[0].data.shape):
                     # one extra dimension at the end
                     # calculate the total
-                    total = (total * n_obs).sum(axis=-1)
+                    total = total.sum(axis=-1)
                     # calculate the n_obs
                     n_obs = n_obs.sum(axis=-1)
 
@@ -223,9 +233,10 @@ class VariableAggregationFunc(IFunc):
                 }
             }
             tbl['rdf_value'] = result
+            key_props = {p.prop: i for i, p in enumerate(group['key_props'])}
             for p in group['carried_props']:
                 if p in {"mint:place", "mint-geo:raster"}:
-                    o = sm.get_record_by_id(group['record'].s(p))
+                    o = group['dataset'].get_record_by_id(group['record'].s(p))
                     if p == "mint-geo:raster":
                         raw_sm['mint-geo:Raster:1'] = {"properties": []}
                         raw_sm['mint:Variable:1']['links'].append(
@@ -264,7 +275,10 @@ class VariableAggregationFunc(IFunc):
                                 })
                 else:
                     aid = p.replace(":", "_")
-                    tbl[aid] = group['record'].s(p)
+                    if p in key_props:
+                        tbl[aid] = group['key_props'][key_props[p]].from_key(group['key'][key_props[p]])
+                    else:
+                        tbl[aid] = group['record'].s(p)
                     attrs[aid] = f"$.{aid}"
                     raw_sm['mint:Variable:1']['properties'].append((p, aid))
                     aligns.append({

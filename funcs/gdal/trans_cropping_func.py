@@ -2,23 +2,24 @@
 # -*- coding: utf-8 -*-
 
 import os
+import glob
 import uuid
+import fiona
+from fiona.crs import from_epsg
 from typing import Optional, Dict
 
 from dtran.argtype import ArgType
 from dtran.backend import ShardedBackend
 from dtran.ifunc import IFunc, IFuncType
-from drepr import outputs
-
 from dtran.metadata import Metadata
+from drepr import outputs
+from drepr.executors.readers.reader_container import ReaderContainer
 from funcs.gdal.raster import Raster, GeoTransform, BoundingBox, ReSample
 from funcs.gdal.raster_to_dataset import raster_to_dataset
-import fiona
-from fiona.crs import from_epsg
 
 
 class CroppingTransFunc(IFunc):
-    id = "cropping trans"
+    id = "cropping_trans"
     description = ""
 
     inputs = {
@@ -43,20 +44,10 @@ class CroppingTransFunc(IFunc):
         "ymin": "",
         "xmax": "",
         "ymax": "",
-        "region_label": "",
+        "region_label": ""
     }
 
-    def __init__(
-        self,
-        dataset,
-        variable_name: str = "",
-        shape=None,
-        xmin=0,
-        ymin=0,
-        xmax=0,
-        ymax=0,
-        region_label="",
-    ):
+    def __init__(self, dataset, variable_name: str = "", shape=None, xmin=0, ymin=0, xmax=0, ymax=0, region_label=""):
         self.variable_name = variable_name
         self.dataset = dataset
         self.shape_sm = shape
@@ -76,21 +67,30 @@ class CroppingTransFunc(IFunc):
 
     @staticmethod
     def shape_array_to_shapefile(data, fname):
-        polygon = data["polygon"]
+        polygon = data['polygon']
         if isinstance(polygon[0][0][0], (int, float)):
             shape_type = "Polygon"
         else:
             shape_type = "MultiPolygon"
 
-        epsg = from_epsg(data["epsg"])
+        epsg = from_epsg(data['epsg'])
         driver = "ESRI Shapefile"
         polygon_data = {
-            "geometry": {"type": shape_type, "coordinates": polygon},
-            "properties": {"name": "TempCroppingPolygon"},
+            "geometry": {
+                "type": shape_type,
+                "coordinates": polygon
+            },
+            "properties": {
+                "name": "TempCroppingPolygon"
+            },
         }
         schema = {"geometry": shape_type, "properties": {"name": "str"}}
         with fiona.open(
-            fname, "w", crs=epsg, driver=driver, schema=schema,
+                fname,
+                "w",
+                crs=epsg,
+                driver=driver,
+                schema=schema,
         ) as shapefile:
             shapefile.write(polygon_data)
 
@@ -109,9 +109,7 @@ class CroppingTransFunc(IFunc):
 
         classes = sm.c(mint_ns.Variable)
         if variable_name:
-            classes = classes.filter(
-                outputs.FCondition(mint_ns.standardName, "==", variable_name)
-            )
+            classes = classes.filter(outputs.FCondition(mint_ns.standardName, "==", variable_name))
 
         for c in classes:
             for raster_id, sc in c.group_by(mint_geo_ns.raster):
@@ -128,8 +126,7 @@ class CroppingTransFunc(IFunc):
                     timestamp = None
 
                 data = sc.p(rdf_ns.value).as_ndarray(
-                    [sc.p(mint_geo_ns.lat), sc.p(mint_geo_ns.long)]
-                )
+                    [sc.p(mint_geo_ns.lat), sc.p(mint_geo_ns.long)])
                 gt_info = sm.get_record_by_id(raster_id)
 
                 gt = GeoTransform(
@@ -142,15 +139,9 @@ class CroppingTransFunc(IFunc):
                     data.data,
                     gt,
                     int(gt_info.s(mint_geo_ns.epsg)),
-                    data.nodata.value if data.nodata is not None else None,
+                    data.nodata.value.item() if data.nodata is not None else None,
                 )
-                rasters.append(
-                    {
-                        "raster": raster,
-                        "timestamp": timestamp,
-                        "variable_name": var_name,
-                    }
-                )
+                rasters.append({"raster": raster, "timestamp": timestamp, "variable_name": var_name})
 
         return rasters
 
@@ -161,9 +152,7 @@ class CroppingTransFunc(IFunc):
         shapes = []
         for c in sm.c(mint_ns.Place):
             for place in c.iter_records():
-                polygon = sm.get_record_by_id(place.s(mint_geo_ns.bounding)).s(
-                    rdf_ns.value
-                )
+                polygon = sm.get_record_by_id(place.s(mint_geo_ns.bounding)).s(rdf_ns.value)
                 # epsg = int(record.s(mint_geo_ns.epsg))
                 epsg = 4326
 
@@ -172,53 +161,44 @@ class CroppingTransFunc(IFunc):
         return shapes
 
     def _crop_boundbox(self):
-        self.rasters = CroppingTransFunc.extract_raster(
-            self.dataset, self.variable_name
-        )
-        bb = BoundingBox(
-            x_min=self.xmin, y_min=self.ymin, x_max=self.xmax, y_max=self.ymax
-        )
+        self.rasters = CroppingTransFunc.extract_raster(self.dataset, self.variable_name)
+        bb = BoundingBox(x_min=self.xmin, y_min=self.ymin, x_max=self.xmax, y_max=self.ymax)
 
-        self.results = ShardedBackend(len(self.rasters))
+        results = []
         for r in self.rasters:
-            cropped_raster = r["raster"].crop(
-                bounds=bb, resampling_algo=ReSample.BILINEAR
-            )
-            self.results.add(
-                raster_to_dataset(
-                    cropped_raster,
-                    r["variable_name"],
-                    self.results.inject_class_id,
-                    timestamp=r["timestamp"],
-                    region_label=self.region_label,
-                )
-            )
+            cropped_raster = r["raster"].crop(bounds=bb, resampling_algo=ReSample.BILINEAR)
+            if cropped_raster is None:
+                continue
+            results.append(raster_to_dataset(cropped_raster, r["variable_name"], timestamp=r["timestamp"], region_label=self.region_label))
+        assert len(results) > 0, "No overlapping data for the given region"
+        self.results = ShardedBackend(len(results))
+        for result, temp_file in results:
+            self.results.add(result(self.results.inject_class_id))
+            ReaderContainer.get_instance().delete(temp_file)
 
     def _crop_shape_dataset(self):
-        self.rasters = CroppingTransFunc.extract_raster(
-            self.dataset, self.variable_name
-        )
+        self.rasters = CroppingTransFunc.extract_raster(self.dataset, self.variable_name)
         self.shapes = CroppingTransFunc.extract_shape(self.shape_sm)
 
-        self.results = ShardedBackend(len(self.rasters) * len(self.shapes))
+        results = []
         for r in self.rasters:
             for shape in self.shapes:
                 tempfile_name = f"/tmp/{uuid.uuid4()}.shp"
                 CroppingTransFunc.shape_array_to_shapefile(shape, tempfile_name)
                 cropped_raster = r["raster"].crop(
-                    vector_file=tempfile_name, resampling_algo=ReSample.BILINEAR
+                    vector_file=tempfile_name, resampling_algo=ReSample.BILINEAR, touch_cutline=True
                 )
-                os.remove(tempfile_name)
-                place = shape["place"]
-                self.results.add(
-                    raster_to_dataset(
-                        cropped_raster,
-                        r["variable_name"],
-                        self.results.inject_class_id,
-                        place=place,
-                        timestamp=r["timestamp"],
-                    )
-                )
+                for f in glob.glob(f"{tempfile_name[:-4]}*"):
+                    os.remove(f)
+                if cropped_raster is None:
+                    continue
+                place = shape['place']
+                results.append(raster_to_dataset(cropped_raster, r["variable_name"], place=place, timestamp=r["timestamp"]))
+        assert len(results) > 0, "No overlapping data for the given region"
+        self.results = ShardedBackend(len(results))
+        for result, temp_file in results:
+            self.results.add(result(self.results.inject_class_id))
+            ReaderContainer.get_instance().delete(temp_file)
 
     def crop_shape_shardedbackend(self):
         # TODO Stub for sharded backend later
@@ -236,7 +216,5 @@ class CroppingTransFunc(IFunc):
 
         return {"data": self.results}
 
-    def change_metadata(
-        self, metadata: Optional[Dict[str, Metadata]]
-    ) -> Dict[str, Metadata]:
+    def change_metadata(self, metadata: Optional[Dict[str, Metadata]]) -> Dict[str, Metadata]:
         return metadata

@@ -58,9 +58,11 @@ class CSVWriteFunc(IFunc):
 
     @staticmethod
     def _dump_to_csv(tabular_rows, attr_names, file_path):
-        with open(file_path, "w", newline="") as f:
+        file_exists = file_path.exists()
+        with open(file_path, "a", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(attr_names)
+            if not file_exists:
+                writer.writerow(attr_names)
             writer.writerows(tabular_rows)
 
     @staticmethod
@@ -127,7 +129,7 @@ class CSVWriteFunc(IFunc):
 
     def _sm_traverse(
         self, dataset: BaseOutputSM, node: Node, visited: List[Node],
-    ) -> (list, set):
+    ) -> (dict, list):
         # print(f"Called {node.node_id}")
         id2attrs = defaultdict(lambda: defaultdict(list))
         attrs = set()
@@ -166,9 +168,7 @@ class CSVWriteFunc(IFunc):
                                     f"{predicate_label}_{attr}{'_' + str(child_idx) if child_idx > 0 else ''}"
                                 )
 
-        return id2attrs, list(attrs)
+        return id2attrs, sorted(attrs)
 
-    def change_metadata(
-        self, metadata: Optional[Dict[str, Metadata]]
-    ) -> Dict[str, Metadata]:
+    def change_metadata(self, metadata: Optional[Dict[str, Metadata]]) -> Dict[str, Metadata]:
         return metadata

@@ -4,10 +4,13 @@ from collections import Counter
 from pathlib import Path
 from typing import *
 
+from inspect import isasyncgenfunction, isgeneratorfunction, signature
+from asyncio import Event, gather, get_event_loop
 from marshmallow import Schema, fields, ValidationError
 from networkx import DiGraph, lexicographical_topological_sort, bfs_edges, NetworkXUnfeasible
 
 from dtran.ifunc import IFunc
+from dtran.metadata import Metadata
 from dtran.wireio import WiredIOArg
 
 
@@ -32,25 +35,32 @@ class Pipeline(object):
             self.preferences[(func_cls.id, idx2order[i])] = {}
 
         wired = wired or []
-        for input, output in wired:
-            if input[1] is None:
-                input[1] = self.get_func_order(input[0])
-            if output[1] is None:
-                output[1] = self.get_func_order(output[0])
-
+        # mapping of wired from input to output
         self.wired = {}
+        # inverse mapping of wired from output to all inputs
+        self.inv_wired = {}
         # applying topological sort on func_classes to determine execution order based on wiring
         graph = DiGraph()
         graph.add_nodes_from(range(len(func_classes)))
         # mapping preferences of argtype "dataset" to determine backend for "dataset" outputs
         preference_roots, preference_graph = [], DiGraph()
         for i, o in wired:
+            if i[1] is None:
+                i[1] = self.get_func_order(i[0])
+            if o[1] is None:
+                o[1] = self.get_func_order(o[0])
+
             input_arg = func_classes[self.id2order[i[0]][i[1] - 1][0]].inputs[i[2]]
             output_arg = func_classes[self.id2order[o[0]][o[1] - 1][0]].outputs[o[2]]
             if input_arg != output_arg:
                 raise ValidationError(
                     f"Incompatible ArgType while wiring {WiredIOArg.get_arg_name(i[0], i[1], i[2])} to {WiredIOArg.get_arg_name(o[0], o[1], o[2])}")
-            self.wired[WiredIOArg.get_arg_name(i[0], i[1], i[2])] = WiredIOArg.get_arg_name(o[0], o[1], o[2])
+            input_gname = WiredIOArg.get_arg_name(i[0], i[1], i[2])
+            output_gname = WiredIOArg.get_arg_name(o[0], o[1], o[2])
+            self.wired[input_gname] = output_gname
+            if output_gname not in self.inv_wired:
+                self.inv_wired[output_gname] = []
+            self.inv_wired[output_gname].append(input_gname)
             graph.add_edge(self.id2order[o[0]][o[1] - 1][0], self.id2order[i[0]][i[1] - 1][0])
 
             if output_arg.id == 'dataset':
@@ -61,10 +71,10 @@ class Pipeline(object):
                     preference_roots.append(node)
                 elif output_arg.input_ref not in func_classes[self.id2order[o[0]][o[1] - 1][0]].inputs:
                     raise ValidationError(
-                        f"Invalid value for input_ref {output_arg.input_ref} of {WiredIOArg.get_arg_name(o[0], o[1], o[2])} output dataset")
+                        f"Invalid value for input_ref {output_arg.input_ref} of {output_gname} output dataset")
                 elif func_classes[self.id2order[o[0]][o[1] - 1][0]].inputs[output_arg.input_ref] != output_arg:
                     raise ValidationError(
-                        f"Invalid ArgType for input_ref {output_arg.input_ref} of {WiredIOArg.get_arg_name(o[0], o[1], o[2])} output dataset")
+                        f"Invalid ArgType for input_ref {output_arg.input_ref} of {output_gname} output dataset")
                 else:
                     # adding dummy "internal" edges within the same adapter to link "dataset" output to its input_ref
                     preference_graph.add_edge((o[0], o[1], 'i', output_arg.input_ref), node, preference='n/a')
@@ -107,7 +117,7 @@ class Pipeline(object):
                 preference = 'array'
             self.preferences[(root[0], root[1])][root[3]] = preference
 
-    def exec(self, inputs: dict) -> dict:
+    def exec(self, inputs: dict) -> None:
         inputs_copy = {}
         for arg in inputs:
             if isinstance(arg, WiredIOArg):
@@ -121,39 +131,108 @@ class Pipeline(object):
         inputs = inputs_copy
         self.validate(inputs)
 
-        output = {}
+        # asyncio events to notify consumer of an input that it is ready
+        self.input_ready_events = {}
+        # asyncio events to notify the producer of an output that a particular wired input has been consumed
+        self.input_received_events = {}
+        # set of inputs which will not be produced/consumed anymore, so that their consumers/producers can stop
+        self.finished_inputs = set()
+        self.output = {}
+        # list of async tasks, one for each adapter
+        tasks = []
         for i, func_cls in enumerate(self.func_classes):
             func_args = {}
             for argname in func_cls.inputs.keys():
-                gname = WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)
-                if gname in self.wired:
+                input_gname = WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)
+                if input_gname in self.wired:
                     # wired has higher priority
-                    func_args[argname] = output[self.wired[gname]]
+                    self.input_ready_events[input_gname] = Event()
+                    self.input_received_events[input_gname] = Event()
+                    # passing an async generator (or stream) for a wired input
+                    func_args[argname] = self.wait_for_input(input_gname)
                 else:
                     try:
-                        func_args[argname] = inputs[gname]
+                        func_args[argname] = inputs[input_gname]
                     except KeyError as e:
                         if func_cls.inputs[argname].optional:
                             continue
                         raise e
 
-            try:
-                func = func_cls(**func_args)
-            except TypeError:
-                print(f"Cannot initialize cls: {func_cls}")
-                raise
-            func.set_preferences(self.preferences[(func_cls.id, self.idx2order[i])])
-            result = func.exec()
+            tasks.append(self.create_task(i, func_args))
+        # run all tasks concurrently in asyncio event loop
+        get_event_loop().run_until_complete(gather(*tasks))
+
+    async def create_task(self, i: int, func_args: dict):
+        func_cls = self.func_classes[i]
+        if not isasyncgenfunction(func_cls.exec):
+            # use a wrapper for regular or generator adapter
+            func_cls = default_wrapper(func_cls, {
+                argname for argname in func_cls.inputs.keys()
+                if WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname) in self.wired.keys()
+            })
+        try:
+            func = func_cls(**func_args)
+        except TypeError:
+            print(f"Cannot initialize cls: {func_cls}")
+            raise
+        func.set_preferences(self.preferences[(func_cls.id, self.idx2order[i])])
+        # list of inputs which have been successfully wired
+        wired = []
+        # default wired inputs for the case if it never goes inside the async for loop below
+        for argname in func_cls.outputs.keys():
+            output_gname = WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)
+            if output_gname in self.inv_wired:
+                for input_gname in self.inv_wired[output_gname]:
+                    wired.append(input_gname)
+
+        # looping Async Generator Adapter
+        async for result in func.exec():
+            wired = []
             for argname in func_cls.outputs.keys():
+                output_gname = WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)
                 try:
-                    output[WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)] = result[argname]
+                    self.output[output_gname] = result[argname]
                 except TypeError:
                     print(
                         f"Error while wiring output of {func_cls} from {argname} to {WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)}"
                     )
                     raise
+                if output_gname in self.inv_wired:
+                    for input_gname in self.inv_wired[output_gname]:
+                        if input_gname not in self.finished_inputs:
+                            # notifying consumer of an input that it is ready
+                            self.input_ready_events[input_gname].set()
+                            wired.append(input_gname)
 
-        return output
+            # waiting for all wired inputs to be consumed
+            for input_gname in wired:
+                # waiting for an input to be consumed
+                await self.input_received_events[input_gname].wait()
+                self.input_received_events[input_gname].clear()
+
+        # notifying all wired inputs that producer has finished
+        for input_gname in wired:
+            self.input_ready_events[input_gname].set()
+            self.finished_inputs.add(input_gname)
+
+        # notifying all producers which are still running that consumer has finished
+        for argname in func_cls.inputs.keys():
+            input_gname = WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)
+            if (input_gname in self.wired) and (input_gname not in self.finished_inputs):
+                self.input_received_events[input_gname].set()
+                self.finished_inputs.add(input_gname)
+
+    async def wait_for_input(self, input_gname: str):
+        while True:
+            # waiting for an input to be ready
+            await self.input_ready_events[input_gname].wait()
+            self.input_ready_events[input_gname].clear()
+            # break out of the loop if producer has finished
+            if input_gname in self.finished_inputs:
+                break
+            # notifying producer of an input that it has been consumed
+            self.input_received_events[input_gname].set()
+            yield self.output[self.wired[input_gname]]
 
     def validate(self, inputs: dict) -> None:
         errors = self.schema().validate(inputs)
@@ -177,3 +256,52 @@ class Pipeline(object):
     @staticmethod
     def load(load_path: Union[str, Path]):
         pass
+
+
+def default_wrapper(cls: Type[IFunc], inputs: Set[str]) -> Type[IFunc]:
+    class DefaultWrapper(IFunc):
+        func_cls = cls
+
+        def __init__(self, **kwargs):
+            # checking if the kwargs satisfy wrapped adapter's init function definition
+            try:
+                signature(DefaultWrapper.func_cls.__init__).bind(DefaultWrapper.func_cls, **kwargs)
+            except TypeError:
+                print(f"Cannot initialize cls: {DefaultWrapper.func_cls}")
+                raise
+            self.func_args = kwargs
+
+        async def exec(self) -> Union[dict, Generator[dict, None, None], AsyncGenerator[dict, None]]:
+            while True:
+                func_args = self.func_args.copy()
+                # waiting for all wired inputs, and break out of the loop if any one of them has finished
+                try:
+                    for argname in inputs:
+                        func_args[argname] = await self.func_args[argname].__anext__()
+                except StopAsyncIteration:
+                    break
+                func = self.func_cls(**func_args)
+                # TODO: correctly handle validate and change_metadata in future
+                # correctly handle get_preference for wrapped adapter's instance
+                func.get_preference = self.get_preference
+                if isgeneratorfunction(func.exec):
+                    for result in func.exec():
+                        yield result
+                else:
+                    yield func.exec()
+                # if there are no wired inputs, break out to avoid looping infinitely
+                if len(inputs) == 0:
+                    break
+
+        def validate(self) -> bool:
+            return True
+
+        def change_metadata(self, metadata: Optional[Dict[str, Metadata]]) -> Dict[str, Metadata]:
+            return metadata
+
+    # setting static properties of DefaultWrapper to proxy wrapped adapter
+    for prop in dir(cls):
+        if (not prop.startswith("__")) and \
+                (prop not in {'exec', 'validate', 'change_metadata', 'preferences', 'get_preference', 'set_preferences'}):
+            setattr(DefaultWrapper, prop, getattr(cls, prop))
+    return DefaultWrapper
