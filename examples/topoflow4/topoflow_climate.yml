@@ -4,10 +4,11 @@ adapters:
     comment: My topoflow climate write adapter
     adapter: funcs.Topoflow4ClimateWriteFunc
     inputs:
-      input_dir: "/tmp/demo/input/weather"
-      temp_dir: "/tmp/demo/tmp"
-      output_file: "/tmp/demo/output/climate_all.zip"
-      var_name: precipitation
-      DEM_bounds: "23.995416666666, 6.532916666667, 28.020416666666, 9.566250000000"
-      DEM_xres_arcsecs: "30"
-      DEM_yres_arcsecs: "30"
+      input_dir: "/home/rook/workspace/mint/MINT-Transformation/data/GLDAS"
+      temp_dir: "/home/rook/workspace/mint/MINT-Transformation/data/temp"
+      output_file: "/home/rook/workspace/mint/MINT-Transformation/data/output.zip"
+      var_name: Rainf_f_tavg
+#      DEM_bounds: "34.22125, 7.370416666666667, 36.437916666666666, 9.50375"
+      DEM_bounds: "34.221249999999, 7.362083333332, 36.450416666666, 9.503749999999"
+      DEM_xres_arcsecs: "60"
+      DEM_yres_arcsecs: "60"

@@ -253,16 +253,16 @@ def regrid_geotiff(in_file=None, out_file=None,
     # -------------------------------------------
     # Specifying out_bounds is not required.
     # -------------------------------------------
-    if (out_bounds is not None):
-        DISJOINT = bounds_disjoint(in_bounds, out_bounds, VERBOSE=False)
-        if (DISJOINT):
-            # print('ERROR:  Output bounds do not overlap input bounds.')
-            print('ERROR:  Input & output bounding boxes are disjoint.')
-            print('       New grid would contain only nodata.')
-            print('  in_file  =', in_file)
-            print('  out_file =', out_file)
-            in_unit = None  # Close in_file
-            return
+    # if (out_bounds is not None):
+    #     DISJOINT = bounds_disjoint(in_bounds, out_bounds, VERBOSE=False)
+    #     if (DISJOINT):
+    #         # print('ERROR:  Output bounds do not overlap input bounds.')
+    #         print('ERROR:  Input & output bounding boxes are disjoint.')
+    #         print('       New grid would contain only nodata.')
+    #         print('  in_file  =', in_file)
+    #         print('  out_file =', out_file)
+    #         in_unit = None  # Close in_file
+    #         return
 
             # ------------------------------------------------
     # Resample & clip and write new grid to GeoTIFF

@@ -40,11 +40,5 @@ def exec_pipeline(ctx, config=None):
     parsed_pipeline.exec(parsed_inputs)
 
 
-@cli.command(name="config_parser")
-@click.option("--config", help="full path to config")
-def config_parser():
-    click.echo("This is config parser!")
-
-
 if __name__ == "__main__":
     cli()

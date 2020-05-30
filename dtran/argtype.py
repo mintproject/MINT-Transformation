@@ -15,7 +15,11 @@ def dataset(val: Any, optional=False, preference: str = None, input_ref: str = N
 
 class ArgType(object):
     FilePath: 'ArgType' = None
-    DataSet: Callable[[Any, str, str], 'ArgType'] = dataset
+    DataSet: Union[
+        Callable[[Any], 'ArgType'],
+        Callable[[Any, bool], 'ArgType'],
+        Callable[[Any, bool, str], 'ArgType'],
+        Callable[[Any, bool, str, str], 'ArgType']] = dataset
     OrderedDict: 'ArgType' = None
     String: 'ArgType' = None
     Number: 'ArgType' = None

@@ -238,6 +238,7 @@ class DcatReadFunc(IFunc):
         "end_time": ArgType.DateTime(optional=True),
         "lazy_load_enabled": ArgType.Boolean(optional=True),
         "should_redownload": ArgType.Boolean(optional=True),
+        "override_drepr": ArgType.String(optional=True),
     }
     outputs = {"data": ArgType.DataSet(None)}
     example = {
@@ -245,7 +246,8 @@ class DcatReadFunc(IFunc):
         "start_time": "2020-03-02T12:30:55",
         "end_time": "2020-03-02T12:30:55",
         "lazy_load_enabled": "False",
-        "should_redownload": "False"
+        "should_redownload": "False",
+        "override_drepr": "/tmp/model.yml"
     }
     logger = logging.getLogger(__name__)
 
@@ -254,7 +256,8 @@ class DcatReadFunc(IFunc):
                  start_time: datetime = None,
                  end_time: datetime = None,
                  lazy_load_enabled: bool = False,
-                 should_redownload: bool = False
+                 should_redownload: bool = False,
+                 override_drepr: str = None
                  ):
         self.dataset_id = dataset_id
         self.lazy_load_enabled = lazy_load_enabled
@@ -271,7 +274,10 @@ class DcatReadFunc(IFunc):
 
         self.resources = OrderedDict()
         if 'resource_repr' in dataset['metadata']:
-            self.drepr = DRepr.parse(dataset['metadata']['resource_repr'])
+            if override_drepr is not None:
+                self.drepr = DRepr.parse_from_file(override_drepr)
+            else:
+                self.drepr = DRepr.parse(dataset['metadata']['resource_repr'])
             for resource in resources:
                 self.resources[resource['resource_id']] = {key: resource[key] for key in
                                                            {'resource_data_url', 'resource_type'}}
@@ -281,7 +287,10 @@ class DcatReadFunc(IFunc):
             assert len(resources) == 1
             self.resources[resources[0]['resource_id']] = {key: resources[0][key] for key in
                                                            {'resource_data_url', 'resource_type'}}
-            self.drepr = DRepr.parse(dataset['metadata']['dataset_repr'])
+            if override_drepr is not None:
+                self.drepr = DRepr.parse_from_file(override_drepr)
+            else:
+                self.drepr = DRepr.parse(dataset['metadata']['dataset_repr'])
             self.repr_type = 'dataset_repr'
 
         self.logger.debug(f"Found key '{self.repr_type}'")
