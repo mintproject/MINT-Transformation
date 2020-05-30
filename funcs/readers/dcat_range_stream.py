@@ -25,7 +25,6 @@ class DcatRangeStream(IFunc):
         "step_time": ArgType.String(optional=True)
     }
     outputs = {
-        "dataset_id": ArgType.String,
         "start_time": ArgType.DateTime,
         "end_time": ArgType.DateTime
     }
@@ -37,7 +36,6 @@ class DcatRangeStream(IFunc):
     }
 
     def __init__(self, dataset_id: str, start_time: datetime = None, end_time: datetime = None, step_time: str = None):
-        self.dataset_id = dataset_id
         if (start_time is None) or (end_time is None):
             dataset = DCatAPI.get_instance().find_dataset_by_id(dataset_id)
             self.start_time = start_time or parser.parse(dataset['metadata']['temporal_coverage']['start_time'])
@@ -57,7 +55,7 @@ class DcatRangeStream(IFunc):
         start_time = self.start_time
         while start_time < self.end_time:
             end_time = min(start_time + self.step_time, self.end_time)
-            yield {"dataset_id": self.dataset_id, "start_time": start_time, "end_time": end_time}
+            yield {"start_time": start_time, "end_time": end_time}
             start_time = end_time
 
     def validate(self) -> bool:
