@@ -3,7 +3,10 @@ from funcs.gdal.raster import *
 from drepr import DRepr, outputs
 from drepr.executors.readers.reader_container import ReaderContainer
 from drepr.executors.readers.np_dict import NPDictReader
-import copy, uuid
+import copy
+import uuid
+from functools import partial
+from urllib.parse import urlencode
 
 raster_model = {
     "version": "2",
@@ -67,33 +70,32 @@ raster_model = {
     }
 }
 
-place_parameters = ['region', 'zone', 'district']
 
-
-def _update_model(place_dict):
+def _update_model(place_dict, place_parameters):
     updated_model = copy.deepcopy(raster_model)
     updated_place_parameters = [pp for pp in place_parameters if f"mint:{pp}" in place_dict]
 
     updated_model['attributes'].update({
         f"place_{pp}": f"$.place_{pp}" for pp in updated_place_parameters
     })
+    updated_model['attributes']["place_uri"] = "$.place_uri"
     updated_model['alignments'].extend(
         {"type": "dimension", "source": "variable", "target": f"place_{pp}", "aligned_dims": []}
         for pp in updated_place_parameters
     )
+    updated_model['alignments'].append({"type": "dimension", "source": "variable", "target": "place_uri", "aligned_dims": []})
     updated_model['semantic_model']["mint:Place:1"] = {
         "properties": [
             (f"mint:{pp}", f"place_{pp}")
             for pp in updated_place_parameters
-        ]
+        ] + [("drepr:uri", "place_uri")]
     }
 
     return updated_model
 
 
-def raster_to_dataset(raster: Raster, variable_name: str, inject_class_id: Callable[[str], str] = None, place=None,
-                      region_label="",
-                      timestamp=None):
+def raster_to_dataset(raster: Raster, variable_name: str, place=None, region_label="", timestamp=None):
+    place_parameters = ['region', 'zone', 'district']
     used_region_label = False
     if place:
         place_dict = place.to_dict()
@@ -102,7 +104,7 @@ def raster_to_dataset(raster: Raster, variable_name: str, inject_class_id: Calla
         used_region_label = True
         place_dict = {"mint:region": [region_label]}
 
-    model = _update_model(place_dict)
+    model = _update_model(place_dict, place_parameters)
     if isinstance(raster.nodata, (float, np.float32, np.float64)):
         model['attributes']['variable']['missing_values'].append(float(raster.nodata))
     elif isinstance(raster.nodata, (int, np.int32, np.int64)):
@@ -115,6 +117,7 @@ def raster_to_dataset(raster: Raster, variable_name: str, inject_class_id: Calla
         "variable_name": variable_name,
         "variable": raster.data,
         "timestamp": timestamp,
+        "place_uri": f"https://mint.isi.edu/place_uri?{urlencode(sorted(place_dict.items()))}",
         "lat": raster.get_center_latitude(),
         "long": raster.get_center_longitude(),
         "gt_x_0": raster.geotransform.x_0,
@@ -134,6 +137,5 @@ def raster_to_dataset(raster: Raster, variable_name: str, inject_class_id: Calla
     reader = NPDictReader(data)
     temp_file = f"resource_{str(uuid.uuid4())}"
     ReaderContainer.get_instance().set(temp_file, reader)
-    new_sm = outputs.ArrayBackend.from_drepr(dsmodel, temp_file, inject_class_id)
-    ReaderContainer.get_instance().delete(temp_file)
-    return new_sm
+    new_sm = partial(outputs.ArrayBackend.from_drepr, dsmodel, temp_file)
+    return new_sm, temp_file

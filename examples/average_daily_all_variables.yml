@@ -1,0 +1,66 @@
+version: "1.0"
+inputs:
+  # DataCatalog Dataset ID for GLDAS
+  gldas_dataset_id: 5babae3f-c468-4e01-862e-8b201468e3b5
+  # Operation to be used for aggregation. Values can be ("sum", "average", "count")
+  agg_function: average
+  # Time period for aggregation. Values can be ("minute", "hour", "day", "month", "year")
+  agg_time_period: day
+  # Start time to filter Resources for DataCatalog GLDAS Dataset (can also be "null" to leave this end open)
+  range_start_time: '2011-01-01 00:00:00'
+  # End time (exclusive) to filter Resources for DataCatalog GLDAS Dataset (can also be "null" to leave this end open)
+  range_end_time: '2011-01-02 00:00:00'
+  # ISO 8601 duration string representing the step (or timedelta) to loop from range_start_time and range_end_time.
+  # Value should be such that agg_time_period lies completely in it. Typically should just be ("P1D", "P1M", "P1Y").
+  # "P1D" should be used with agg_time_period ("minute", "hour", "day"), "P1M" with ("month") and "P1Y" with ("year").
+  range_step_time: P1D
+  # DataCatalog Dataset ID for Shapefile with woredas
+  shapefile_dataset_id: 74e6f707-d5e9-4cbd-ae26-16ffa21a1d84
+  # Filename for output CSV
+  csv_output_file: ./data/results/average_daily_all_variables.csv
+adapters:
+  gldas_range_stream:
+    comment: My gldas range stream adapter
+    adapter: funcs.DcatRangeStream
+    inputs:
+      dataset_id: $$.gldas_dataset_id
+      start_time: $$.range_start_time
+      end_time: $$.range_end_time
+      step_time: $$.range_step_time
+  gldas_read_func:
+    comment: My gldas read func adapter
+    adapter: funcs.DcatReadFunc
+    inputs:
+      dataset_id: $.gldas_range_stream.dataset_id
+      start_time: $.gldas_range_stream.start_time
+      end_time: $.gldas_range_stream.end_time
+  shapefile_read_func:
+    comment: My shape file read func adapter
+    adapter: funcs.DcatReadFunc
+    inputs:
+      dataset_id: $$.shapefile_dataset_id
+  gldas_variable_stream:
+    comment: My gldas variables stream adapter
+    adapter: funcs.DcatVariableStream
+    inputs:
+      dataset_id: $$.gldas_dataset_id
+  my_crop_wrapper:
+    comment: My cropping func wrapper adapter
+    adapter: funcs.CroppingTransWrapper
+    inputs:
+      variable_name: $.gldas_variable_stream.variable_name
+      dataset: $.gldas_read_func.data
+      shape: $.shapefile_read_func.data
+  agg_by_time_place:
+    adapter: funcs.aggregations.variable_aggregation_func.VariableAggregationFunc
+    inputs:
+      dataset: $.my_crop_wrapper.data
+      group_by:
+        - { prop: "mint:timestamp", value: $$.agg_time_period }
+        - { prop: "mint:place", value: exact }
+      function: $$.agg_function
+  my_writer:
+    adapter: funcs.CSVWriteFunc
+    inputs:
+      data: $.agg_by_time_place.data
+      output_file: $$.csv_output_file

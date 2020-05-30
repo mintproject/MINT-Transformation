@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import abc
 from enum import Enum
-from typing import Dict, Optional
+from typing import Dict, Optional, Union, Generator, AsyncGenerator
 
 from dtran.argtype import ArgType
 from dtran.metadata import Metadata
@@ -50,7 +50,7 @@ class IFunc(metaclass=IFuncIO):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def exec(self) -> dict:
+    async def exec(self) -> Union[dict, Generator[dict, None, None], AsyncGenerator[dict, None]]:
         """
         Execute the transformation function and return the result
         :return:
@@ -81,9 +81,12 @@ class IFunc(metaclass=IFuncIO):
 
     def set_preferences(self, preferences: Dict[str, str]) -> None:
         self.preferences = preferences
+        for output in self.outputs.keys() - preferences:
+            if self.outputs[output].id == 'dataset':
+                self.preferences[output] = None
 
     def get_preference(self, output: str) -> Optional[str]:
-        return self.preferences.get(output, None)
+        return self.preferences[output]
 
     @abc.abstractmethod
     def change_metadata(self, metadata: Optional[Dict[str, Metadata]]) -> Dict[str, Metadata]:

@@ -13,6 +13,7 @@ from dtran.ifunc import IFunc
 from dtran.wireio import WiredIOArg
 
 wired_pattern = re.compile(r'^\$\.\w+\.\w+$')
+inputs_pattern = re.compile(r'^\$\$\.\w+$')
 keys_pattern = re.compile(r'^\w+$')
 
 
@@ -23,7 +24,7 @@ class OrderedDictField(fields.Dict):
 class AdapterSchema(Schema):
     adapter = fields.Str(required=True)
     comment = fields.Str()
-    inputs = OrderedDictField(keys=fields.Str(validate=validate.Regexp(keys_pattern)), values=fields.Raw())
+    inputs = OrderedDictField(keys=fields.Str(validate=validate.Regexp(keys_pattern)), values=fields.Raw(allow_none=True))
 
     class Meta:
         ordered = True
@@ -36,12 +37,34 @@ class PipelineSchema(Schema):
 
     version = fields.Str(required=True)
     description = fields.Str()
+    inputs = OrderedDictField(validate=validate.Length(min=1),
+                              keys=fields.Str(validate=validate.Regexp(keys_pattern)),
+                              values=fields.Raw(allow_none=True))
     adapters = OrderedDictField(required=True, validate=validate.Length(min=1),
                                 keys=fields.Str(validate=validate.Regexp(keys_pattern)),
                                 values=fields.Nested(AdapterSchema()))
 
     class Meta:
         ordered = True
+
+    @staticmethod
+    def process_input(val, data):
+        # processing for root-level pipeline inputs recursively
+        if isinstance(val, str):
+            if not inputs_pattern.match(val):
+                return val
+            input_name = val.split('.')[1:][0]
+            if ('inputs' not in data) or (input_name not in data['inputs']):
+                raise ValidationError(f"invalid pipeline input {input_name}")
+            return data['inputs'][input_name]
+        if isinstance(val, dict):
+            inputs = val.items()
+        else:
+            inputs = enumerate(val)
+        for input, value in inputs:
+            if isinstance(value, str) or isinstance(value, dict) or isinstance(value, list):
+                val[input] = PipelineSchema.process_input(value, data)
+        return val
 
     @post_load
     def construct_pipeline(self, data, **kwargs):
@@ -91,6 +114,15 @@ class PipelineSchema(Schema):
                 # validating input
                 if input not in mappings[name][0].inputs:
                     raise ValidationError(f"invalid input {input} in {data['adapters'][name]['adapter']} for {name}")
+                # processing for root-level pipeline inputs
+                if isinstance(value, str) or isinstance(value, dict) or isinstance(value, list):
+                    try:
+                        value = PipelineSchema.process_input(value, data)
+                    except ValidationError as e:
+                        raise ValidationError(f"{e} in {input} for {name}")
+                # skipping inputs with null values
+                if value is None:
+                    continue
                 # processing wiring inputs
                 if isinstance(value, str) and wired_pattern.match(value):
                     adapter_name, output = value.split('.')[1:]

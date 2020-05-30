@@ -54,8 +54,8 @@ class ResourceManager:
     instance = None
 
     def __init__(self):
-        self.max_capacity = 100 * UNITS_MAPPING['GB']
-        self.max_clear_size = 10 * UNITS_MAPPING['GB']
+        self.max_capacity = 70 * UNITS_MAPPING['GB']
+        self.max_clear_size = 35 * UNITS_MAPPING['GB']
         assert self.max_capacity >= self.max_clear_size, "max_capacity cannot be less than max_clear_size"
         self.poll_interval = 10
         self.compressed_resource_types = {".zip", ".tar.gz", ".tar"}
@@ -192,6 +192,7 @@ class ResourceManager:
             resource.delete_instance()
             if size >= self.max_clear_size:
                 return size
+        return size
 
     def uncompress(self, resource_type: str, path: Union[Path, str]):
         subprocess.check_call(f"unzip {path + resource_type} -d {path}", shell=True)
