@@ -96,6 +96,19 @@ class DCatAPI:
         assert resp.status_code == 200, resp.text
         return resp.json()
 
+    def find_standard_variables_by_dataset_id(self, dataset_id):
+        request_headers = {
+            "Content-Type": "application/json",
+            "X-Api-Key": self.get_api_key(),
+        }
+        resp = requests.post(
+            f"{self.dcat_url}/datasets/dataset_standard_variables",
+            headers=request_headers,
+            json={"dataset_id": dataset_id},
+        )
+        assert resp.status_code == 200, resp.text
+        return resp.json()['dataset']['standard_variables']
+
     def update_dataset_metadata(self, provenance_id, dataset_id, metadata):
         request_headers = {"Content-Type": "application/json", "X-Api-Key": self.get_api_key()}
         resp = requests.post(

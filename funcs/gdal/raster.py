@@ -114,7 +114,7 @@ class Raster:
              x_res: float = None,
              y_res: float = None,
              resampling_algo: ReSample = None,
-             touch_cutline: bool = False) -> 'Raster':
+             touch_cutline: bool = False) -> Union['Raster', None]:
         """
         @param x_res, y_res None will use original resolution
         """
@@ -123,19 +123,23 @@ class Raster:
         if vector_file is not None:
             warp_options['cutlineDSName'] = vector_file
             warp_options['cropToCutline'] = use_vector_bounds
+            warp_options['targetAlignedPixels'] = use_vector_bounds
             assert os.path.exists(vector_file)
         elif bounds is not None:
             warp_options['outputBounds'] = bounds.to_gdal()
         else:
             raise Exception('Please specify either bounds or vector_file to crop.')
-        warp_options['xRes'] = x_res
-        warp_options['yRes'] = y_res
+        warp_options['xRes'] = x_res or self.geotransform.dx
+        warp_options['yRes'] = y_res or self.geotransform.dy
         warp_options['srcNodata'] = self.nodata
         warp_options['resampleAlg'] = resampling_algo.value if resampling_algo is not None else None
 
         if touch_cutline:
             warp_options['warpOptions'] = ['CUTLINE_ALL_TOUCHED=TRUE']
         tmp_ds = gdal.Warp(tmp_file, self.raster, **warp_options)
+        if tmp_ds is None:
+            gdal.Unlink(tmp_file)
+            return None
 
         cropped_array, cropped_geotransform = tmp_ds.ReadAsArray(), GeoTransform.from_gdal(
             tmp_ds.GetGeoTransform())
