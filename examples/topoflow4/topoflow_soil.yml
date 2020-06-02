@@ -3,10 +3,10 @@ description: Data transformation to generate TopoFlow-ready precipitation files 
 inputs:
   layer: 1
   input_dir: "/tmp/demo/input/isric_soil"
-  output_dir: "/tmp/demo/output/isric_soil"
-  DEM_bounds: "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999"
-  DEM_xres_arcsecs: "30"
-  DEM_yres_arcsecs: "30"
+  output_file: "/tmp/demo/output/isric_soil.zip"
+  bounding_box: "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999"
+  xres_arcsecs: "30"
+  yres_arcsecs: "30"
 adapters:
   tf_soil:
     comment: My topoflow soil write adapter
@@ -14,8 +14,7 @@ adapters:
     inputs:
       layer: $$.layer
       input_dir: $$.input_dir
-      temp_dir: $$.temp_dir
-      output_dir: $$.output_dir
+      output_file: $$.output_file
       DEM_bounds: $$.bounding_box
       DEM_xres_arcsecs: $$.xres_arcsecs
       DEM_yres_arcsecs: $$.yres_arcsecs
