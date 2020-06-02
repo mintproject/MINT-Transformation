@@ -1,24 +1,33 @@
 version: "1.0"
 description: Data transformation to generate daily average data from original GLDAS data sources
 inputs:
-  # DataCatalog Dataset ID for GLDAS
-  gldas_dataset_id: 5babae3f-c468-4e01-862e-8b201468e3b5
-  # Operation to be used for aggregation. Values can be ("sum", "average", "count")
-  agg_function: average
-  # Time period for aggregation. Values can be ("minute", "hour", "day", "month", "year")
-  agg_time_period: day
-  # Start time to filter Resources for DataCatalog GLDAS Dataset (can also be "null" to leave this end open)
-  range_start_time: '2011-01-01 00:00:00'
-  # End time to filter Resources for DataCatalog GLDAS Dataset (can also be "null" to leave this end open)
-  range_end_time: '2011-01-02 00:00:00'
-  # ISO 8601 duration string representing the step (or timedelta) to loop from range_start_time to range_end_time.
-  # Value should be such that agg_time_period lies completely in it. Typically should just be ("P1D", "P1M", "P1Y").
-  # "P1D" should be used with agg_time_period ("minute", "hour", "day"), "P1M" with ("month") and "P1Y" with ("year").
-  range_step_time: P1D
-  # DataCatalog Dataset ID for Shapefile with woredas
-  shapefile_dataset_id: 74e6f707-d5e9-4cbd-ae26-16ffa21a1d84
-  # Filename for output CSV
-  csv_output_file: ./data/results/average_daily_all_variables.csv
+  gldas_dataset_id:
+    comment: DataCatalog Dataset ID for GLDAS
+    value: 5babae3f-c468-4e01-862e-8b201468e3b5
+  agg_function:
+    comment: Operation to be used for aggregation. Values can be ("sum", "average", "count")
+    value: average
+  agg_time_period:
+    comment: Time period for aggregation. Values can be ("minute", "hour", "day", "month", "year")
+    value: day
+  range_start_time:
+    comment: Start time to filter Resources for DataCatalog GLDAS Dataset (can also be "null" to leave this end open)
+    value: '2011-01-01 00:00:00'
+  range_end_time:
+    comment: End time to filter Resources for DataCatalog GLDAS Dataset (can also be "null" to leave this end open)
+    value: '2011-01-02 00:00:00'
+  range_step_time:
+    comment: >-
+      ISO 8601 duration string representing the step (or timedelta) to loop from range_start_time to range_end_time.
+      Value should be such that agg_time_period lies completely in it. Typically should just be ("P1D", "P1M", "P1Y").
+      "P1D" should be used with agg_time_period ("minute", "hour", "day"), "P1M" with ("month") and "P1Y" with ("year").
+    value: P1D
+  shapefile_dataset_id:
+    comment: DataCatalog Dataset ID for Shapefile with woredas
+    value: 74e6f707-d5e9-4cbd-ae26-16ffa21a1d84
+  csv_output_file:
+    comment: Filename for output CSV
+    value: ./data/results/average_daily_all_variables.csv
 adapters:
   gldas_range_stream:
     comment: My gldas range stream adapter
