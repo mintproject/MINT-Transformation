@@ -1,8 +1,12 @@
 version: "1"
+inputs:
+  grid_dir: "/tmp/input/mint/gpm_grid_lol_kuru"
+  date_regex: '3B-HHR-E.MS.MRG.3IMERG.(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'
+  output_file: "/tmp/output/mint/lol_kuru/climate_all.rts"
 adapters:
   tf_climate_month:
     adapter: funcs.Topoflow4ClimateWritePerMonthFunc
     inputs:
-      grid_dir: "/data/mint/gpm_grid_lol_kuru"
-      date_regex: '3B-HHR-E.MS.MRG.3IMERG.(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'
-      output_file: "/data/mint/lol_kuru/climate_all.rts"
+      grid_dir: $$.grid_dir
+      date_regex: $$.date_regex
+      output_file: $$.output_file

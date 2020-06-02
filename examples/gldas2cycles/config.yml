@@ -1,14 +1,24 @@
 version: "1"
+description: Data transformation to generate Cycles-ready input files (RTS) from GLDAS weather data sources
+inputs:
+  start_date: "2000-01-01"
+  end_date: "2000-01-01"
+  gldas_path: "/tmp/input/gldas/"
+  output_path: "/tmp/output/"
+  output_prefix: "prefix"
+  latitude: -1 # use coord_file when lat = -1 or long = -1
+  longitude: -1 # use coord_file when lat = -1 or long = -1
+  coord_file: "/tmp/input/oromia.csv"
 adapters:
   gldas2cycles_func:
     comment: GLDAS2Cycles adapter
     adapter: funcs.Gldas2CyclesFunc
     inputs:
-      start_date: "2000-01-01"
-      end_date: "2000-01-01"
-      gldas_path: "/tmp/input/gldas/"
-      output_path: "/tmp/output/"
-      output_prefix: "prefix"
-      latitude: -1 # use coord_file when lat = -1 or long = -1
-      longitude: -1 # use coord_file when lat = -1 or long = -1
-      coord_file: "/tmp/input/oromia.csv"
+      start_date: $$.start_date
+      end_date: $$.end_date
+      gldas_path: $$.gldas_path
+      output_path: $$.output_path
+      output_prefix: $$.output_prefix
+      latitude: $$.latitude
+      longitude: $$.longitude
+      coord_file: $$.coord_file
