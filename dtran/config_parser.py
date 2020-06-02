@@ -30,6 +30,11 @@ class AdapterSchema(Schema):
         ordered = True
 
 
+class InputSchema(Schema):
+    comment = fields.Str()
+    value = fields.Raw(required=True, allow_none=True)
+
+
 class PipelineSchema(Schema):
     def __init__(self, cli_inputs, **kwargs):
         super().__init__(**kwargs)
@@ -39,7 +44,7 @@ class PipelineSchema(Schema):
     description = fields.Str()
     inputs = OrderedDictField(validate=validate.Length(min=1),
                               keys=fields.Str(validate=validate.Regexp(keys_pattern)),
-                              values=fields.Raw(allow_none=True))
+                              values=fields.Nested(InputSchema()))
     adapters = OrderedDictField(required=True, validate=validate.Length(min=1),
                                 keys=fields.Str(validate=validate.Regexp(keys_pattern)),
                                 values=fields.Nested(AdapterSchema()))
@@ -56,7 +61,7 @@ class PipelineSchema(Schema):
             input_name = val.split('.')[1:][0]
             if ('inputs' not in data) or (input_name not in data['inputs']):
                 raise ValidationError(f"invalid pipeline input {input_name}")
-            return data['inputs'][input_name]
+            return data['inputs'][input_name]['value']
         if isinstance(val, dict):
             inputs = val.items()
         else:
