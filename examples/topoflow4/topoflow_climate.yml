@@ -1,13 +1,27 @@
 version: "1"
 description: Data transformation to generate TopoFlow-ready precipitation files (RTS) from Global Precipitation Measurement (GPM) data sources
 inputs:
-  input_dir: "/tmp/demo/input/weather"
-  temp_dir: "/tmp/demo/tmp"
-  output_file: "/tmp/demo/output/climate_all.zip"
-  var_name: precipitation
-  bounding_box: "23.995416666666, 6.532916666667, 28.020416666666, 9.566250000000"
-  xres_arcsecs: "30"
-  yres_arcsecs: "30"
+  input_dir:
+    comment: "Path to input directory"
+    value: "/tmp/demo/input/weather"
+  temp_dir:
+    comment: "Path to temporary diretory (to store temp files generated)"
+    value: "/tmp/demo/tmp"
+  output_file:
+    comment: "Path to output directory"
+    value: "/tmp/demo/output/climate_all.zip"
+  var_name:
+    comment: "Variable to extract values"
+    value: precipitation
+  bounding_box:
+    comment: "Bounding box of the extracting region"
+    value: "23.995416666666, 6.532916666667, 28.020416666666, 9.566250000000"
+  xres_arcsecs:
+    comment: "Resolution on x axis"
+    value: "30"
+  yres_arcsecs:
+    comment: "Resolution on y axis"
+    value: "30"
 adapters:
   tf_climate:
     comment: My topoflow climate write adapter

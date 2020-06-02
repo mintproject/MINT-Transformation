@@ -1,12 +1,24 @@
 version: "1"
 description: Data transformation to generate TopoFlow-ready precipitation files (RTS) from ISRIC SoilGrids data sources
 inputs:
-  layer: 1
-  input_dir: "/tmp/demo/input/isric_soil"
-  output_file: "/tmp/demo/output/isric_soil.zip"
-  bounding_box: "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999"
-  xres_arcsecs: "30"
-  yres_arcsecs: "30"
+  layer:
+    comment: "Soil layer to be extracted"
+    value: 1
+  input_dir:
+    comment: "Path to input directory"
+    value: "/tmp/demo/input/isric_soil"
+  output_file:
+    comment: "Path to output directory"
+    value: "/tmp/demo/output/isric_soil.zip"
+  bounding_box:
+    comment: "Bounding box of the extracting region"
+    value: "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999"
+  xres_arcsecs:
+    comment: "Resolution on x axis"
+    value: "30"
+  yres_arcsecs:
+    comment: "Resolution on y axis"
+    value: "30"
 adapters:
   tf_soil:
     comment: My topoflow soil write adapter
