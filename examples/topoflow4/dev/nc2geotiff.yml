@@ -6,11 +6,13 @@ adapters:
     adapter: funcs.DcatReadFunc
     inputs:
       # gldas
-      dataset_id: 5babae3f-c468-4e01-862e-8b201468e3b5
+#      dataset_id: 5babae3f-c468-4e01-862e-8b201468e3b5
+      # gpm monthly
+      dataset_id: ea0e86f3-9470-4e7e-a581-df85b4a7075d
       start_time: 2014-08-01 00:00:00
-      end_time: 2014-08-02 00:00:00
+      end_time: 2014-09-01 00:00:00
       lazy_load_enabled: false
-      override_drepr: /home/rook/workspace/mint/MINT-Transformation/examples/topoflow4/dev/gldas.yml
+#      override_drepr: /home/rook/workspace/mint/MINT-Transformation/examples/topoflow4/dev/gldas.yml
   geotiff_writer:
     adapter: funcs.GeoTiffWriteFunc
     inputs:

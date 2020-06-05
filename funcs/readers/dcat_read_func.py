@@ -241,7 +241,7 @@ class DcatReadFunc(IFunc):
         "should_redownload": ArgType.Boolean(optional=True),
         "override_drepr": ArgType.String(optional=True),
     }
-    outputs = {"data": ArgType.DataSet(None)}
+    outputs = {"data": ArgType.DataSet(None), "data_path": ArgType.ListString(optional=True)}
     example = {
         "dataset_id": "ea0e86f3-9470-4e7e-a581-df85b4a7075d",
         "start_time": "2020-03-02T12:30:55",
@@ -319,17 +319,19 @@ class DcatReadFunc(IFunc):
                                                 self.resource_manager.unlink, partial(ShardedClassID, dataset.count)))
                 return {"data": dataset}
         else:
+            # data_path is location of the resources in disk, for pipeline that wants to download the file
             if self.repr_type == 'dataset_repr':
                 resource_id, resource_metadata = list(self.resources.items())[0]
-                return {"data": backend.from_drepr(self.drepr,
-                                                   self.resource_manager.download(resource_id, resource_metadata, self.should_redownload))}
+                resource_file = self.resource_manager.download(resource_id, resource_metadata, self.should_redownload)
+                return {"data": backend.from_drepr(self.drepr, resource_file), "data_path": [resource_file]}
             else:
                 dataset = ShardedBackend(len(self.resources))
+                data_path = []
                 for resource_id, resource_metadata in self.resources.items():
-                    dataset.add(
-                        backend.from_drepr(self.drepr, self.resource_manager.download(resource_id, resource_metadata, self.should_redownload),
-                                           dataset.inject_class_id))
-                return {"data": dataset}
+                    resource_file = self.resource_manager.download(resource_id, resource_metadata, self.should_redownload)
+                    dataset.add(backend.from_drepr(self.drepr, resource_file, dataset.inject_class_id))
+                    data_path.append(data_path)
+                return {"data": dataset, "data_path": data_path}
 
     def __del__(self):
         if not self.lazy_load_enabled:
