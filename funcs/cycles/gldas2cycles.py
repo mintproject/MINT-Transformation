@@ -3,6 +3,7 @@ import math
 import os
 import shutil
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Optional, Dict
 
 import numpy as np
@@ -252,6 +253,7 @@ def gldas2cycles(
         else:
             memoize[(lat_str, lon_str)] = fname
 
+        Path(output_path).mkdir(parents=True, exist_ok=True)
         # fname = "met" + lat_str + "x" + lon_str + ".weather"
         outfp = open(os.path.join(output_path, fname), "w")
         outfp.write("LATITUDE %.2f\n" % (grid_lat))

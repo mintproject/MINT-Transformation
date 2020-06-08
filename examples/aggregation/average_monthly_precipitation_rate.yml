@@ -1,30 +1,48 @@
 version: "1.0"
+description: Data transformation to aggregate monthly precipitation rate from original GLDAS data sources
 inputs:
-  # DataCatalog Dataset ID for GLDAS
-  gldas_dataset_id: 5babae3f-c468-4e01-862e-8b201468e3b5
-  # Operation to be used for aggregation. Values can be ("sum", "average", "count")
-  agg_function: average
-  # Time period for aggregation. Values can be ("minute", "hour", "day", "month", "year")
-  agg_time_period: month
-  # Start time to filter Resources for DataCatalog GLDAS Dataset (can also be "null" to leave this end open)
-  range_start_time: '2011-01-01 00:00:00'
-  # End time to filter Resources for DataCatalog GLDAS Dataset (can also be "null" to leave this end open)
-  range_end_time: '2011-01-02 00:00:00'
-  # ISO 8601 duration string representing the step (or timedelta) to loop from range_start_time to range_end_time.
-  # Value should be such that agg_time_period lies completely in it. Typically should just be ("P1D", "P1M", "P1Y").
-  # "P1D" should be used with agg_time_period ("minute", "hour", "day"), "P1M" with ("month") and "P1Y" with ("year").
-  range_step_time: P1M
-  # GLDAS Standard Variable name for which aggregation is to be performed
-  gldas_variable_name: atmosphere_water__precipitation_mass_flux
-  # Target region bounding box coordinates
-  crop_region_xmin: 32.75418
-  crop_region_ymin: 3.22206
-  crop_region_xmax: 47.98942
-  crop_region_ymax: 15.15943
-  # Target region label
-  crop_region_label: ethiopia
-  # Filename for output CSV
-  csv_output_file: ./data/results/average_monthly_precipitation_rate.csv
+  gldas_dataset_id:
+    comment: DataCatalog Dataset ID for GLDAS
+    value: 5babae3f-c468-4e01-862e-8b201468e3b5
+  agg_function:
+    comment: Operation to be used for aggregation. Values can be ("sum", "average", "count")
+    value: average
+  agg_time_period:
+    comment: Time period for aggregation. Values can be ("minute", "hour", "day", "month", "year")
+    value: month
+  range_start_time:
+    comment: Start time to filter Resources for DataCatalog GLDAS Dataset (can also be "null" to leave this end open)
+    value: '2011-01-01 00:00:00'
+  range_end_time:
+    comment: End time to filter Resources for DataCatalog GLDAS Dataset (can also be "null" to leave this end open)
+    value: '2011-01-02 00:00:00'
+  range_step_time:
+    comment: >-
+      ISO 8601 duration string representing the step (or timedelta) to loop from range_start_time to range_end_time.
+      Value should be such that agg_time_period lies completely in it. Typically should just be ("P1D", "P1M", "P1Y").
+      "P1D" should be used with agg_time_period ("minute", "hour", "day"), "P1M" with ("month") and "P1Y" with ("year").
+    value: P1M
+  gldas_variable_name:
+    comment: GLDAS Standard Variable name for which aggregation is to be performed
+    value: atmosphere_water__precipitation_mass_flux
+  crop_region_xmin:
+    comment: Target region bounding box xmin coordinate
+    value: 32.75418
+  crop_region_ymin:
+    comment: Target region bounding box ymin coordinate
+    value: 3.22206
+  crop_region_xmax:
+    comment: Target region bounding box xmax coordinate
+    value: 47.98942
+  crop_region_ymax:
+    comment: Target region bounding box ymax coordinate
+    value: 15.15943
+  crop_region_label:
+    comment: Target region label
+    value: ethiopia
+  csv_output_file:
+    comment: Filename for output CSV
+    value: ./data/results/average_monthly_precipitation_rate.csv
 adapters:
   gldas_range_stream:
     comment: My gldas range stream adapter

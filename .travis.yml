@@ -1,0 +1,26 @@
+language: generic
+env:
+  matrix:
+  - DOCKER_COMPOSE_VERSION=1.23.2
+  global:
+  - secure: oANEDw4gLmekZj/RnRtUh9Dq2gmhru22w4Nddzo6xF3sVbHopk/Ij+73rjQ2cOted+gB8Sis0jxysvMdo+J0HiD3KNXGvZxsT1iwezXC0Tp7LY3ZehRD/MZ97Bm5cu4wvUL3I3RYmYIzyX6O2v3Xc3O1LCuDj8zl1KOc22oDPe3zVPuXzO1sGkZIYncI7DS1/cia5/UMy589L34yRFtu7kS11tyCgBGfvxn4QbbImyZX+KscWM4I7Y6bgmosyRTjtDoM9uJueSuX/bKwyVinfgfVaYOu1Q3V9cClhjDh3Uos1SkpIdM/c1QIsFD+ImeHMxbaSdpc2Hya4JpNSzSTQLizIO99R46O4bxsvT2PovBNJOPGK/sToLh8UqmMHOiCT/OwefgngqeMGOZlYKtbFt0lQAhQvGClqh8HntwYhFH1RgV/ZPwdkqb6X5C/jOj8szawTeCZ4SbG88KKhbIe5gWyZfQFkl5MQrOppUxAInvTg9RAZMtXUik7T35yjAxBT68N7Q2+2eN8BC+KLK8bonkvDWpG+hBEzByJp8UbmK9n4C4MIe/1mkneD9cSVHQzGyXyRlDv5yyquz7W96o7TU2UYP1SUyj7VnJo5GE1bpm7WvuTau/eBsgKPPZ6PKy9JbuJtu71hrzYnksKXHeh+ysrAvyje15M0+diJnXIBBs=
+  - secure: gqI74FarOtc3HlizcA6/1pOuDz2w75NVCbxTh4jNKrjfFTfwXfquulhdYKpcxM+u9v/gsETMcYHtb7uYMPy9yIPUNhYuOLLX6HvNKXohQ58KCW13IG1lC3hlijzXdSe/LQFID7pqpkLaEXHldCqnXrt3FFkge5zlESTaeBVZjIE7OxZMrLiVpDz1JLtvnZr5qcHQB8pYm4vJCL9JXk72r+01DyPjkl7DWEGTA2nMy8Bvh8hjTjQnmzmwlybVfsh41FCT6P1KViUOgiVFQxpj5l9cqIzxE9aKRIOrgVOBTumXeK46v6rUGMSUvmPD1ptlZwpL+RFkookx3QbMQAPkciW5j5Cxjj2ZigxXg8BsG13ubtAIXkd/3DiAtR7kUS3kZ5CRq79QpZYy7ZWb4LjNFJ+fa6RI+GQzsGcwWyeUkcUcR2IyyVOanha8bv41ZgzihO5QqXgcXWGslmlTog8GM82qZycZDXVVtEeh3mBNLTJCBaTo99gsaaM/ryC+SDkj7u2fn6imQP0HXzTQXgkDwi3wEDfb7WH4KWeBr1IGF3U6KrnxjXvivQL1x7vasZMOdKoN7Z+m2ikbcjrrshSQoYFTM1dYGFmrvIPHoumYDMgFpJRn2oRvudRjLvExNsZa4Gq6N4/2RdDhD8SihxpdIS4wN6jF43EZb9PFHdP3Mnw=
+services:
+- docker
+before_install:
+- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+- sudo rm /usr/local/bin/docker-compose
+- curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname-s`-`uname
+  -m` > docker-compose
+- chmod +x docker-compose
+- sudo mv docker-compose /usr/local/bin
+- docker build -t mint_dt .
+- docker tag mint_dt mintproject/mint_dt:latest
+- docker push mintproject/mint_dt:latest
+deploy:
+  provider: script
+  script: bash .docker-push.sh $TRAVIS_TAG
+  on:
+    tags: true
+    all_branches: true
+  skip_cleanup: true

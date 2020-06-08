@@ -2,9 +2,10 @@
 # August - October 2019
 # See:
 # https://csdms.colorado.edu/wiki/Model_help:TopoFlow-Soil_Properties_Page
-
+import os
 from pathlib import Path
 from typing import Union, Optional, Dict
+from zipfile import ZipFile
 
 import gdal  ## ogr
 import numpy as np
@@ -24,7 +25,7 @@ class Topoflow4SoilWriteFunc(IFunc):
     """
     inputs = {
         "input_dir": ArgType.String,
-        "output_dir": ArgType.FilePath,
+        "output_file": ArgType.FilePath,
         "layer": ArgType.Number,
         "DEM_bounds": ArgType.String,
         "DEM_xres_arcsecs": ArgType.String,
@@ -35,7 +36,7 @@ class Topoflow4SoilWriteFunc(IFunc):
     func_type = IFuncType.MODEL_TRANS
     example = {
         "input_dir": "/ws/oct_eval_data/soilGrids/",
-        "output_dir": "/ws/examples/scotts_transformations/tmp/soil_BARO_l1",
+        "output_file": "/ws/examples/scotts_transformations/tmp/soil_BARO_l1.zip",
         "layer": 5,
         "DEM_bounds": "34.221249999999, 7.362083333332, 36.446249999999, 9.503749999999",
         "DEM_xres_arcsecs": "30",
@@ -45,8 +46,8 @@ class Topoflow4SoilWriteFunc(IFunc):
     def __init__(
         self,
         input_dir: str,
-        output_dir: Union[str, Path],
-        layer: str,
+        output_file: Union[str, Path],
+        layer: int,
         DEM_bounds: str,
         DEM_xres_arcsecs: str,
         DEM_yres_arcsecs: str,
@@ -57,16 +58,27 @@ class Topoflow4SoilWriteFunc(IFunc):
             "yres": float(DEM_yres_arcsecs) / 3600.0,
         }
         self.input_dir = str(input_dir)
-        self.output_dir = str(output_dir)
+        self.output_file = str(output_file)
+
+        self.output_dir = self.output_file.replace(".zip", "")
         self.layer = layer
 
     def exec(self) -> dict:
+        Path(self.output_dir).mkdir(parents=True, exist_ok=True)
+
         save_soil_hydraulic_vars(
             input_dir=self.input_dir,
             output_dir=self.output_dir,
             DEM_info=self.DEM,
-            layer=self.layer,
+            layer=self.layer
         )
+
+        with ZipFile(self.output_file, 'w') as z:
+            for fpath in Path(self.output_dir).iterdir():
+                print(f'Zipping {fpath.name}...')
+
+                z.write(fpath, os.path.basename(fpath.name))
+            print(f"Zipping is complete. Please check {self.output_file}")
         return {}
 
     def validate(self) -> bool:
@@ -90,16 +102,17 @@ def save_soil_hydraulic_vars(input_dir, output_dir, DEM_info: dict, layer=1):
 
     # ---------------------------------
     # Basic soil hydraulic variables
+    base_name = os.path.basename(output_dir)
     # ---------------------------------
-    Ks_file = output_dir + "_2D-Ks.bin"
-    qs_file = output_dir + "_2D-qs.bin"
-    pB_file = output_dir + "_2D-pB.bin"
+    Ks_file = os.path.join(output_dir, base_name + "_2D-Ks.bin")
+    qs_file = os.path.join(output_dir, base_name + "_2D-qs.bin")
+    pB_file = os.path.join(output_dir, base_name + "_2D-pB.bin")
     # -------------------------------------------
     # The transitional Brooks-Corey parameters
     # -------------------------------------------
-    c_file = output_dir + "_2D-c.bin"
-    lam_file = output_dir + "_2D-lam.bin"
-    G_file = output_dir + "_2D-G.bin"
+    c_file = os.path.join(output_dir, base_name + "_2D-c.bin")
+    lam_file = os.path.join(output_dir, base_name + "_2D-lam.bin")
+    G_file = os.path.join(output_dir, base_name +"_2D-G.bin")
     ## eta_file  = output_dir + '_2D-eta.bin'
     # c_file    = output_dir + '_2D-tBC-c.bin'
     # lam_file  = output_dir + '_2D-tBC-lam.bin'
@@ -108,9 +121,10 @@ def save_soil_hydraulic_vars(input_dir, output_dir, DEM_info: dict, layer=1):
     # -------------------------------
     # The van Genuchten parameters
     # -------------------------------
-    a_file = output_dir + "_2D-vG-alpha.bin"
-    n_file = output_dir + "_2D-vG-n.bin"
-    L_file = output_dir + "_2D-vG-L.bin"
+    a_file = os.path.join(output_dir, base_name +"_2D-vG-alpha.bin")
+    n_file = os.path.join(output_dir, base_name + "_2D-vG-n.bin")
+    L_file = os.path.join(output_dir, base_name + "_2D-vG-L.bin")
+
 
     # -------------------------------
     # Write all variables to files
@@ -185,6 +199,8 @@ def save_soil_hydraulic_vars(input_dir, output_dir, DEM_info: dict, layer=1):
             DEM_info["yres"],
             pixel_geom=0,
         )
+
+
 
 
 # -------------------------------------------------------------------

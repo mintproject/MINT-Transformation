@@ -93,7 +93,7 @@ Open URL `http://0.0.0.0:10010` on your browser
 Run image with local mount and port 5000 exposed
 
 ```
-docker run --rm -p 5000:5000 -v $(pwd):/ws -it mint_dt bash
+docker run --rm -p 5000:5000 -v $(pwd):/ws -it --entrypoint=/bin/bash mint_dt
 ```
 
 **Public server**
