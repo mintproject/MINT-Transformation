@@ -1,15 +1,16 @@
+
 #########################################################
 # 1/16/09.  Using the factor "dtor" here looks strange
 #           in meters_per_degree_lon() and
 #           in meters_per_degree_lat()
 #           but seems to be correct.
 #########################################################
-
+        
 ## Copyright (c) 2009-2010, Scott D. Peckham
 ## January 12-16, 2009
 ## May 2010 (changes to unit_test())
 
-# -------------------------------------------------------------------
+#-------------------------------------------------------------------
 #
 #  Functions:
 #
@@ -20,56 +21,56 @@
 #  meters_per_degree_lon()
 #  meters_per_degree_lat()
 #
-# -------------------------------------------------------------------
+#-------------------------------------------------------------------
 
 import numpy as np
 
 from .tf_utils import TF_Print
 
-
-# -------------------------------------------------------------------
+#-------------------------------------------------------------------
 def unit_test():
-    from . import rti_files
 
+    from . import rti_files
+    
     print('Testing meters_per_degree_lon()...')
     MPD_lon = meters_per_degree_lon(0)
     print('meters_per_degree_lon(0)   =', MPD_lon)
     print('meters_per_3_arcsec_lon(0) =', MPD_lon / 1200.0)
     print(' ')
-    # ------------------------------------------------------------
+    #------------------------------------------------------------
     print('Testing meters_per_degree_lat()...')
     MPD_lat = meters_per_degree_lat(0)
     print('meters_per_degree_lat(0)   =', MPD_lat)
     print('meters_per_3_arcsec_lat(0) =', MPD_lat / 1200.0)
     print(' ')
-    # ------------------------------------------------------------
+    #------------------------------------------------------------    
     print('Testing get_da() with KY_Sub (fixed-angle pixels)...')
-    in_directory = '/Applications/RIVIX/RiverTools_3.0/basins/KY_Sub/'
+    in_directory  = '/Applications/RIVIX/RiverTools_3.0/basins/KY_Sub/'
     site_prefix = 'KY_Sub'
-    RTI_file = (in_directory + site_prefix + '.rti')
-    info = rti_files.read_info(RTI_file, REPORT=True)
-    da = get_da(info, REPORT=True, VERBOSE=True)
+    RTI_file    = (in_directory + site_prefix + '.rti')
+    info = rti_files.read_info( RTI_file, REPORT=True )
+    da   = get_da(info, REPORT=True, VERBOSE=True)
     print('da = ')
     print(da)
     print('shape(da) =', shape(da))
     print(' ')
-    # ------------------------------------------------------------
+    #------------------------------------------------------------    
     print('Testing get_da() with Beaver... (fixed-length pixels)')
-    in_directory = '/Applications/RIVIX/RiverTools_3.0/basins/Beaver_Creek_KY/'
+    in_directory  = '/Applications/RIVIX/RiverTools_3.0/basins/Beaver_Creek_KY/'
     site_prefix = 'Beaver'
-    RTI_file = (in_directory + site_prefix + '.rti')
-    info = rti_files.read_info(RTI_file, REPORT=True)
-    da = get_da(info, REPORT=True, VERBOSE=True)
+    RTI_file    = (in_directory + site_prefix + '.rti')
+    info = rti_files.read_info( RTI_file, REPORT=True )
+    da   = get_da(info, REPORT=True, VERBOSE=True)
     print('da = ')
     print(da)
     print('shape(da) =', shape(da))
     print(' ')
-
-
+    
 #   unit_test()                    
-# -------------------------------------------------------------------
+#-------------------------------------------------------------------
 def get_sizes_by_row(rti, REPORT=False, METERS=False):
-    # ----------------------------------------------------------
+
+    #----------------------------------------------------------
     # NOTES: This routine returns the xsize, ysize, diagonal
     #        size and area of pixels, based on the pixel
     #        geometry associated with the current DEM, in
@@ -96,64 +97,64 @@ def get_sizes_by_row(rti, REPORT=False, METERS=False):
     #        NOTE that dd=np.sqrt( dx^2 + dy^2) and da=(dx * dy)
     #        are very good approximations as long as dx and
     #        dy are not too large.
-    # ----------------------------------------------------------
-
-    # -------------------------
+    #----------------------------------------------------------
+    
+    #-------------------------
     # Kilometers or Meters ?
-    # -------------------------
-    if (METERS):
+    #-------------------------
+    if (METERS):  
         ufactor = np.float64(1)
-    else:
+    else:    
         ufactor = np.float64(1000)
-
-    if (rti.pixel_geom == 0):
-        # ---------------
+    
+    if (rti.pixel_geom == 0):    
+        #---------------
         # Compute lats
-        # ---------------
-        DTORD = (np.pi / np.float64(180))
+        #---------------
+        DTORD   = (np.pi / np.float64(180))
         ycoords = np.arange(rti.nrows, dtype='int16')
-        yresdeg = (rti.yres / np.float64(3600))  # (arcsecs -> degrees)
+        yresdeg = (rti.yres / np.float64(3600))    #(arcsecs -> degrees)
         lats = (rti.y_north_edge - (yresdeg * (ycoords + np.float64(1))))
-
-        # ----------------------------------------
+        
+        #----------------------------------------
         # Compute pixel sizes using lats & lons
-        # ----------------------------------------
+        #----------------------------------------
         # NB!  dy becomes a vector !!
         #      Also for (pixel_geom eq 1) below !
-        # ------------------------------------------
-        MPD_LON = meters_per_degree_lon(lats)  # (vector)
-        MPD_LAT = meters_per_degree_lat(lats)  # (vector)
-        dx = (rti.xres / np.float64(3600) * MPD_LON / ufactor)  # (vector)
-        dy = (rti.yres / np.float64(3600) * MPD_LAT / ufactor)  # (vector)
+        #------------------------------------------
+        MPD_LON = meters_per_degree_lon(lats)         #(vector)
+        MPD_LAT = meters_per_degree_lat(lats)         #(vector)
+        dx = (rti.xres / np.float64(3600) * MPD_LON / ufactor)  #(vector)
+        dy = (rti.yres / np.float64(3600) * MPD_LAT / ufactor)  #(vector)
         dd = np.sqrt(dx ** 2 + dy ** 2)
-        da = (dx * dy)
-    else:
-        dx = (rti.xres / ufactor)  # (meters or km)
+        da = (dx * dy)   
+    else:    
+        dx = (rti.xres / ufactor)   #(meters or km)
         dy = (rti.yres / ufactor)
         dd = np.sqrt(dx ** 2 + dy ** 2)
         da = (dx * dy)
-        # -------------------------------
+        #-------------------------------
         # Return dx, dy, etc. as grids
-        # -------------------------------
+        #-------------------------------
         dx = np.zeros([rti.nrows], dtype='float64') + dx
         dy = np.zeros([rti.nrows], dtype='float64') + dy
         dd = np.zeros([rti.nrows], dtype='float64') + dd
         da = np.zeros([rti.nrows], dtype='float64') + da
-
-    # ------------------
+    
+    #------------------
     # Optional report
-    # ------------------
-    if (REPORT):
-        if (rti.pixel_geom == 0):
+    #------------------
+    if (REPORT):    
+        if (rti.pixel_geom == 0):    
             RADEG = (np.float64(180) / np.pi)
-            # ---------------------
+            #---------------------
             print('Pixel geometry = Fixed-angle ')
             print(' ')
             print('Actual south edge lat   = ' + str(rti.y_south_edge))
             print('Computed south edge lat = ' + str(lats[rti.nrows - 1] * RADEG))
             print('Actual north edge lat   = ' + str(rti.y_north_edge))
             print('Computed north edge lat = ' + str((lats[0] + yresdeg) * RADEG))
-        else:
+        else:    
             print('Pixel geometry = Fixed-length ')
             print(' ')
             print('Actual south edge y   = ' + str(rti.y_south_edge))
@@ -167,32 +168,32 @@ def get_sizes_by_row(rti, REPORT=False, METERS=False):
 
     return (dx, dy, dd)
 
-
 #   get_sizes_by_row()
-# -------------------------------------------------------------------
+#-------------------------------------------------------------------
 def get_da(rti, METERS=False, REPORT=False, VERBOSE=False):
-    # ------------------------------------
+    
+    #------------------------------------
     # Pixel dimensions; convert km to m
     # These are planform dimensions.
-    # ---------------------------------------
+    #---------------------------------------
     dx, dy, dd = get_sizes_by_row(rti, METERS=True)
-
-    # -------------------------------------------
+    
+    #-------------------------------------------
     # 7/13/06.  Allow da to be scalar or grid.
     # For speed;  was always grid before.
-    # -------------------------------------------
+    #-------------------------------------------
     if (rti.pixel_geom == 1):
         da = (dx[0] * dy[0])
-
+        
         if (VERBOSE):
             TF_Print('dx = ' + str(dx[0]) + '  [m]')
             TF_Print('dy = ' + str(dy[0]) + '  [m]')
             TF_Print('da = ' + str(da) + '  [m^2]')
     else:
-        # ---------------------------------
+        #---------------------------------
         # Convert da from 1D to 2D array
         # Then subscript with the wk's.
-        # ---------------------------------
+        #---------------------------------
         TF_Print('Computing pixel area grid...')
         nx = rti.ncols
         ny = rti.nrows
@@ -204,10 +205,10 @@ def get_da(rti, METERS=False, REPORT=False, VERBOSE=False):
         da_by_row = (dx * dy)
         da = np.reshape(np.repeat(da_by_row, nx), (ny, nx))
 
-        # ------------------------------------------------------
+        #------------------------------------------------------
         ## This resulted from I2PY and doesn't seem right.
         ## matrixmultiply() was depracated in favor of dot().
-        # ------------------------------------------------------
+        #------------------------------------------------------
         ## self.da = (transpose(matrixmultiply(transpose(repeat(1,nx)), \
         ##                                     transpose(self.da_by_row))))
 
@@ -228,14 +229,14 @@ def get_da(rti, METERS=False, REPORT=False, VERBOSE=False):
 
     return da
 
-
 #   get_da()
-# -------------------------------------------------------------------
+#-------------------------------------------------------------------
 def meters_per_degree_lon(lat_deg,
                           a_radius=np.float64(6378137.0),  # [meters]
                           b_radius=np.float64(6356752.3),  # [meters]
                           mean_elev=np.float64(0)):
-    # ----------------------------------------------------------
+
+    #----------------------------------------------------------
     # NOTES: This formula comes from both:
     #        Snyder, J.P. (1987) Map projections - A working
     #        manual, USGS Prof. Paper 1395, p. 25.
@@ -272,34 +273,34 @@ def meters_per_degree_lon(lat_deg,
     #        For CLARKE_1866 ellipsoid:
     #            a_radius = 6378.2064, b_radius = 6356.5838
     #        Default arguments are for WGS_1984.
-    # -----------------------------------------------------------
-
-    # -------------------------------
+    #-----------------------------------------------------------
+    
+    #-------------------------------
     # Compute flattening ratio, f,
     # and eccentricity, e
-    # -------------------------------
+    #-------------------------------
     f = (a_radius - b_radius) / a_radius
     e = np.sqrt((np.float64(2) * f) - f ** np.float64(2))
-
-    # --------------------
+    
+    #--------------------
     # Compute the value
-    # --------------------
+    #--------------------
     dtor = np.pi / np.float64(180)
     lat_rad = (lat_deg * dtor)
     p1 = mean_elev * np.cos(lat_rad)
     p2 = a_radius * np.cos(lat_rad) / np.sqrt(np.float64(1) - \
-                                              (e * np.sin(lat_rad)) ** np.float64(2))
+                                        (e * np.sin(lat_rad)) ** np.float64(2))
 
     return (dtor * (p1 + p2))
-
-
+    
 #   meters_per_degree_lon()
-# -------------------------------------------------------------------
+#-------------------------------------------------------------------
 def meters_per_degree_lat(lat_deg,
                           a_radius=np.float64(6378137.0),  # [meters]
                           b_radius=np.float64(6356752.3),  # [meters]
                           mean_elev=np.float64(0)):
-    # ----------------------------------------------------------
+
+    #----------------------------------------------------------
     # NOTES: This formula comes from both:
     #        Snyder, J.P. (1987) Map projections - A working
     #        manual, USGS Prof. Paper 1395, p. 25.
@@ -324,24 +325,24 @@ def meters_per_degree_lat(lat_deg,
     #        then R should be replaced by (R + mean_elev).
 
     #        Default arguments are for WGS_1984.
-    # ----------------------------------------------------------
-
-    # -------------------------------
+    #----------------------------------------------------------
+    
+    #-------------------------------
     # Compute flattening ratio, f,
     # and eccentricity, e
-    # -------------------------------
+    #-------------------------------
     f = (a_radius - b_radius) / a_radius
     e = np.sqrt((np.float64(2) * f) - f ** np.float64(2))
-
-    # --------------------
+    
+    #--------------------
     # Compute the value
-    # --------------------
-    dtor = np.pi / np.float64(180)
+    #--------------------
+    dtor    = np.pi / np.float64(180)
     lat_rad = (lat_deg * dtor)
-    p = a_radius * (np.float64(1) - e ** np.float64(2)) / (
-                np.float64(1) - (e * np.sin(lat_rad)) ** np.float64(2)) ** np.float64(1.5)
-
+    p = a_radius * (np.float64(1) - e ** np.float64(2)) / (np.float64(1) - (e * np.sin(lat_rad)) ** np.float64(2)) ** np.float64(1.5)
+       
     return (dtor * (mean_elev + p))
-
+    
 #   meters_per_degree_lat()
-# -------------------------------------------------------------------
+#-------------------------------------------------------------------    
+

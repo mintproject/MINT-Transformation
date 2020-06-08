@@ -135,7 +135,7 @@ import time
 # import wx
 import xml.dom.minidom
 
-from funcs.topoflow.topoflow.framework import time_interpolation    # (time_interpolator class)
+from topoflow.framework import time_interpolation    # (time_interpolator class)
 # from topoflow.framework import unit_conversion  # (unit_convertor class)
 # from topoflow.framework import grid_remapping
 
@@ -1779,7 +1779,7 @@ class framework():
         # erode_test(), or try to run topoflow_test() twice, it will
         # fail with a path problem.  To avoid these problems, we now
         # (9/21/14):
-        # (1) Set CFG directory from CFG file in check_directories()
+        # (1) Set CFG directory from CFG file in set_directories()
         #     in BMI_base.py.
         # (2) Change an "in_directory" read from a CFG file as "." to
         #     the CFG directory from (1).

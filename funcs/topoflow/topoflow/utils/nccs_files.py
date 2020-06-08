@@ -100,13 +100,16 @@ True
 
 """
 
+import os
+import sys
 import time
 
-import netCDF4 as nc
 import numpy as np
-
+from . import bov_files
 from . import file_utils
+from . import rti_files
 
+import netCDF4 as nc
 
 #---------------------------------------------------------------------
 # This class is for I/O of time-indexed 3D arrays to netCDF files.
@@ -226,6 +229,7 @@ class nccs_file():
     #   get_dtype_map()
     #----------------------------------------------------------
     def open_new_file(self, file_name, info=None,
+                      time_info=None,
                       var_name='X',
                       long_name=None,
                       units_name='None',

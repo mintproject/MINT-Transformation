@@ -43,14 +43,17 @@
 
 # from numpy import *    ## ELIMINATE THIS.
 
-import os  # (for os.chdir, in unit_test())
-import os.path
-
 import numpy as np
-from topoflow.components import d8_base
-from topoflow.utils import fill_pits
-from topoflow.utils import rtg_files
 
+import os        # (for os.chdir, in unit_test())
+import os.path
+import platform  # (for get_test_info())
+import sys
+import time
+
+from topoflow.components import d8_base
+from topoflow.utils      import fill_pits
+from topoflow.utils      import rtg_files
 
 #-------------------------------------------
 # For use outside of the TopoFlow package.

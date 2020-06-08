@@ -11,19 +11,19 @@ if not(SILENT):
     # print '   topoflow.gui (unfinished)'
     print(' ')
 
-import funcs.topoflow.topoflow.utils
-import funcs.topoflow.topoflow.utils.tests
+import topoflow.utils
+import topoflow.utils.tests
 #-----------------------------------
-import funcs.topoflow.topoflow.components
-import funcs.topoflow.topoflow.components.tests
+import topoflow.components
+import topoflow.components.tests
 #-----------------------------------
-import funcs.topoflow.topoflow.framework
-import funcs.topoflow.topoflow.framework.tests
+import topoflow.framework
+import topoflow.framework.tests
 
 #------------------------------------------
 # This imports EMELI and prints more info
 #------------------------------------------
-import funcs.topoflow.topoflow.framework.tests.test_framework
+import topoflow.framework.tests.test_framework
 
 #--------------------------------------
 # The Python GUI is not yet finished.

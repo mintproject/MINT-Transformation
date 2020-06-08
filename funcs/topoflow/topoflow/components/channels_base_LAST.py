@@ -129,15 +129,22 @@
 #-----------------------------------------------------------------------
 
 import numpy as np
-# -------------------------------------------------------
-# NOTE:  Do not import "d8_base" itself, it won't work
-# -------------------------------------------------------
-from topoflow.components import d8_global as d8_base  # (11/11/16)
+import os, os.path
+
 from topoflow.utils import BMI_base
+from topoflow.utils import file_utils  ###
 from topoflow.utils import model_input
 from topoflow.utils import model_output
+from topoflow.utils import ncgs_files  ###
+from topoflow.utils import ncts_files  ###
+from topoflow.utils import rtg_files   ###
+from topoflow.utils import text_ts_files   ###
+from topoflow.utils import tf_utils
 
-
+#-------------------------------------------------------
+# NOTE:  Do not import "d8_base" itself, it won't work
+#-------------------------------------------------------
+from topoflow.components import d8_global as d8_base    # (11/11/16)
 ## from topoflow.utils import tf_d8_base as d8_base
 
 #-----------------------------------------------------------------------

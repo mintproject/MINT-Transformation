@@ -52,7 +52,7 @@ import numpy as np
 from topoflow.components import infil_base
 
 from topoflow.utils import model_input
-
+from topoflow.utils.tf_utils import TF_Print, TF_String
 
 #-----------------------------------------------------------------------
 class infil_component( infil_base.infil_component ):
@@ -100,6 +100,7 @@ class infil_component( infil_base.infil_component ):
         'soil_surface_water__domain_time_integral_of_infiltration_volume_flux', # vol_IN
         'soil_surface_water__infiltration_volume_flux',                       # IN
         'soil_surface_water__time_integral_of_infiltration_volume_flux',      # I
+        'soil_water__domain_time_integral_of_volume_fraction',  # vol_soil       
         'soil_water__green-ampt_capillary_length',         # G
         'soil_water__potential_infiltration_volume_flux',  # fc
         'soil_water__initial_hydraulic_conductivity',      # Ki
@@ -108,7 +109,8 @@ class infil_component( infil_base.infil_component ):
         'soil_water__saturated_volume_fraction',           # qs
         'soil_water_flow__z_component_of_darcy_velocity',  # v
         'soil_water_sat-zone_top__domain_time_integral_of_recharge_volume_flux',  # vol_Rg
-        'soil_water_sat-zone_top__recharge_volume_flux' ]  # Rg
+        'soil_water_sat-zone_top__recharge_volume_flux']   # Rg
+
 
     _var_name_map = {
         'atmosphere_water__rainfall_volume_flux':          'P_rain',   
@@ -123,6 +125,7 @@ class infil_component( infil_base.infil_component ):
         'soil_surface_water__domain_time_integral_of_infiltration_volume_flux': 'vol_IN',
         'soil_surface_water__infiltration_volume_flux':    'IN',
         'soil_surface_water__time_integral_of_infiltration_volume_flux': 'I',
+        'soil_water__domain_time_integral_of_volume_fraction': 'vol_soil',  
         'soil_water__green-ampt_capillary_length':         'G',
         'soil_water__initial_hydraulic_conductivity':      'Ki',
         'soil_water__initial_volume_fraction':             'qi',
@@ -146,6 +149,7 @@ class infil_component( infil_base.infil_component ):
         'soil_surface_water__domain_time_integral_of_infiltration_volume_flux': 'm3',
         'soil_surface_water__infiltration_volume_flux': 'm s-1',
         'soil_surface_water__time_integral_of_infiltration_volume_flux': 'm',
+        'soil_water__domain_time_integral_of_volume_fraction': 'm3',  
         'soil_water__green-ampt_capillary_length': 'm',
         'soil_water__initial_hydraulic_conductivity': 'm s-1',
         'soil_water__initial_volume_fraction': '1',
@@ -308,7 +312,12 @@ class infil_component( infil_base.infil_component ):
                          self.is_scalar('C[0]')  ])
 
         self.ALL_SCALARS = np.all(are_scalars)
-        
+
+        #----------------------------------------
+        # Use the same profile for all pixels ?
+        #----------------------------------------
+        self.SINGLE_PROFILE = self.ALL_SCALARS
+       
     #   check_input_types()
     #-------------------------------------------------------------------
     def initialize_computed_vars(self):
@@ -321,9 +330,11 @@ class infil_component( infil_base.infil_component ):
         #       so IN will be a grid.
         #       z, h and IN must be compatible.
         #-----------------------------------------------------------
-        self.vol_IN = self.initialize_scalar( 0, dtype='float64')
-        self.vol_Rg = self.initialize_scalar( 0, dtype='float64')
-        
+        self.vol_IN   = self.initialize_scalar( 0, dtype='float64')
+        self.vol_v0   = self.initialize_scalar( 0, dtype='float64')
+        self.vol_Rg   = self.initialize_scalar( 0, dtype='float64')
+        self.vol_soil = self.initialize_scalar( 0, dtype='float64')
+                
         if (self.ALL_SCALARS):
             #-----------------------------------------------------
             # Note: "I" is initialized to 1e-6 to avoid a divide
@@ -331,6 +342,7 @@ class infil_component( infil_base.infil_component ):
             #       have a singularity at the origin.
             #-----------------------------------------------------
             self.IN     = self.initialize_scalar( 0,    dtype='float64')
+            self.v0     = self.initialize_scalar( 0,    dtype='float64')
             self.Rg     = self.initialize_scalar( 0,    dtype='float64') 
             self.I      = self.initialize_scalar( 1e-6, dtype='float64')
             self.tp     = self.initialize_scalar( -1,   dtype='float64')
@@ -338,6 +350,7 @@ class infil_component( infil_base.infil_component ):
             # self.r_last = self.initialize_scalar( 0,  dtype='float64') # (P+SM at prev step)
         else:
             self.IN     = self.initialize_grid( 0,    dtype='float64')
+            self.v0     = self.initialize_grid( 0,    dtype='float64')
             self.Rg     = self.initialize_grid( 0,    dtype='float64')
             self.I      = self.initialize_grid( 1e-6, dtype='float64')
             self.tp     = self.initialize_grid( -1,   dtype='float64')
@@ -385,11 +398,11 @@ class infil_component( infil_base.infil_component ):
         self.C_unit   = []
 
         for k in range(self.n_layers):
-            self.Ks_file[k] = self.in_directory + self.Ks_file[k]
-            self.qs_file[k] = self.in_directory + self.qs_file[k]
-            self.qi_file[k] = self.in_directory + self.qi_file[k]
-            self.f_file[k]  = self.in_directory + self.f_file[k]
-            self.C_file[k]  = self.in_directory + self.C_file[k]
+            self.Ks_file[k] = self.soil_directory + self.Ks_file[k]
+            self.qs_file[k] = self.soil_directory + self.qs_file[k]
+            self.qi_file[k] = self.soil_directory + self.qi_file[k]
+            self.f_file[k]  = self.soil_directory + self.f_file[k]
+            self.C_file[k]  = self.soil_directory + self.C_file[k]
 
             self.Ks_unit.append( model_input.open_file(self.Ks_type[k], self.Ks_file[k]) )
             self.qs_unit.append( model_input.open_file(self.qs_type[k], self.qs_file[k]) )
@@ -529,7 +542,8 @@ def Beven_Exp_K_Infil_Rate_v1(self):
     #-----------------------------------------------
     self.fc = fc
     self.IN = np.minimum(fc, self.P_total)
-    
+    self.v0 = np.minimum(fc, self.P_total)    ######## FIX LATER
+
     #-------------------------------------
     # Is P_total less than Ks anywhere ?
     # If so, set IN = P_total there.

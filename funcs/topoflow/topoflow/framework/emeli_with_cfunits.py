@@ -127,6 +127,7 @@
 #
 #-----------------------------------------------------------------------
 
+import numpy as np
 import os
 # import sys
 import time
@@ -134,19 +135,21 @@ import time
 # import wx
 import xml.dom.minidom
 
-import numpy as np
-# --------------------------------------------------------------
+from topoflow.framework import time_interpolation    # (time_interpolator class)
+# from topoflow.framework import unit_conversion  # (unit_convertor class)
+# from topoflow.framework import grid_remapping
+
+# import OrderedDict_backport  # (for Python 2.4 to 2.7)
+
+#--------------------------------------------------------------
 # Load the unit conversion package.
 # This requires installing UDUnits2.2 on your Mac first, e.g.
 #     brew install udunits
 # and then installing the Python API package: cfunits
-# --------------------------------------------------------------
+#--------------------------------------------------------------
 from cfunits import Units
-from topoflow.framework import time_interpolation  # (time_interpolator class)
 
-# from topoflow.framework import unit_conversion  # (unit_convertor class)
-# from topoflow.framework import grid_remapping
-# import OrderedDict_backport  # (for Python 2.4 to 2.7)
+import sys    #### for testing
 
 #-----------------------------------------------------------------------
 # Embed some path info directly into EMELI.
@@ -1764,7 +1767,7 @@ class framework():
         # erode_test(), or try to run topoflow_test() twice, it will
         # fail with a path problem.  To avoid these problems, we now
         # (9/21/14):
-        # (1) Set CFG directory from CFG file in check_directories()
+        # (1) Set CFG directory from CFG file in set_directories()
         #     in BMI_base.py.
         # (2) Change an "in_directory" read from a CFG file as "." to
         #     the CFG directory from (1).

@@ -4,15 +4,13 @@
 #   Author:   Dr. Scott D. Peckham, INSTAAR, Univ. of Colorado
 #   Created:  August 14, 2008
 
+from numpy import *
+import numpy
 import os
 import os.path
-import platform
 import re
-
-import numpy
-from numpy import *
-
-
+import platform
+ 
 #------------------------------------------
 #  Define the "bunch" class for structures
 #----------------------------------------------

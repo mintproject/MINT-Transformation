@@ -2,8 +2,14 @@ import glob
 import os
 
 from funcs.gdal.raster import Raster, BoundingBox
-from topoflow.utils import regrid
-from topoflow.utils import import_grid
+
+try:
+    from topoflow.utils import regrid
+    from topoflow.utils import import_grid
+except ModuleNotFoundError:
+    from .topoflow.utils import regrid
+    from .topoflow.utils import import_grid
+
 from tqdm.auto import tqdm
 
 from multiprocessing import Pool

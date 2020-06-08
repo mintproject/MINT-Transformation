@@ -19,7 +19,7 @@ class GeoTiffWriteFunc(IFunc):
         "output_dir": ArgType.String,
     }
     outputs = {
-        "output_files": ArgType.String
+        "output_files": ArgType.ListString
     }
 
     def __init__(self, dataset: BaseOutputSM, variable_name: str, output_dir: Union[str, Path]):
@@ -27,17 +27,20 @@ class GeoTiffWriteFunc(IFunc):
         self.variable_name = variable_name
         self.output_dir = os.path.abspath(str(output_dir))
 
+        if not os.path.exists(self.output_dir):
+            Path(self.output_dir).mkdir(exist_ok=True, parents=True)
+
     def exec(self):
         rasters = CroppingTransFunc.extract_raster(self.dataset, self.variable_name)
         rasters = sorted(rasters, key=lambda x: x['timestamp'])
-        names = [
-            datetime.fromtimestamp(raster['timestamp'], tz=timezone.utc).strftime(f"%Y%m%d%H%M%S.{i}.tif")
+        outfiles = [
+            os.path.join(self.output_dir, datetime.fromtimestamp(raster['timestamp'], tz=timezone.utc).strftime(f"%Y%m%d%H%M%S.{i}.tif"))
             for i, raster in enumerate(rasters)
         ]
-        for name, raster in zip(names, rasters):
-            raster['raster'].to_geotiff(os.path.join(self.output_dir, name))
+        for outfile, raster in zip(outfiles, rasters):
+            raster['raster'].to_geotiff(outfile)
 
-        return { "output_files": os.path.join(self.output_dir, "*.tif") }
+        return {"output_files": outfiles}
 
     def validate(self) -> bool:
         return True
