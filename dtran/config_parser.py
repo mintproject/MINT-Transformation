@@ -82,7 +82,7 @@ class PipelineSchema(Schema):
             try:
                 mod = import_module(mod)
             except Exception as e:
-                raise ValidationError([str(e), f"could not import adapter {adapter['adapter']} for {name}"])
+                raise ValidationError([str(e), f"could not import adapter {adapter['adapter']} for {name}"]) from e
             try:
                 cls = getattr(mod, cls[0])
             except AttributeError as e:

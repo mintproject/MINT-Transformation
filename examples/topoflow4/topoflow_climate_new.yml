@@ -9,7 +9,7 @@ inputs:
     value: 2014-08-01 00:00:00
   end_time:
     comment: End time of resources (inclusive - if you are downloading GLDAS, it won't include the resource with timestamp 2014-09-01 00:00:00 as its end time is 2014-09-01 03:00:00)
-    value: 2014-09-01 00:00:00
+    value: 2014-08-02 00:00:00
   var_name:
     comment: Variable to extract values
     value: atmosphere_water__rainfall_mass_flux
@@ -50,7 +50,7 @@ adapters:
       variable_name: $$.var_name
       output_dir: $$.tmp_dir_geotiff
   tf_trans:
-    adapter: funcs.topoflow.topoflow_climate.Topoflow4ClimateWriteFunc
+    adapter: funcs.topoflow.topoflow_climate.Topoflow4ClimateWriteWrapperFunc
     inputs:
       geotiff_files: $.geotiff_writer.output_files
       cropped_geotiff_dir: $$.tmp_dir_cropped_geotiff
