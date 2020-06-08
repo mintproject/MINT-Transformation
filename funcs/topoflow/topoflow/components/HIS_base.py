@@ -39,16 +39,18 @@
 
 #-----------------------------------------------------------------------
 
-import socket  # (to get hostname)
-import sys
-
 import numpy as np
+
+import os
+import socket          # (to get hostname)
 import suds.client
-from topoflow.utils import BMI_base
-from topoflow.utils import model_output
-
-
+import sys
+import urllib.request, urllib.parse, urllib.error
 # import urllib2
+
+from topoflow.utils import BMI_base
+from topoflow.utils import model_input
+from topoflow.utils import model_output
 
 #-----------------------------------------------------------------------
 class HIS_component(BMI_base.BMI_component):
@@ -263,7 +265,7 @@ class HIS_component(BMI_base.BMI_component):
         #-----------------------------------------------
         self.set_constants()
         self.initialize_config_vars()
-        self.read_grid_info()
+        ## self.read_grid_info()    # NOW IN initialize_config_vars()
         # self.initialize_basin_vars()
         self.initialize_time_vars()
         self.dt = 1.0      # (Needed for final report.)

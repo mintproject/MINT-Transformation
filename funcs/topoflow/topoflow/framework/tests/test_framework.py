@@ -10,7 +10,7 @@ import tempfile
 # See:  http://docs.python.org/2/library/tempfile.html
 
 from funcs.topoflow.topoflow.framework import emeli  ###########
-## from topoflow.utils import tf_utils
+## from funcs.topoflow.topoflow.utils import tf_utils
 
 #-----------------------------------------------------------------------
 #

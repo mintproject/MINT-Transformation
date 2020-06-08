@@ -1,10 +1,13 @@
 
-## See "d_bankfull" in update_flow_depth()  ######## (2/21/13)
+# See "d_bankfull" in update_flow_depth()  ######## (2/21/13)
+# NB!   update_diversion() is currently COMMENTED OUT.
+# See "(5/13/10)" for a temporary fix.
 
-## See "(5/13/10)" for a temporary fix.
 #------------------------------------------------------------------------
-#  Copyright (c) 2001-2019, Scott D. Peckham
+#  Copyright (c) 2001-2020, Scott D. Peckham
 #
+#  Apr 2020.  Added set_new_defaults(), disable_all_output().
+#  Oct 2019.  Added FLOOD_OPTION and CHECK_STABILITY flags.
 #  Sep 2014.  Wrote new update_diversions().
 #             New standard names and BMI updates and testing.
 #  Nov 2013.  Converted TopoFlow to a Python package.
@@ -65,6 +68,7 @@
 #      get_var_units()           # (5/15/12)
 #-----------------------------
 #      set_constants()
+#      set_missing_cfg_options()   # (4/29/20)
 #      initialize()
 #      update()
 #      finalize()
@@ -113,6 +117,7 @@
 #----------------------------------
 #      update_outfile_names()
 #      bundle_output_files()        # (9/21/14. Not used yet)
+#      disable_all_output()         # (04/29/20)
 #      open_output_files()
 #      write_output_files()
 #      close_output_files()
@@ -131,18 +136,24 @@
     
 #-----------------------------------------------------------------------
 
+import numpy as np
+import os, os.path
 import copy
 
-import numpy as np
-# -------------------------------------------------------
-# NOTE:  Do not import "d8_base" itself, it won't work
-# -------------------------------------------------------
-from topoflow.components import d8_global as d8_base  # (11/11/16)
 from topoflow.utils import BMI_base
+from topoflow.utils import file_utils  ###
 from topoflow.utils import model_input
 from topoflow.utils import model_output
+from topoflow.utils import ncgs_files  ###
+from topoflow.utils import ncts_files  ###
+from topoflow.utils import rtg_files   ###
+from topoflow.utils import text_ts_files   ###
+from topoflow.utils import tf_utils
 
-
+#-------------------------------------------------------
+# NOTE:  Do not import "d8_base" itself, it won't work
+#-------------------------------------------------------
+from topoflow.components import d8_global as d8_base    # (11/11/16)
 ## from topoflow.utils import tf_d8_base as d8_base
 
 #-----------------------------------------------------------------------
@@ -232,7 +243,7 @@ class channels_component( BMI_base.BMI_component ):
         'channel_x-section_trapezoid_bottom__width',               # width
         'channel_x-section_trapezoid_side__flare_angle',           # angle
         #######   Next one added for flooding:  2019-09-16.  ########
-        'land_surface_water__depth',                               # d_flood
+        'land_surface_water__depth',                               # df
         'land_surface_water__runoff_volume_flux',                  # R  
         'land_surface_water__domain_time_integral_of_runoff_volume_flux', # vol_R   
         'model__time_step',                                        # dt
@@ -254,9 +265,9 @@ class channels_component( BMI_base.BMI_component ):
         'channel_x-section_trapezoid_bottom__width',               # width
         'channel_x-section_trapezoid_side__flare_angle',           # angle
         # Next two vars can be obtained from d8 component.
-#         'land_surface__elevation',                                 # DEM
-#         'land_surface__slope',                                     # S_bed
-        'land_surface_water__depth' ]                              # d_flood
+#         'land_surface__elevation',                                # DEM
+#         'land_surface__slope',                                    # S_bed
+        'land_surface_water__depth' ]                               # df
             
     _var_name_map = {
         'atmosphere_water__rainfall_volume_flux':              'P_rain',
@@ -315,7 +326,7 @@ class channels_component( BMI_base.BMI_component ):
         ## 'channel_water_x-section_top__width':                   # (not used)
         'channel_x-section_trapezoid_bottom__width':               'width',   ####
         'channel_x-section_trapezoid_side__flare_angle':           'angle',   ####
-        'land_surface_water__depth':                               'd_flood',
+        'land_surface_water__depth':                               'df',
         'land_surface_water__domain_time_integral_of_runoff_volume_flux': 'vol_R',
         'land_surface_water__runoff_volume_flux':                  'R',
         'model__time_step':                                        'dt',
@@ -340,14 +351,6 @@ class channels_component( BMI_base.BMI_component ):
         'network_channel_water__volume':                'vol_chan',
         'land_surface_water__area_integral_of_depth':   'vol_land' }
         #####################################
-
-
-    #------------------------------------------------
-    # Create an "inverse var name map"
-    # inv_map = dict(zip(map.values(), map.keys()))
-    #------------------------------------------------
-##    _long_name_map = dict( zip(_var_name_map.values(),
-##                               _var_name_map.keys() ) )
 
     _var_units_map = {
         'atmosphere_water__rainfall_volume_flux':              'm s-1',
@@ -499,6 +502,36 @@ class channels_component( BMI_base.BMI_component ):
     
     #   set_constants()
     #-------------------------------------------------------------------
+    def set_missing_cfg_options(self):    
+
+        #------------------------------------------------------
+        # (2019-10-08) Added CHECK_STABILITY flag to CFG file
+        # so stability check be turned off to increase speed.
+        #------------------------------------------------------
+        if not(hasattr(self, 'CHECK_STABILITY')):
+            self.CHECK_STABILITY = True
+             
+        #--------------------------------------------------------------        
+        # (2019-10-03) Added FLOOD_OPTION flag to CFG file.
+        # If not(FLOOD_OPTION), don't write flood depths (all zeros).
+        #--------------------------------------------------------------
+        if not(hasattr(self, 'FLOOD_OPTION')):
+            self.FLOOD_OPTION   = False
+            self.SAVE_DF_GRIDS  = False
+            self.SAVE_DF_PIXELS = False
+
+        #--------------------------------------------- 
+        # Also new in 2019, not in older CFG files
+        # Not used then, but still need to be set.
+        # Need to be set if FLOOD_OPTION is False ??
+        #---------------------------------------------
+        if not(hasattr(self, 'd_bankfull_type')):
+            self.d_bankfull_type = 'Scalar'  # or Grid
+            self.d_bankfull = 10.0  # [meters]
+            self.d_bankfull_file = ''
+
+    #   set_missing_cfg_options()
+    #-------------------------------------------------------------------
     def initialize(self, cfg_file=None, mode="nondriver", SILENT=False): 
 
         if not(SILENT):
@@ -512,34 +545,24 @@ class channels_component( BMI_base.BMI_component ):
         #-----------------------------------------------
         # Load component parameters from a config file
         #-----------------------------------------------
-        self.set_constants()           # (12/7/09)
-        #--------------------------------------------------------
+        self.set_constants()       # (12/7/09)
         # print 'CHANNELS calling initialize_config_vars()...'
         self.initialize_config_vars()
+        self.set_missing_cfg_options()  # (2020-04-29)
 
-        #--------------------------------------------------------------        
-        # (2019-10-03) Added FLOOD_OPTION flag to CFG file.
-        # If not(FLOOD_OPTION), don't write flood depths (all zeros).
-        #--------------------------------------------------------------
-        if not(hasattr(self, 'FLOOD_OPTION')):
-            self.FLOOD_OPTION = False
+        # New option, see set_new_defaults().
         if not(self.FLOOD_OPTION):
-            self.SAVE_DF_GRIDS  = False
+            self.SAVE_DF_GRIDS  = False  # (still needed here)
             self.SAVE_DF_PIXELS = False
-            self.df_gs_file = ''
-            self.df_ts_file = ''
-
-        #------------------------------------------------------
-        # (2019-10-08) Added CHECK_STABILITY flag to CFG file
-        #------------------------------------------------------
-        if not(hasattr(self, 'CHECK_STABILITY')):
-             self.CHECK_STABILITY = True
+            self.d_flood_gs_file = ''
+            self.d_flood_ts_file = ''
 
         #------------------------------------------------------------
         # Must call read_grid_info() after initialize_config_vars()
         #------------------------------------------------------------
         # print 'CHANNELS calling read_grid_info()...'
-        self.read_grid_info()
+        #### self.read_grid_info()    # NOW IN initialize_config_vars()
+
         #------------------------------------------------------------
         #print 'CHANNELS calling initialize_basin_vars()...'
         self.initialize_basin_vars()  # (5/14/10)
@@ -555,8 +578,7 @@ class channels_component( BMI_base.BMI_component ):
         if (self.comp_status == 'Disabled'):
             if not(SILENT):
                 print('Channels component: Disabled in CFG file.')
-            self.SAVE_Q_GRIDS  = False   # (It is True by default.)
-            self.SAVE_Q_PIXELS = False   # (It is True by default.)
+            self.disable_all_output()   # (04/29/2020)
             self.DONE = True
             self.status = 'initialized'  # (OpenMI 2.0 convention) 
             return
@@ -565,6 +587,13 @@ class channels_component( BMI_base.BMI_component ):
 ##        print 'min(d0), max(d0) =', self.d0.min(), self.d0.max()
 ##        print '################################################'
 
+        #--------------------------------------------------------
+        # Since only Grid type is allowed, these are not set in
+        # the CFG file, but need to be defined for next part.
+        #--------------------------------------------------------
+        self.code_type  = 'Grid'  # (may not need this one)
+        self.slope_type = 'Grid'
+        
         ##################################################################
         # Move this block into new: "initialize_input_file_vars()"  ???
         #---------------------------------------------------
@@ -615,6 +644,14 @@ class channels_component( BMI_base.BMI_component ):
         print('CHANNELS calling read_input_files()...')
         self.read_input_files()
 
+        #--------------------------------------------
+        # Set any input variables that are computed
+        #--------------------------------------------------
+        # NOTE:  Must be called AFTER read_input_files().
+        #--------------------------------------------------
+        print('CHANNELS calling set_computed_input_vars()...')
+        self.set_computed_input_vars()
+        
         #-----------------------
         # Initialize variables
         #-----------------------
@@ -626,8 +663,7 @@ class channels_component( BMI_base.BMI_component ):
         #--------------------------------------------------
         # (5/12/10) I think this is obsolete now.
         #--------------------------------------------------
-        # Make sure self.Q_ts_file is not NULL (12/22/05)
-        
+        # Make sure self.Q_ts_file is not NULL (12/22/05)  
         # This is only output file that is set by default
         # and is still NULL if user hasn't opened the
         # output var dialog for the channel process.
@@ -642,6 +678,9 @@ class channels_component( BMI_base.BMI_component ):
     #-------------------------------------------------------------------
     def update(self, dt=-1.0):
 
+        ## DEBUG = True
+        DEBUG = False
+        
         #---------------------------------------------
         # Note that u and d from previous time step
         # must be used on RHS of the equations here.
@@ -659,10 +698,19 @@ class channels_component( BMI_base.BMI_component ):
 
         # For testing (5/19/12)
         # self.print_time_and_value(self.Q_outlet, 'Q_out', '[m^3/s]  CHANNEL')
-            
-        ## DEBUG = True
-        DEBUG = False
- 
+
+        #-------------------------------------------
+        # Read from files as needed to update vars 
+        #-----------------------------------------------------
+        # NB! This is currently not needed for the "channel
+        # process" because values don't change over time and
+        # read_input_files() is called by initialize().
+        # NB! read_input_files() is called in initialize().
+        #-----------------------------------------------------
+        # if (self.time_index > 0):
+        #     if (DEBUG): print('#### Calling read_input_files()...')
+        #     self.read_input_files()
+        
         #-------------------------
         # Update computed values
         #-------------------------
@@ -756,16 +804,6 @@ class channels_component( BMI_base.BMI_component ):
         else:
             OK = True
 
-        #-------------------------------------------
-        # Read from files as needed to update vars 
-        #-----------------------------------------------------
-        # NB! This is currently not needed for the "channel
-        # process" because values don't change over time and
-        # read_input_files() is called by initialize().
-        #-----------------------------------------------------
-        # if (self.time_index > 0):
-        #     self.read_input_files()
-
         #----------------------------------------------
         # Write user-specified data to output files ?
         #----------------------------------------------
@@ -800,6 +838,7 @@ class channels_component( BMI_base.BMI_component ):
         #---------------------------------------------------
         self.update_total_channel_water_volume()  ## (9/17/19)
         self.update_total_land_water_volume()     ## (9/17/19)
+        ## self.update_total_edge_water_volume()     ## (5/7/20)
         self.update_mins_and_maxes( REPORT=False )  ## (2/6/13)
         self.print_final_report(comp_name='Channels component')
         
@@ -856,12 +895,22 @@ class channels_component( BMI_base.BMI_component ):
         # uses case_prefix (vs. site_prefix) for its CFG file:
         # <site_prefix>_d8_global.cfg.  This is to prevent confusion
         # since this was the only CFG file that used site_prefix.
-        #-------------------------------------------------------------    
-        self.d8.site_prefix  = self.site_prefix
-        self.d8.case_prefix  = self.case_prefix   # (used in d8_base.py)
-        self.d8.in_directory = self.in_directory
-        self.d8.initialize( cfg_file=None, SILENT=self.SILENT, \
-                            REPORT=self.REPORT )
+        #-------------------------------------------------------------
+        # Note:  This D8 component is serving a channels component
+        #        that has already been instantiated and knows its
+        #        directory and prefix information.  So we can build
+        #        the correct D8 cfg_file name from that info.  It
+        #        will then read path_info CFG file to get other info.
+        #-------------------------------------------------------------
+        cfg_file = (self.case_prefix + '_d8_global.cfg')
+        cfg_file = (self.cfg_directory + cfg_file)
+        self.d8.initialize( cfg_file=cfg_file, SILENT=self.SILENT, \
+                            REPORT=self.REPORT )                   
+#         self.d8.site_prefix  = self.site_prefix
+#         self.d8.case_prefix  = self.case_prefix   # (used in d8_base.py)
+#         self.d8.in_directory = self.in_directory
+#         self.d8.initialize( cfg_file=None, SILENT=self.SILENT, \
+#                             REPORT=self.REPORT )
         
         #---------------------------------------------------
         # The next 2 "update" calls are needed when we use
@@ -986,6 +1035,8 @@ class channels_component( BMI_base.BMI_component ):
         ### S_bed = (S_bed / self.sinu)     #*************
         self.slope = (self.slope / self.sinu)
         self.S_bed  = self.slope
+        self.S_free = self.S_bed.copy()  # (2020-04-29)
+
         ###################################################
         ###################################################
         
@@ -1086,7 +1137,7 @@ class channels_component( BMI_base.BMI_component ):
         Ac_bankfull       = self.d_bankfull * (self.width + L3)
         self.vol_bankfull = Ac_bankfull * self.d8.ds
         self.vol_flood = self.initialize_grid( 0, dtype='float64') 
-                
+
         #-------------------------------------------------------        
         # Note: depth is often zero at the start of a run, and
         # both width and then P_wet are also zero in places.
@@ -2003,8 +2054,8 @@ class channels_component( BMI_base.BMI_component ):
         # free-surface gradient (DEM + d_flood), we should not
         # set it to zero at interior noflow_IDs.
         #-----------------------------------------------------------
-        ## d_flood[ self.d8.noflow_IDs ] = 0.0     
-        d_flood[ self.d8.edge_IDs ] = 0.0      
+        d_flood[ self.d8.noflow_IDs ] = 0.0     
+        ## d_flood[ self.d8.edge_IDs ] = 0.0      
         self.d_flood[:] = d_flood   # write in place 
 
     #   update_flood_depth()
@@ -2327,6 +2378,10 @@ class channels_component( BMI_base.BMI_component ):
     #-------------------------------------------------------------
     def update_peak_values(self):
 
+        #-------------------------------------------
+        # Using "fill" saves new values "in-place"
+        # and preserves "mutable scalars".
+        #-------------------------------------------
         if (self.Q_outlet > self.Q_peak):    
             self.Q_peak.fill( self.Q_outlet )
             self.T_peak.fill( self.time_min )      # (time to peak)
@@ -2361,7 +2416,7 @@ class channels_component( BMI_base.BMI_component ):
         #--------------------------------------------------------
         self.vol_Q += (self.Q_outlet * self.dt)  ## 5/19/12.
         ## self.vol_Q += (self.Q[self.outlet_ID] * self.dt)
-        
+
     #   update_Q_out_integral()
     #-------------------------------------------------------------
     def update_mins_and_maxes(self, REPORT=False):
@@ -2468,6 +2523,13 @@ class channels_component( BMI_base.BMI_component ):
         #        in the final mass balance reporting.
         #        (2019-09-17)
         #----------------------------------------------------
+        # Note:  This should be called from finalize().
+        #----------------------------------------------------
+        vol = self.vol
+        vol[ self.d8.noflow_IDs ] = 0.0
+        ## vol[ self.d8.edge_IDs ]   = 0.0       
+        vol_chan = np.sum( vol )
+        self.vol_chan.fill( vol_chan )
 
         #-------------------------------------
         # Exclude values on edges of the DEM?
@@ -2476,10 +2538,6 @@ class channels_component( BMI_base.BMI_component ):
 #         ny = self.ny
 #         vol = self.vol[1:(ny - 2)+1,1:(nx - 2)+1].min()
 
-        vol = self.vol
-        vol_chan = np.sum( vol )
-        self.vol_chan.fill( vol_chan )   
-        
     #   update_total_channel_water_volume()
     #-------------------------------------------------------------
     def update_total_land_water_volume(self, REPORT=False):
@@ -2808,26 +2866,32 @@ class channels_component( BMI_base.BMI_component ):
     #-------------------------------------------------------------------  
     def open_input_files(self):
 
-        # This doesn't work, because file_unit doesn't get full path. (10/28/11)
-        # start_dir = os.getcwd()
-        # os.chdir( self.in_directory )
+        #------------------------------------------------------
+        # This method uses prepend_directory() in BMI_base.py
+        # which uses both eval and exec.
+        #------------------------------------------------------
+#         in_files = ['slope_file', 'nval_file', 'z0val_file',
+#                     'width_file', 'angle_file', 'sinu_file',
+#                     'd0_file', 'd_bankfull_file' ]
+#         self.prepend_directory( in_files, INPUT=True )
 
-        # print '### start_dir =', start_dir
-        # print '### in_directory =', self.in_directory
+        #------------------------------------------------------
+        # This avoids eval/exec, but is brute-force
+        # 2020-05-03. Changed in_directory to topo_directory.
+        # See set_directories() in BMI_base.py.
+        #------------------------------------------------------
+        self.slope_file = (self.topo_directory + self.slope_file)
+        self.nval_file  = (self.topo_directory + self.nval_file)
+        self.z0val_file = (self.topo_directory + self.z0val_file)        
+        self.width_file = (self.topo_directory + self.width_file)
+        self.angle_file = (self.topo_directory + self.angle_file)
+        self.sinu_file  = (self.topo_directory + self.sinu_file) 
+        self.d0_file    = (self.topo_directory + self.d0_file)
+        self.d_bankfull_file = (self.topo_directory + self.d_bankfull_file) 
 
-        in_files = ['slope_file', 'nval_file', 'z0val_file',
-                    'width_file', 'angle_file', 'sinu_file',
-                    'd0_file', 'd_bankfull_file' ]
-        self.prepend_directory( in_files, INPUT=True )
-
-        # self.slope_file = self.in_directory + self.slope_file
-        # self.nval_file  = self.in_directory + self.nval_file
-        # self.z0val_file = self.in_directory + self.z0val_file
-        # self.width_file = self.in_directory + self.width_file
-        # self.angle_file = self.in_directory + self.angle_file
-        # self.sinu_file  = self.in_directory + self.sinu_file
-        # self.d0_file    = self.in_directory + self.d0_file
-
+        #----------------------------------------------        
+        # Open all input files and store file objects
+        #----------------------------------------------                
         #self.code_unit = model_input.open_file(self.code_type,  self.code_file)
         self.slope_unit = model_input.open_file(self.slope_type, self.slope_file)
         if (self.MANNING):
@@ -2838,9 +2902,7 @@ class channels_component( BMI_base.BMI_component ):
         self.angle_unit = model_input.open_file(self.angle_type, self.angle_file)
         self.sinu_unit  = model_input.open_file(self.sinu_type,  self.sinu_file)
         self.d0_unit    = model_input.open_file(self.d0_type,    self.d0_file)
-        self.d_bankfull_unit    = model_input.open_file(self.d_bankfull_type, self.d_bankfull_file)
-        
-        # os.chdir( start_dir )
+        self.d_bankfull_unit = model_input.open_file(self.d_bankfull_type, self.d_bankfull_file)
 
     #   open_input_files()
     #-------------------------------------------------------------------  
@@ -3037,14 +3099,14 @@ class channels_component( BMI_base.BMI_component ):
         self.Q_gs_file  = (self.out_directory + self.Q_gs_file)
         self.u_gs_file  = (self.out_directory + self.u_gs_file)
         self.d_gs_file  = (self.out_directory + self.d_gs_file) 
-        self.f_gs_file  = (self.out_directory + self.f_gs_file) 
-        self.df_gs_file = (self.out_directory + self.df_gs_file) 
+        self.f_gs_file  = (self.out_directory + self.f_gs_file)
+        self.d_flood_gs_file = (self.out_directory + self.d_flood_gs_file) 
         #--------------------------------------------------------
         self.Q_ts_file  = (self.out_directory + self.Q_ts_file)
         self.u_ts_file  = (self.out_directory + self.u_ts_file) 
         self.d_ts_file  = (self.out_directory + self.d_ts_file) 
         self.f_ts_file  = (self.out_directory + self.f_ts_file) 
-        self.df_ts_file = (self.out_directory + self.df_ts_file) 
+        self.d_flood_ts_file = (self.out_directory + self.d_flood_ts_file) 
         
     #   update_outfile_names()
     #-------------------------------------------------------------------  
@@ -3084,11 +3146,27 @@ class channels_component( BMI_base.BMI_component ):
         long_name:get_long_name('f'), units_name:get_var_units('f')},
         #-----------------------------------------------------------------
         {var_name:'d_flood',
-        save_gs:self.SAVE_DF_GRIDS,  gs_file:self.df_gs_file,
-        save_ts:self.SAVE_DF_PIXELS, ts_file:self.df_ts_file,
+        save_gs:self.SAVE_DF_GRIDS,  gs_file:self.d_flood_gs_file,
+        save_ts:self.SAVE_DF_PIXELS, ts_file:self.d_flood_ts_file,
         long_name:get_long_name('d_flood'), units_name:get_var_units('d_flood')} ]
                                 
     #   bundle_output_files
+    #------------------------------------------------------------------- 
+    def disable_all_output(self):
+    
+        self.SAVE_Q_GRIDS  = False
+        self.SAVE_U_GRIDS  = False
+        self.SAVE_D_GRIDS  = False
+        self.SAVE_F_GRIDS  = False
+        self.SAVE_DF_GRIDS = False
+        #----------------------------
+        self.SAVE_Q_PIXELS  = False
+        self.SAVE_U_PIXELS  = False
+        self.SAVE_D_PIXELS  = False
+        self.SAVE_F_PIXELS  = False
+        self.SAVE_DF_PIXELS = False
+        
+    #   disable_all_output()
     #-------------------------------------------------------------------  
     def open_output_files(self):
 
@@ -3148,8 +3226,8 @@ class channels_component( BMI_base.BMI_component ):
                                            units_name='none')
  
         if (self.SAVE_DF_GRIDS):    
-            model_output.open_new_gs_file( self, self.df_gs_file, self.rti,
-                                           var_name='df',
+            model_output.open_new_gs_file( self, self.d_flood_gs_file, self.rti,
+                                           var_name='d_flood',
                                            long_name='land_surface_water__depth',
                                            units_name='m')
                                                       
@@ -3182,8 +3260,8 @@ class channels_component( BMI_base.BMI_component ):
                                            units_name='none')
 
         if (self.SAVE_DF_PIXELS):    
-            model_output.open_new_ts_file( self, self.df_ts_file, IDs,
-                                           var_name='df',
+            model_output.open_new_ts_file( self, self.d_flood_ts_file, IDs,
+                                           var_name='d_flood',
                                            long_name='land_surface_water__depth',
                                            units_name='m')
                                                    
@@ -3233,13 +3311,13 @@ class channels_component( BMI_base.BMI_component ):
         if (self.SAVE_U_GRIDS):  model_output.close_gs_file( self, 'u')  
         if (self.SAVE_D_GRIDS):  model_output.close_gs_file( self, 'd')   
         if (self.SAVE_F_GRIDS):  model_output.close_gs_file( self, 'f')
-        if (self.SAVE_DF_GRIDS):  model_output.close_gs_file( self, 'df')
+        if (self.SAVE_DF_GRIDS): model_output.close_gs_file( self, 'd_flood')
         #---------------------------------------------------------------
-        if (self.SAVE_Q_PIXELS): model_output.close_ts_file( self, 'Q')   
-        if (self.SAVE_U_PIXELS): model_output.close_ts_file( self, 'u')    
-        if (self.SAVE_D_PIXELS): model_output.close_ts_file( self, 'd')    
-        if (self.SAVE_F_PIXELS): model_output.close_ts_file( self, 'f')
-        if (self.SAVE_DF_PIXELS): model_output.close_ts_file( self, 'df')
+        if (self.SAVE_Q_PIXELS):  model_output.close_ts_file( self, 'Q')   
+        if (self.SAVE_U_PIXELS):  model_output.close_ts_file( self, 'u')    
+        if (self.SAVE_D_PIXELS):  model_output.close_ts_file( self, 'd')    
+        if (self.SAVE_F_PIXELS):  model_output.close_ts_file( self, 'f')
+        if (self.SAVE_DF_PIXELS): model_output.close_ts_file( self, 'd_flood')
                 
     #   close_output_files()              
     #-------------------------------------------------------------------  
@@ -3264,7 +3342,7 @@ class channels_component( BMI_base.BMI_component ):
             model_output.add_grid( self, self.f, 'f', self.time_min )     
 
         if (self.SAVE_DF_GRIDS):
-            model_output.add_grid( self, self.d_flood, 'df', self.time_min )   
+            model_output.add_grid( self, self.d_flood, 'd_flood', self.time_min )   
             
     #   save_grids()
     #-------------------------------------------------------------------  
@@ -3289,7 +3367,7 @@ class channels_component( BMI_base.BMI_component ):
             model_output.add_values_at_IDs( self, time, self.f, 'f', IDs )
 
         if (self.SAVE_DF_PIXELS):
-            model_output.add_values_at_IDs( self, time, self.d_flood, 'df', IDs )
+            model_output.add_values_at_IDs( self, time, self.d_flood, 'd_flood', IDs )
                     
     #   save_pixel_values()
     #-------------------------------------------------------------------

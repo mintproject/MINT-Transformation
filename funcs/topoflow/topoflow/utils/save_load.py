@@ -3,10 +3,12 @@
 ## January 16, 2009
 
 ## from numpy import *
+import numpy as np
 
-from . import idl_func
 from .tf_utils import *
 
+from . import idl_func
+import sys, os, time, glob, platform
 
 #******************************************************************
 #   save_vars.pro

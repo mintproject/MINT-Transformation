@@ -16,8 +16,8 @@ from dtran.ifunc import IFunc, IFuncType
 class ReadFunc(IFunc):
     id = "read_func"
     description = """ An entry point in the pipeline.
-    Reads an input file and a yml file describing the D-REPR layout of this file.
-    The data are representated in a Graph object.
+    Reads an input file (or multiple files) and a yml file describing the D-REPR layout of each file.
+    Return a Dataset object 
     """
     friendly_name: str = "Local File Reader"
     func_type = IFuncType.READER
@@ -32,14 +32,12 @@ class ReadFunc(IFunc):
         resource_path = str(resource_path)
 
         self.repr = DRepr.parse_from_file(str(repr_file))
-
         self.resources = glob.glob(resource_path)
 
+        assert len(self.resources) > 0
+
     def exec(self) -> dict:
-        if (
-                self.get_preference("data") is None
-                or self.get_preference("data") == "array"
-        ):
+        if self.get_preference("data") is None or self.get_preference("data") == "array":
             backend = ArrayBackend
         else:
             backend = GraphBackend
@@ -50,7 +48,7 @@ class ReadFunc(IFunc):
             }
         else:
             dataset = ShardedBackend(len(self.resources))
-            for resource in self.resources.values():
+            for resource in self.resources:
                 dataset.add(
                     backend.from_drepr(self.repr, resource, dataset.inject_class_id)
                 )

@@ -84,10 +84,16 @@
 #
 #-----------------------------------------------------------------------
 
+import numpy as np
 import os.path
 import time
+#----------------------
+# Could also do this.
+#----------------------
+# from numpy import where, logical_and, logical_or
 
-import numpy as np
+from topoflow.components import d8_global
+
 from topoflow.utils import BMI_base
 from topoflow.utils import fill_pits
 from topoflow.utils import midpoints
@@ -96,12 +102,6 @@ from topoflow.utils import model_output
 from topoflow.utils import pixels
 from topoflow.utils import rtg_files
 from topoflow.utils import rti_files
-
-
-# ----------------------
-# Could also do this.
-# ----------------------
-# from numpy import where, logical_and, logical_or
 
 #-------------------------------------------
 # For use outside of the TopoFlow package.

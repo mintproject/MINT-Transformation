@@ -163,7 +163,7 @@ class Raster:
         for band in range(bands):
             outdata.GetRasterBand(band + 1).WriteArray(data[band])
             if self.nodata is not None:
-                outdata.GetRasterBand(band + 1).SetNoDataValue(self.nodata)
+                outdata.GetRasterBand(band + 1).SetNoDataValue(float(self.nodata))
         outdata.FlushCache()
 
     def serialize(self, outfile: str):

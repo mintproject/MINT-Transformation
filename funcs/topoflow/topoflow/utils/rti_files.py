@@ -3,11 +3,9 @@
 ## January 2009  (converted from IDL)
 ## Nov 2019  get_utm_zone().
 
-import glob  # (for exists())
-import sys  # (for sys.byteorder)
-
+import glob   # (for exists())
+import sys    # (for sys.byteorder)
 import numpy as np  # (for things like uint8(), int16(), float64())
-
 
 #-------------------------------------------------------------------------
 #
@@ -298,7 +296,7 @@ def read_info(file_name, SILENT=False, REPORT=False):
     #        "byte_order" must be MSB or LSB.
     #        Type and byte order are converted to upper case.
     #----------------------------------------------------------
-    RTI_file = try_to_find_rti_file( file_name )
+    RTI_file = try_to_find_rti_file( file_name, SILENT=SILENT )
     if (RTI_file == None):
         # Message already prints before this.
         # if not(SILENT): print 'ERROR: Unable to find RTI file.'

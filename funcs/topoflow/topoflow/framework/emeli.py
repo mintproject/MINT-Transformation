@@ -10,7 +10,7 @@
 #  Profile the code as follows:
 #
 #  >>> import cProfile
-#  >>> cProfile.run('topoflow.framework.tests.test_framework.topoflow_test()')  
+#  >>> cProfile.run('funcs.topoflow.topoflow.framework.tests.test_framework.topoflow_test()')
 #      
 #-----------------------------------------------------------------------      
 ## Copyright (c) 2012-2016, Scott D. Peckham
@@ -136,8 +136,8 @@ import time
 import xml.dom.minidom
 
 from funcs.topoflow.topoflow.framework import time_interpolation    # (time_interpolator class)
-# from topoflow.framework import unit_conversion  # (unit_convertor class)
-# from topoflow.framework import grid_remapping
+# from funcs.topoflow.topoflow.framework import unit_conversion  # (unit_convertor class)
+# from funcs.topoflow.topoflow.framework import grid_remapping
 
 # import OrderedDict_backport  # (for Python 2.4 to 2.7)
 
@@ -207,10 +207,10 @@ paths['examples']         = examples_dir
 paths['framework_parent'] = parent_dir
 
 ## This works fine.
-# from topoflow.framework.tests import rti_files   ## (works fine)
+# from funcs.topoflow.topoflow.framework.tests import rti_files   ## (works fine)
 
 ## This doesn't work because test_framework.py already imported emeli.py.
-# from topoflow.framework.tests import test_framework
+# from funcs.topoflow.topoflow.framework.tests import test_framework
 
   
 #-----------------------------------------------------------------------
@@ -653,7 +653,7 @@ class framework():
         #----------------------------------------------
         # (6/20/13) Add package prefix to module_name
         #----------------------------------------------
-        module_prefix    = 'topoflow.components.'          ## COULD GET FROM module_path
+        module_prefix    = 'funcs.topoflow.topoflow.components.'          ## COULD GET FROM module_path
         full_module_name = module_prefix + module_name
         
         #--------------------------------------------
@@ -662,7 +662,7 @@ class framework():
         # place it in the framework.
         #--------------------------------------------
         ## print '### full_module_name = ', full_module_name
-        cmd = 'from topoflow.components import ' + module_name
+        cmd = 'from funcs.topoflow.topoflow.components import ' + module_name
         exec( cmd, globals(), locals())
         comp = eval( module_name + '.' + class_name + '()' )   ### (2019-10-03)
         ### exec( 'comp = ' + module_name + '.' + class_name + '()', globals())
@@ -1779,7 +1779,7 @@ class framework():
         # erode_test(), or try to run topoflow_test() twice, it will
         # fail with a path problem.  To avoid these problems, we now
         # (9/21/14):
-        # (1) Set CFG directory from CFG file in check_directories()
+        # (1) Set CFG directory from CFG file in set_directories()
         #     in BMI_base.py.
         # (2) Change an "in_directory" read from a CFG file as "." to
         #     the CFG directory from (1).

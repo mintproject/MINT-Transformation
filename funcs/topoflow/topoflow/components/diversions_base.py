@@ -48,12 +48,13 @@
 #
 #--------------------------------------------------------------------
 
-import glob
-
 import numpy as np
-from topoflow.utils import BMI_base
-from topoflow.utils import idl_func  # (still needed for idl.readf...)
+import glob
+import os
 
+from topoflow.utils import BMI_base
+from topoflow.utils import cfg_files as cfg
+from topoflow.utils import idl_func  # (still needed for idl.readf...)
 
 #---------------------------------------------------------------------
 class diversions_component( BMI_base.BMI_component ):

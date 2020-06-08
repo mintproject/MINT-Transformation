@@ -47,19 +47,17 @@
 #
 #-----------------------------------------------------------------------
 
-import time
-
 import numpy as np
-from topoflow.utils import rtg_files
-
-from . import d8_global  ### (9/19/14.  Attempt to fix issue.)
-from . import erode_base
-
-
-# ----------------------
+import os.path
+import time
+#----------------------
 # Could also do this.
-# ----------------------
+#----------------------
 # from numpy import where, logical_and, logical_or
+
+from . import d8_global   ### (9/19/14.  Attempt to fix issue.)
+from . import erode_base
+from topoflow.utils import rtg_files
 
 # from topoflow.components import d8_global
 # from topoflow.components import erode_base
@@ -261,8 +259,6 @@ class erosion_component( erode_base.erosion_component ):
 ##    
 ##    #   get_var_type()
     #-------------------------------------------------------------------
-    ## def update(self, time=None, SILENT=None, REPORT=None):
-    ## def update(self, dt=-1.0, time_seconds=None):
     def update(self, dt=-1.0):
 
 ##        if (SILENT == None): SILENT=self.SILENT

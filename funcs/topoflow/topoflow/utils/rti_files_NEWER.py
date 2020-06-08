@@ -2,11 +2,9 @@
 ## Copyright (c) 2001-2010, Scott D. Peckham
 ## January 2009  (converted from IDL)
 
-import glob  # (for exists())
-import sys  # (for sys.byteorder)
-
+import glob   # (for exists())
 import numpy  # (for things like uint8(), int16(), float64())
-
+import sys    # (for sys.byteorder)
 
 #-------------------------------------------------------------------------
 #
