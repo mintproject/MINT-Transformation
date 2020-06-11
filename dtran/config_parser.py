@@ -44,7 +44,8 @@ class PipelineSchema(Schema):
     description = fields.Str()
     inputs = OrderedDictField(validate=validate.Length(min=1),
                               keys=fields.Str(validate=validate.Regexp(keys_pattern)),
-                              values=fields.Nested(InputSchema()))
+                              values=fields.Function(deserialize=lambda value: InputSchema().load(value)
+                              if isinstance(value, dict) else value))
     adapters = OrderedDictField(required=True, validate=validate.Length(min=1),
                                 keys=fields.Str(validate=validate.Regexp(keys_pattern)),
                                 values=fields.Nested(AdapterSchema()))
@@ -61,7 +62,7 @@ class PipelineSchema(Schema):
             input_name = val.split('.')[1:][0]
             if ('inputs' not in data) or (input_name not in data['inputs']):
                 raise ValidationError(f"invalid pipeline input {input_name}")
-            return data['inputs'][input_name]['value']
+            return data['inputs'][input_name]['value'] if isinstance(data['inputs'][input_name], dict) else data['inputs'][input_name]
         if isinstance(val, dict):
             inputs = val.items()
         else:
