@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+env_file=$(readlink -f ./env.env)
+
+BASEDIR=`dirname $0`
+pushd /ws
+echo "Running DAME execution"
+dotenv -f env.env run python -m dtran.dame.exec "$@"
+
+while [[ "$#" -gt 0 ]]
+do
+case $1 in
+    -o1)
+    OUTPUT="$2"; shift;;
+    *) ;;
+esac
+shift
+done
+echo "Finish running. Output location is ${OUTPUT}"

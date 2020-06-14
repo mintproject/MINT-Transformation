@@ -1,39 +1,39 @@
 version: "1"
-description: Data transformation to generate TopoFlow-ready precipitation files (RTS/RTI) from GlDAS data sources
+description: Data transformation to generate TopoFlow-ready precipitation files (RTS/RTI) from GLDAS/GPM data sources
 inputs:
   dataset_id:
     comment: Dataset ID
     value: 5babae3f-c468-4e01-862e-8b201468e3b5
   start_time:
-    comment: Start time of resources (inclusive)
+    comment: Start time to filter Resources for DataCatalog GLDAS/GPM Dataset ("YYYY-MM-DD HH:MM:SS" format or "null" to leave this end open)
     value: 2014-08-01 00:00:00
   end_time:
-    comment: End time of resources (inclusive - if you are downloading GLDAS, it won't include the resource with timestamp 2014-09-01 00:00:00 as its end time is 2014-09-01 03:00:00)
+    comment: End time to filter Resources for DataCatalog GLDAS/GPM Dataset ("YYYY-MM-DD HH:MM:SS" format or "null" to leave this end open)
     value: 2014-08-02 00:00:00
   var_name:
-    comment: Variable to extract values
+    comment: GLDAS Standard Variable name for which transformation is to be performed
     value: atmosphere_water__rainfall_mass_flux
   bounding_box:
-    comment: Bounding box of the extracting region
-    value: "34.221249999999, 7.353749999999, 36.45458333333234, 9.503749999999"
+    comment: Bounding box of the extracting region in "x_min, y_min, x_max, y_max" order
+    value: 23.995416666666,6.532916666667,28.020416666666,9.566250000000
   xres_arcsecs:
     comment: Resolution on x axis
-    value: 60
+    value: 30
   yres_arcsecs:
     comment: Resolution on y axis
-    value: 60
+    value: 30
   unit_multifier:
-    comment: The value that will be multiplied with values of the variable to get its value in mm/hr. GLDAS original unit is kg m^-3 s^-1
+    comment: The value that will be multiplied with values of the variable to get its value in mm/hr. GLDAS value is 3600 and GPM value is 1.
     value: 3600
   output_file:
     comment: The output zip file
-    value: examples/topoflow4/dev/tmp/output.zip
+    value: outputs1.zip
   tmp_dir_geotiff:
     comment: A temporary directory that is used to stored GeoTiff files
-    value: examples/topoflow4/dev/tmp/geotiff
+    value: tmp/geotiff
   tmp_dir_cropped_geotiff:
     comment: A temporary directory that is used to stored GeoTiff files
-    value: examples/topoflow4/dev/tmp/cropped_geotiff
+    value: tmp/cropped_geotiff
 adapters:
   weather_data:
     comment: |

@@ -1,0 +1,85 @@
+version: "1.0"
+description: Data transformation to aggregate monthly precipitation rate on one variable from original GLDAS data sources
+inputs:
+  gldas_dataset_id:
+    comment: DataCatalog Dataset ID for GLDAS
+    value: {INPUTS1}
+  agg_function:
+    comment: Operation to be used for aggregation. Values can be ("sum", "average", "count")
+    value: {PARAMS1}
+  agg_time_period:
+    comment: Time period for aggregation. Values can be ("minute", "hour", "day", "month", "year")
+    value: {PARAMS2}
+  range_start_time:
+    comment: Start time to filter Resources for DataCatalog GLDAS Dataset ("YYYY-MM-DD HH:MM:SS" format or "null" to leave this end open)
+    value: {PARAMS3}
+  range_end_time:
+    comment: End time to filter Resources for DataCatalog GLDAS Dataset ("YYYY-MM-DD HH:MM:SS" format or "null" to leave this end open)
+    value: {PARAMS4}
+  range_step_time:
+    comment: >-
+      ISO 8601 duration string representing the step (or timedelta) to loop from range_start_time to range_end_time.
+      Value should be such that agg_time_period lies completely in it. Typically should just be ("P1D", "P1M", "P1Y").
+      "P1D" should be used with agg_time_period ("minute", "hour", "day"), "P1M" with ("month") and "P1Y" with ("year").
+    value: {PARAMS5}
+  gldas_variable_name:
+    comment: GLDAS Standard Variable name for which aggregation is to be performed
+    value: {PARAMS6}
+  crop_region_xmin:
+    comment: Target region bounding box xmin coordinate
+    value: {PARAMS7}
+  crop_region_ymin:
+    comment: Target region bounding box ymin coordinate
+    value: {PARAMS8}
+  crop_region_xmax:
+    comment: Target region bounding box xmax coordinate
+    value: {PARAMS9}
+  crop_region_ymax:
+    comment: Target region bounding box ymax coordinate
+    value: {PARAMS10}
+  crop_region_label:
+    comment: Target region label
+    value: {PARAMS11}
+  csv_output_file:
+    comment: Filename for output CSV
+    value: {OUTPUTS1}
+adapters:
+  gldas_range_stream:
+    comment: My gldas range stream adapter
+    adapter: funcs.DcatRangeStream
+    inputs:
+      dataset_id: $$.gldas_dataset_id
+      start_time: $$.range_start_time
+      end_time: $$.range_end_time
+      step_time: $$.range_step_time
+  gldas_read_func:
+    comment: My gldas read func adapter
+    adapter: funcs.DcatReadFunc
+    inputs:
+      dataset_id: $$.gldas_dataset_id
+      start_time: $.gldas_range_stream.start_time
+      end_time: $.gldas_range_stream.end_time
+  my_crop_wrapper:
+    comment: My cropping func wrapper adapter
+    adapter: funcs.CroppingTransWrapper
+    inputs:
+      variable_name: $$.gldas_variable_name
+      dataset: $.gldas_read_func.data
+      xmin: $$.crop_region_xmin
+      ymin: $$.crop_region_ymin
+      xmax: $$.crop_region_xmax
+      ymax: $$.crop_region_ymax
+      region_label: $$.crop_region_label
+  agg_by_time_place:
+    adapter: funcs.aggregations.variable_aggregation_func.VariableAggregationFunc
+    inputs:
+      dataset: $.my_crop_wrapper.data
+      group_by:
+        - { prop: "mint:timestamp", value: $$.agg_time_period }
+        - { prop: "mint:place", value: exact }
+      function: $$.agg_function
+  my_writer:
+    adapter: funcs.CSVWriteFunc
+    inputs:
+      data: $.agg_by_time_place.data
+      output_file: $$.csv_output_file

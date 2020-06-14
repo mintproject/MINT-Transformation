@@ -15,5 +15,6 @@ RUN sed -i '$ d' ~/.bashrc && \
 RUN bash -c 'source ~/.bashrc && conda activate mintdt'
 ADD .docker/entrypoint.sh /
 RUN mkdir /ws
-ADD . /ws 
+ADD . /ws
+WORKDIR /ws
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
