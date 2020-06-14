@@ -1,5 +1,6 @@
 import argparse
 import os
+from pathlib import Path
 
 from dtran.config_parser import ConfigParser
 import re
@@ -47,6 +48,8 @@ def exec_dame():
 
     # Execute the pipeline
     parsed_pipeline.exec(parsed_inputs)
+
+    os.remove(new_config_file)
 
 
 if __name__ == '__main__':
