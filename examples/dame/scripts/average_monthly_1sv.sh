@@ -1,0 +1,1 @@
+./run --config examples/dame/templates/average_monthly_precipitation_rate.yml.template -i1 5babae3f-c468-4e01-862e-8b201468e3b5 -p1 average -p2 month -p3 '2011-01-01 00:00:00' -p4 '2011-01-02 00:00:00' -p5 P1M  -p6 atmosphere_water__precipitation_mass_flux -p7 32.75418 -p8 3.22206 -p9 47.98942 -p10 15.15943 -p11 ethiopia -o1 output1.csv

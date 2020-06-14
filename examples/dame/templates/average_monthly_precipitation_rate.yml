@@ -2,47 +2,47 @@ version: "1.0"
 description: Data transformation to aggregate monthly precipitation rate on one variable from original GLDAS data sources
 inputs:
   gldas_dataset_id:
-    comment: DataCatalog Dataset ID for GLDAS
-    value: {INPUTS1}
+    comment: DataCatalog Dataset ID for GLDAS (5babae3f-c468-4e01-862e-8b201468e3b5)
+    value: 5babae3f-c468-4e01-862e-8b201468e3b5
   agg_function:
     comment: Operation to be used for aggregation. Values can be ("sum", "average", "count")
-    value: {PARAMS1}
+    value: average
   agg_time_period:
     comment: Time period for aggregation. Values can be ("minute", "hour", "day", "month", "year")
-    value: {PARAMS2}
+    value: month
   range_start_time:
     comment: Start time to filter Resources for DataCatalog GLDAS Dataset ("YYYY-MM-DD HH:MM:SS" format or "null" to leave this end open)
-    value: {PARAMS3}
+    value: 2011-01-01 00:00:00
   range_end_time:
     comment: End time to filter Resources for DataCatalog GLDAS Dataset ("YYYY-MM-DD HH:MM:SS" format or "null" to leave this end open)
-    value: {PARAMS4}
+    value: 2011-01-02 00:00:00
   range_step_time:
     comment: >-
       ISO 8601 duration string representing the step (or timedelta) to loop from range_start_time to range_end_time.
       Value should be such that agg_time_period lies completely in it. Typically should just be ("P1D", "P1M", "P1Y").
       "P1D" should be used with agg_time_period ("minute", "hour", "day"), "P1M" with ("month") and "P1Y" with ("year").
-    value: {PARAMS5}
+    value: P1M
   gldas_variable_name:
     comment: GLDAS Standard Variable name for which aggregation is to be performed
-    value: {PARAMS6}
+    value: atmosphere_water__precipitation_mass_flux
   crop_region_xmin:
     comment: Target region bounding box xmin coordinate
-    value: {PARAMS7}
+    value: 32.75418
   crop_region_ymin:
     comment: Target region bounding box ymin coordinate
-    value: {PARAMS8}
+    value: 3.22206
   crop_region_xmax:
     comment: Target region bounding box xmax coordinate
-    value: {PARAMS9}
+    value: 47.98942
   crop_region_ymax:
     comment: Target region bounding box ymax coordinate
-    value: {PARAMS10}
+    value: 15.15943
   crop_region_label:
     comment: Target region label
-    value: {PARAMS11}
+    value: ethiopia
   csv_output_file:
     comment: Filename for output CSV
-    value: {OUTPUTS1}
+    value: output1.csv
 adapters:
   gldas_range_stream:
     comment: My gldas range stream adapter

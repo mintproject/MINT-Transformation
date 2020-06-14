@@ -1,0 +1,61 @@
+version: "1"
+description: Data transformation to generate TopoFlow-ready precipitation files (RTS/RTI) from GLDAS/GPM data sources
+inputs:
+  dataset_id:
+    comment: Dataset ID
+    value: 5babae3f-c468-4e01-862e-8b201468e3b5
+  start_time:
+    comment: Start time to filter Resources for DataCatalog GLDAS/GPM Dataset ("YYYY-MM-DD HH:MM:SS" format or "null" to leave this end open)
+    value: 2014-08-01 00:00:00
+  end_time:
+    comment: End time to filter Resources for DataCatalog GLDAS/GPM Dataset ("YYYY-MM-DD HH:MM:SS" format or "null" to leave this end open)
+    value: 2014-08-02 00:00:00
+  var_name:
+    comment: GLDAS Standard Variable name for which transformation is to be performed
+    value: atmosphere_water__rainfall_mass_flux
+  bounding_box:
+    comment: Bounding box of the extracting region in "x_min, y_min, x_max, y_max" order
+    value: 23.995416666666,6.532916666667,28.020416666666,9.566250000000
+  xres_arcsecs:
+    comment: Resolution on x axis
+    value: 30
+  yres_arcsecs:
+    comment: Resolution on y axis
+    value: 30
+  unit_multifier:
+    comment: The value that will be multiplied with values of the variable to get its value in mm/hr. GLDAS value is 3600 and GPM value is 1.
+    value: 3600
+  output_file:
+    comment: The output zip file
+    value: outputs1.zip
+  tmp_dir_geotiff:
+    comment: A temporary directory that is used to stored GeoTiff files
+    value: tmp/geotiff
+  tmp_dir_cropped_geotiff:
+    comment: A temporary directory that is used to stored GeoTiff files
+    value: tmp/cropped_geotiff
+adapters:
+  weather_data:
+    comment: |
+      Weather dataset
+    adapter: funcs.DcatReadFunc
+    inputs:
+      dataset_id: $$.dataset_id
+      start_time: $$.start_time
+      end_time: $$.end_time
+  geotiff_writer:
+    adapter: funcs.GeoTiffWriteFunc
+    inputs:
+      dataset: $.weather_data.data
+      variable_name: $$.var_name
+      output_dir: $$.tmp_dir_geotiff
+  tf_trans:
+    adapter: funcs.topoflow.topoflow_climate.Topoflow4ClimateWriteWrapperFunc
+    inputs:
+      geotiff_files: $.geotiff_writer.output_files
+      cropped_geotiff_dir: $$.tmp_dir_cropped_geotiff
+      output_file: $$.output_file
+      bounds: $$.bounding_box
+      xres_arcsecs: $$.xres_arcsecs
+      yres_arcsecs: $$.yres_arcsecs
+      unit_multiplier: $$.unit_multifier
