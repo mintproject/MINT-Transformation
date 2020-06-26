@@ -44,7 +44,8 @@ class PipelineSchema(Schema):
     description = fields.Str()
     inputs = OrderedDictField(validate=validate.Length(min=1),
                               keys=fields.Str(validate=validate.Regexp(keys_pattern)),
-                              values=fields.Nested(InputSchema()))
+                              values=fields.Function(deserialize=lambda value: InputSchema().load(value)
+                              if isinstance(value, dict) else value))
     adapters = OrderedDictField(required=True, validate=validate.Length(min=1),
                                 keys=fields.Str(validate=validate.Regexp(keys_pattern)),
                                 values=fields.Nested(AdapterSchema()))
@@ -61,13 +62,13 @@ class PipelineSchema(Schema):
             input_name = val.split('.')[1:][0]
             if ('inputs' not in data) or (input_name not in data['inputs']):
                 raise ValidationError(f"invalid pipeline input {input_name}")
-            return data['inputs'][input_name]['value']
+            return data['inputs'][input_name]['value'] if isinstance(data['inputs'][input_name], dict) else data['inputs'][input_name]
         if isinstance(val, dict):
             inputs = val.items()
         else:
             inputs = enumerate(val)
         for input, value in inputs:
-            if isinstance(value, str) or isinstance(value, dict) or isinstance(value, list):
+            if isinstance(value, (str, dict, list)):
                 val[input] = PipelineSchema.process_input(value, data)
         return val
 
@@ -120,7 +121,7 @@ class PipelineSchema(Schema):
                 if input not in mappings[name][0].inputs:
                     raise ValidationError(f"invalid input {input} in {data['adapters'][name]['adapter']} for {name}")
                 # processing for root-level pipeline inputs
-                if isinstance(value, str) or isinstance(value, dict) or isinstance(value, list):
+                if isinstance(value, (str, dict, list)):
                     try:
                         value = PipelineSchema.process_input(value, data)
                     except ValidationError as e:

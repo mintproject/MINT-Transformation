@@ -54,8 +54,8 @@ class ResourceManager:
     instance = None
 
     def __init__(self):
-        self.max_capacity = 70 * UNITS_MAPPING['GB']
-        self.max_clear_size = 35 * UNITS_MAPPING['GB']
+        self.max_capacity = 200 * UNITS_MAPPING['MB']
+        self.max_clear_size = 100 * UNITS_MAPPING['MB']
         assert self.max_capacity >= self.max_clear_size, "max_capacity cannot be less than max_clear_size"
         self.poll_interval = 10
         self.compressed_resource_types = {".zip", ".tar.gz", ".tar"}
@@ -143,14 +143,14 @@ class ResourceManager:
             DcatReadFunc.logger.debug(f"Downloading resource {resource_id} ...")
             if is_compressed:
                 temp_path = path + resource_metadata['resource_type']
-                subprocess.check_call(f"wget \"{resource_metadata['resource_data_url']}\" -O {temp_path}", shell=True)
+                subprocess.check_call(f"wget -q \"{resource_metadata['resource_data_url']}\" -O {temp_path}", shell=True, close_fds=False)
                 self.uncompress(resource_metadata['resource_type'], path)
                 # adjust required_size when the resource is compressed
                 required_size = -resource.size
                 required_size += sum(f.stat().st_size for f in Path(path).rglob('*')) + Path(path).stat().st_size
                 Path(temp_path).unlink()
             else:
-                subprocess.check_call(f"wget \"{resource_metadata['resource_data_url']}\" -O {path}", shell=True)
+                subprocess.check_call(f"wget -q \"{resource_metadata['resource_data_url']}\" -O {path}", shell=True, close_fds=False)
                 required_size = 0
 
             with self.db.atomic('EXCLUSIVE'):
@@ -195,7 +195,7 @@ class ResourceManager:
         return size
 
     def uncompress(self, resource_type: str, path: Union[Path, str]):
-        subprocess.check_call(f"unzip {path + resource_type} -d {path}", shell=True)
+        subprocess.check_call(f"unzip {path + resource_type} -d {path}", shell=True, close_fds=False)
         # flatten the structure (max two levels)
         for fpath in Path(path).iterdir():
             if fpath.is_dir():

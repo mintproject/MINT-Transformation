@@ -128,6 +128,7 @@ class VariableAggregationFunc(IFunc):
                 }
                 dsmodel = DRepr.parse(dsmodel)
                 ds = outputs.ArrayBackend.from_drepr(dsmodel, resource_id)
+                ReaderContainer.get_instance().delete(resource_id)
         return {"data": ds}
 
     def validate(self) -> bool:

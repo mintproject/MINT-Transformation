@@ -1,9 +1,8 @@
 version: "1.0"
 description: Data transformation to generate daily average data from original GLDAS data sources
 inputs:
-  gldas_dataset_id:
-    comment: DataCatalog Dataset ID for GLDAS
-    value: 5babae3f-c468-4e01-862e-8b201468e3b5
+  # DataCatalog Dataset ID for GLDAS
+  gldas_dataset_id: 5babae3f-c468-4e01-862e-8b201468e3b5
   agg_function:
     comment: Operation to be used for aggregation. Values can be ("sum", "average", "count")
     value: average
