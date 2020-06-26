@@ -68,7 +68,7 @@ class PipelineSchema(Schema):
         else:
             inputs = enumerate(val)
         for input, value in inputs:
-            if isinstance(value, str) or isinstance(value, dict) or isinstance(value, list):
+            if isinstance(value, (str, dict, list)):
                 val[input] = PipelineSchema.process_input(value, data)
         return val
 
@@ -121,7 +121,7 @@ class PipelineSchema(Schema):
                 if input not in mappings[name][0].inputs:
                     raise ValidationError(f"invalid input {input} in {data['adapters'][name]['adapter']} for {name}")
                 # processing for root-level pipeline inputs
-                if isinstance(value, str) or isinstance(value, dict) or isinstance(value, list):
+                if isinstance(value, (str, dict, list)):
                     try:
                         value = PipelineSchema.process_input(value, data)
                     except ValidationError as e:
