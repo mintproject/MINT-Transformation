@@ -4,8 +4,8 @@ from collections import Counter
 from pathlib import Path
 from typing import *
 
-from inspect import isasyncgenfunction, isgeneratorfunction, signature
-from asyncio import Event, gather, get_event_loop
+from inspect import isasyncgenfunction, isgeneratorfunction, iscoroutinefunction, signature
+from asyncio import Event, gather, get_event_loop, sleep
 from marshmallow import Schema, fields, ValidationError
 from networkx import DiGraph, lexicographical_topological_sort, bfs_edges, NetworkXUnfeasible
 
@@ -55,8 +55,8 @@ class Pipeline(object):
             if input_arg != output_arg:
                 raise ValidationError(
                     f"Incompatible ArgType while wiring {WiredIOArg.get_arg_name(i[0], i[1], i[2])} to {WiredIOArg.get_arg_name(o[0], o[1], o[2])}")
-            input_gname = WiredIOArg.get_arg_name(i[0], i[1], i[2])
-            output_gname = WiredIOArg.get_arg_name(o[0], o[1], o[2])
+            input_gname = (i[0], i[1], i[2])
+            output_gname = (o[0], o[1], o[2])
             self.wired[input_gname] = output_gname
             if output_gname not in self.inv_wired:
                 self.inv_wired[output_gname] = []
@@ -95,13 +95,12 @@ class Pipeline(object):
         self.schema = {}
         for i, func_cls in enumerate(self.func_classes):
             for argname in func_cls.inputs:
-                gname = WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)
-                if gname in self.wired:
+                input_gname = (func_cls.id, self.idx2order[i], argname)
+                if input_gname in self.wired:
                     continue
                 argtype = func_cls.inputs[argname]
-                self.schema[gname] = fields.Raw(required=not argtype.optional, validate=argtype.is_valid,
-                                                error_messages={
-                                                    'validator_failed': f"Invalid Argument type. Expected {argtype.id}"})
+                self.schema[WiredIOArg.get_arg_name(*input_gname)] = fields.Raw(required=not argtype.optional, validate=argtype.is_valid,
+                                                                                error_messages={'validator_failed': f"Invalid Argument type. Expected {argtype.id}"})
         self.schema = Schema.from_dict(self.schema)
 
         # setting preferences for new "dataset" outputs
@@ -135,15 +134,19 @@ class Pipeline(object):
         self.input_ready_events = {}
         # asyncio events to notify the producer of an output that a particular wired input has been consumed
         self.input_received_events = {}
-        # set of inputs which will not be produced/consumed anymore, so that their consumers/producers can stop
-        self.finished_inputs = set()
+        # set of inputs whose consumer is waiting for it to be ready
+        self.waiting_ready_inputs = set()
+        # set of inputs whose producer is waiting for it to be consumed
+        self.waiting_received_inputs = set()
+        # set of tasks which are finished, so that any of their consumers/producers can stop
+        self.finished_tasks = set()
         self.output = {}
         # list of async tasks, one for each adapter
         tasks = []
         for i, func_cls in enumerate(self.func_classes):
             func_args = {}
             for argname in func_cls.inputs.keys():
-                input_gname = WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)
+                input_gname = (func_cls.id, self.idx2order[i], argname)
                 if input_gname in self.wired:
                     # wired has higher priority
                     self.input_ready_events[input_gname] = Event()
@@ -152,7 +155,7 @@ class Pipeline(object):
                     func_args[argname] = self.wait_for_input(input_gname)
                 else:
                     try:
-                        func_args[argname] = inputs[input_gname]
+                        func_args[argname] = inputs[WiredIOArg.get_arg_name(*input_gname)]
                     except KeyError as e:
                         if func_cls.inputs[argname].optional:
                             continue
@@ -160,7 +163,7 @@ class Pipeline(object):
 
             tasks.append(self.create_task(i, func_args))
         # run all tasks concurrently in asyncio event loop
-        get_event_loop().run_until_complete(gather(*tasks))
+        get_event_loop().run_until_complete(gather(*tasks, self.detect_deadlock()))
 
     async def create_task(self, i: int, func_args: dict):
         func_cls = self.func_classes[i]
@@ -168,7 +171,7 @@ class Pipeline(object):
             # use a wrapper for regular or generator adapter
             func_cls = default_wrapper(func_cls, {
                 argname for argname in func_cls.inputs.keys()
-                if WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname) in self.wired.keys()
+                if (func_cls.id, self.idx2order[i], argname) in self.wired.keys()
             })
         try:
             func = func_cls(**func_args)
@@ -180,7 +183,7 @@ class Pipeline(object):
         wired = []
         # default wired inputs for the case if it never goes inside the async for loop below
         for argname in func_cls.outputs.keys():
-            output_gname = WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)
+            output_gname = (func_cls.id, self.idx2order[i], argname)
             if output_gname in self.inv_wired:
                 for input_gname in self.inv_wired[output_gname]:
                     wired.append(input_gname)
@@ -189,7 +192,7 @@ class Pipeline(object):
         async for result in func.exec():
             wired = []
             for argname in func_cls.outputs.keys():
-                output_gname = WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)
+                output_gname = (func_cls.id, self.idx2order[i], argname)
                 try:
                     self.output[output_gname] = result[argname]
                 except TypeError:
@@ -199,40 +202,57 @@ class Pipeline(object):
                     raise
                 if output_gname in self.inv_wired:
                     for input_gname in self.inv_wired[output_gname]:
-                        if input_gname not in self.finished_inputs:
+                        if input_gname[:2] not in self.finished_tasks:
                             # notifying consumer of an input that it is ready
                             self.input_ready_events[input_gname].set()
+                            self.waiting_ready_inputs.discard(input_gname)
                             wired.append(input_gname)
 
             # waiting for all wired inputs to be consumed
             for input_gname in wired:
+                # adding input to the waiting set only if it's not already consumed
+                if not self.input_received_events[input_gname].is_set():
+                    self.waiting_received_inputs.add(input_gname)
                 # waiting for an input to be consumed
                 await self.input_received_events[input_gname].wait()
                 self.input_received_events[input_gname].clear()
 
+        self.finished_tasks.add((func_cls.id, self.idx2order[i]))
         # notifying all wired inputs that producer has finished
         for input_gname in wired:
-            self.input_ready_events[input_gname].set()
-            self.finished_inputs.add(input_gname)
+            if input_gname[:2] not in self.finished_tasks:
+                self.input_ready_events[input_gname].set()
+                self.waiting_ready_inputs.discard(input_gname)
 
         # notifying all producers which are still running that consumer has finished
         for argname in func_cls.inputs.keys():
-            input_gname = WiredIOArg.get_arg_name(func_cls.id, self.idx2order[i], argname)
-            if (input_gname in self.wired) and (input_gname not in self.finished_inputs):
+            input_gname = (func_cls.id, self.idx2order[i], argname)
+            if (input_gname in self.wired) and (self.wired[input_gname][:2] not in self.finished_tasks):
                 self.input_received_events[input_gname].set()
-                self.finished_inputs.add(input_gname)
+                self.waiting_received_inputs.discard(input_gname)
 
-    async def wait_for_input(self, input_gname: str):
+    async def wait_for_input(self, input_gname: Tuple[str, int, str]):
         while True:
+            # adding input to the waiting set only if it's not already ready
+            if not self.input_ready_events[input_gname].is_set():
+                self.waiting_ready_inputs.add(input_gname)
             # waiting for an input to be ready
             await self.input_ready_events[input_gname].wait()
             self.input_ready_events[input_gname].clear()
             # break out of the loop if producer has finished
-            if input_gname in self.finished_inputs:
+            if self.wired[input_gname][:2] in self.finished_tasks:
                 break
             # notifying producer of an input that it has been consumed
             self.input_received_events[input_gname].set()
+            self.waiting_received_inputs.discard(input_gname)
             yield self.output[self.wired[input_gname]]
+
+    async def detect_deadlock(self):
+        while len(self.finished_tasks) < len(self.func_classes):
+            # checking if all running tasks are waiting, the deadlock condition
+            if len(self.func_classes) - len(self.finished_tasks) == len(self.waiting_ready_inputs) + len(self.waiting_received_inputs):
+                raise RuntimeError("Pipeline went into a deadlock")
+            await sleep(0)
 
     def validate(self, inputs: dict) -> None:
         errors = self.schema().validate(inputs)
@@ -287,6 +307,8 @@ def default_wrapper(cls: Type[IFunc], inputs: Set[str]) -> Type[IFunc]:
                 if isgeneratorfunction(func.exec):
                     for result in func.exec():
                         yield result
+                elif iscoroutinefunction(func.exec):
+                    yield await func.exec()
                 else:
                     yield func.exec()
                 # if there are no wired inputs, break out to avoid looping infinitely

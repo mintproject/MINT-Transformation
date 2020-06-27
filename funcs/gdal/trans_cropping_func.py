@@ -4,8 +4,8 @@
 import os
 import glob
 import uuid
-import fiona
-from fiona.crs import from_epsg
+from osgeo import osr, ogr
+from shapely.geometry import shape
 from typing import Optional, Dict
 
 from dtran.argtype import ArgType
@@ -67,32 +67,23 @@ class CroppingTransFunc(IFunc):
 
     @staticmethod
     def shape_array_to_shapefile(data, fname):
-        polygon = data['polygon']
-        if isinstance(polygon[0][0][0], (int, float)):
+        driver = ogr.GetDriverByName("ESRI Shapefile")
+        ds = driver.CreateDataSource(fname)
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(data['epsg'])
+        if isinstance(data['polygon'][0][0][0], (int, float)):
             shape_type = "Polygon"
+            layer = ds.CreateLayer("TempCroppingPolygon", srs, ogr.wkbPolygon)
         else:
             shape_type = "MultiPolygon"
-
-        epsg = from_epsg(data['epsg'])
-        driver = "ESRI Shapefile"
-        polygon_data = {
-            "geometry": {
-                "type": shape_type,
-                "coordinates": polygon
-            },
-            "properties": {
-                "name": "TempCroppingPolygon"
-            },
-        }
-        schema = {"geometry": shape_type, "properties": {"name": "str"}}
-        with fiona.open(
-                fname,
-                "w",
-                crs=epsg,
-                driver=driver,
-                schema=schema,
-        ) as shapefile:
-            shapefile.write(polygon_data)
+            layer = ds.CreateLayer("TempCroppingPolygon", srs, ogr.wkbMultiPolygon)
+        field = ogr.FieldDefn("name", ogr.OFTString)
+        layer.CreateField(field)
+        feature = ogr.Feature(layer.GetLayerDefn())
+        feature.SetGeometry(ogr.CreateGeometryFromWkt(shape({"type": shape_type, "coordinates": data['polygon']}).wkt))
+        feature.SetField("name", "TempCroppingPolygon")
+        layer.CreateFeature(feature)
+        ds = None
 
     @staticmethod
     def get_namespaces(sm: ArgType.DataSet):
@@ -125,8 +116,7 @@ class CroppingTransFunc(IFunc):
                 else:
                     timestamp = None
 
-                data = sc.p(rdf_ns.value).as_ndarray(
-                    [sc.p(mint_geo_ns.lat), sc.p(mint_geo_ns.long)])
+                data = sc.p(rdf_ns.value).as_ndarray([sc.p(mint_geo_ns.lat), sc.p(mint_geo_ns.long)])
                 gt_info = sm.get_record_by_id(raster_id)
 
                 gt = GeoTransform(
@@ -181,19 +171,19 @@ class CroppingTransFunc(IFunc):
         self.shapes = CroppingTransFunc.extract_shape(self.shape_sm)
 
         results = []
-        for r in self.rasters:
-            for shape in self.shapes:
-                tempfile_name = f"/tmp/{uuid.uuid4()}.shp"
-                CroppingTransFunc.shape_array_to_shapefile(shape, tempfile_name)
+        for shape in self.shapes:
+            tempfile_name = f"/tmp/{uuid.uuid4()}.shp"
+            CroppingTransFunc.shape_array_to_shapefile(shape, tempfile_name)
+            for r in self.rasters:
                 cropped_raster = r["raster"].crop(
                     vector_file=tempfile_name, resampling_algo=ReSample.BILINEAR, touch_cutline=True
                 )
-                for f in glob.glob(f"{tempfile_name[:-4]}*"):
-                    os.remove(f)
                 if cropped_raster is None:
                     continue
                 place = shape['place']
                 results.append(raster_to_dataset(cropped_raster, r["variable_name"], place=place, timestamp=r["timestamp"]))
+            for f in glob.glob(f"{tempfile_name[:-4]}*"):
+                os.remove(f)
         assert len(results) > 0, "No overlapping data for the given region"
         self.results = ShardedBackend(len(results))
         for result, temp_file in results:

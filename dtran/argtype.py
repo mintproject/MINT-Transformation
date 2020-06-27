@@ -78,7 +78,7 @@ ArgType.OrderedDict = ArgType("ordered_dict", validate=lambda val: isinstance(va
 ArgType.ListString = ArgType("list_string", validate=lambda val: isinstance(val, list) and all(isinstance(x, str) for x in val))
 ArgType.ListOrOneString = ArgType("list_or_one_string", validate=lambda val: isinstance(val, str) or (isinstance(val, list) and all(isinstance(x, str) for x in val)))
 ArgType.String = ArgType("string", validate=lambda val: isinstance(val, str))
-ArgType.Number = ArgType("number", validate=lambda val: isinstance(val, int) or isinstance(val, float),
+ArgType.Number = ArgType("number", validate=lambda val: isinstance(val, (int, float)),
                          from_str=lambda val: ('.' in val and float(val)) or int(val))
 ArgType.Boolean = ArgType("boolean", validate=lambda val: isinstance(val, bool),
                           from_str=lambda val: {'True': True, 'true': True, 'False': False, 'false': False}[val])
