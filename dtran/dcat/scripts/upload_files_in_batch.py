@@ -8,14 +8,20 @@ import glob
 
 def setup_owncloud(upload_dir):
     oc = owncloud.Client('https://files.mint.isi.edu/')
-    oc.login('datacatalog', 'sVMIryVWEx3Ec2')
-    oc.mkdir(upload_dir)
+    oc.login(os.environ['USERNAME'], os.environ['PASSWORD'])
+    try:
+        # https://github.com/owncloud/pyocclient/blob/master/owncloud/owncloud.py
+        # trying to look through the documentation. However, I didn't see a way to check if the directory exists
+        # before, so I just assume that if the operator fails, the directory is already there.
+        oc.mkdir(upload_dir)
+    except:
+        pass
     return oc
 
 
 def upload_to_mint_server(target_dir, target_filename, upload_url):
     upload_output = subprocess.check_output(
-        f"curl -sD - --user upload:HVmyqAPWDNuk5SmkLOK2 --upload-file {target_dir}/{target_filename} {upload_url}",
+        f"curl -sD - --user {os.environ['USERNAME']}:{os.environ['PASSWORD']} --upload-file {target_dir}/{target_filename} {upload_url}",
         shell=True,
     )
     uploaded_url = f'https://{upload_output.decode("utf-8").split("https://")[-1]}'

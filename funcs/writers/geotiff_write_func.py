@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 from typing import Dict, Optional, Union
-from zipfile import ZipFile
 
 from drepr.outputs.base_output_sm import BaseOutputSM
 from datetime import datetime, timezone
@@ -17,45 +16,36 @@ class GeoTiffWriteFunc(IFunc):
     inputs = {
         "dataset": ArgType.DataSet(None),
         "variable_name": ArgType.String,
-        "output_path": ArgType.String,
+        "output_dir": ArgType.String,
+        "skip_on_exist": ArgType.Boolean,
     }
     outputs = {
         "output_files": ArgType.ListString
     }
 
-    def __init__(self, dataset: BaseOutputSM, variable_name: str, output_path: Union[str, Path]):
+    def __init__(self, dataset: BaseOutputSM, variable_name: str, output_dir: Union[str, Path], skip_on_exist: bool=False):
         self.dataset = dataset
         self.variable_name = variable_name
-        self.output_path = os.path.abspath(str(output_path))
+        self.output_dir = os.path.abspath(str(output_dir))
+        self.skip_on_exist = skip_on_exist
 
-        if self.output_path.endswith(".zip"):
-            self.dir_path = self.output_path[:-4]
-        else:
-            self.dir_path = self.output_path
-
-        if not os.path.exists(self.output_path):
-            Path(self.output_path).mkdir(exist_ok=True, parents=True)
+        if not os.path.exists(self.output_dir):
+            Path(self.output_dir).mkdir(exist_ok=True, parents=True)
 
     def exec(self):
         rasters = CroppingTransFunc.extract_raster(self.dataset, self.variable_name)
         rasters = sorted(rasters, key=lambda x: x['timestamp'])
-
         outfiles = [
-            os.path.join(self.dir_path,
-                         datetime.fromtimestamp(raster['timestamp'], tz=timezone.utc).strftime(f"%Y%m%d%H%M%S.{i}.tif"))
+            os.path.join(self.output_dir, datetime.fromtimestamp(raster['timestamp'], tz=timezone.utc).strftime(f"%Y%m%d%H%M%S.{i}.tif"))
             for i, raster in enumerate(rasters)
         ]
+
         for outfile, raster in zip(outfiles, rasters):
+            if self.skip_on_exist and os.path.exists(outfile):
+                continue
             raster['raster'].to_geotiff(outfile)
 
-        if self.output_path.endswith(".zip"):
-            # compress the outfile
-            with ZipFile(self.output_path, 'w') as z:
-                for outfile in outfiles:
-                    z.write(outfile, os.path.basename(outfile))
-            return {"output_files": [self.output_path]}
-        else:
-            return {"output_files": outfiles}
+        return {"output_files": outfiles}
 
     def validate(self) -> bool:
         return True
