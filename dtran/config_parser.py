@@ -36,10 +36,6 @@ class InputSchema(Schema):
 
 
 class PipelineSchema(Schema):
-    def __init__(self, cli_inputs, **kwargs):
-        super().__init__(**kwargs)
-        self.cli_inputs = cli_inputs
-
     version = fields.Str(required=True)
     description = fields.Str()
     inputs = OrderedDictField(validate=validate.Length(min=1),
@@ -51,6 +47,10 @@ class PipelineSchema(Schema):
 
     class Meta:
         ordered = True
+
+    def __init__(self, cli_inputs, **kwargs):
+        super().__init__(**kwargs)
+        self.cli_inputs: Dict[Union[Tuple[str, str], str], str] = cli_inputs
 
     @staticmethod
     def process_input(val, data):
@@ -95,17 +95,27 @@ class PipelineSchema(Schema):
             mappings[name] = (cls, adapter_count[adapter['adapter']])
 
         # validating cli_inputs
-        for name, input in self.cli_inputs:
-            if name not in mappings:
-                raise ValidationError(
-                    ['cli_inputs exception', f"invalid adapter name {name}. not found in config file"])
-            if input not in mappings[name][0].inputs:
-                raise ValidationError(['cli_inputs exception',
-                                       f"invalid input {input} in {data['adapters'][name]['adapter']} for {name}"])
-            # cli_inputs has higher priority and overwrites config_file data
-            if 'inputs' not in data['adapters'][name]:
-                data['adapters'][name]['inputs'] = OrderedDict()
-            data['adapters'][name]['inputs'][input] = self.cli_inputs[(name, input)]
+        for cli_input in self.cli_inputs:
+            if isinstance(cli_input, (tuple,list)):
+                name, arg = cli_input
+
+                if name not in mappings:
+                    raise ValidationError(
+                        ['cli_inputs exception', f"invalid adapter name {name}. not found in config file"])
+                if arg not in mappings[name][0].inputs:
+                    raise ValidationError(['cli_inputs exception',
+                                        f"invalid input {arg} in {data['adapters'][name]['adapter']} for {name}"])
+                # cli_inputs has higher priority and overwrites config_file data
+                if 'inputs' not in data['adapters'][name]:
+                    data['adapters'][name]['inputs'] = OrderedDict()
+                data['adapters'][name]['inputs'][arg] = self.cli_inputs[(name, arg)]
+            else:
+                name = cli_input
+                if name in data['inputs']:
+                    if isinstance(data['inputs'][name], (dict, OrderedDict)):
+                        data['inputs'][name]['value'] = self.cli_inputs[name]
+                    else:
+                        data['inputs'][name] = self.cli_inputs[name]
 
         inputs = {}
         wired = []

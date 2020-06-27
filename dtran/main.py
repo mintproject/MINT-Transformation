@@ -19,7 +19,7 @@ def exec_pipeline(ctx, config=None):
     Creates a pipeline and execute it based on given config and input(optional).
     To specify the input to pipeline, use (listed in ascending priority):
     1) config file option: --config path_to_file
-    2) arg params: e.g. --FuncName.Attr=value
+    2) arg params: e.g. --FuncName.Attr=value, --InputName=value
     """
 
     # Accept user-specified inputs: expect format of --key=value
@@ -27,10 +27,13 @@ def exec_pipeline(ctx, config=None):
     for arg in ctx.args:
         try:
             key, value = arg[2:].split("=")
-            func_name, attr_name = key.split(".")
-            user_inputs[(func_name, attr_name)] = value
+            if key.find(".") != -1:
+                func_name, attr_name = key.split(".")
+                user_inputs[(func_name, attr_name)] = value
+            else:
+                user_inputs[key] = value
         except ValueError:
-            print(f"user input: '{arg}' should have format '--FuncName.Attr=value'")
+            print(f"user input: '{arg}' should have format '--FuncName.Attr=value' or --InputName=value")
             return
 
     parser = ConfigParser(user_inputs)

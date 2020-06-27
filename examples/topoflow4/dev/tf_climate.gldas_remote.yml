@@ -1,23 +1,22 @@
 version: "1"
 adapters:
-  weather_data:
+  dataset:
     comment: |
       Weather dataset
-    adapter: funcs.DcatReadFunc
+    adapter: funcs.readers.dcat_read_func.DcatReadStreamFunc
     inputs:
       # gldas
       dataset_id: 5babae3f-c468-4e01-862e-8b201468e3b5
       start_time: 2014-08-01 00:00:00
       end_time: 2014-09-01 00:00:00
-      lazy_load_enabled: false
 #      override_drepr: /home/rook/workspace/mint/MINT-Transformation/examples/topoflow4/dev/gldas.yml
   geotiff_writer:
     adapter: funcs.GeoTiffWriteFunc
     inputs:
-      dataset: $.weather_data.data
+      dataset: $.dataset.data
       variable_name: atmosphere_water__rainfall_mass_flux
       output_dir: /home/rook/workspace/mint/MINT-Transformation/examples/topoflow4/dev/data/geotiff
-  tf_trans:
+  topoflow:
     adapter: funcs.topoflow.topoflow_climate.Topoflow4ClimateWriteFunc
     inputs:
       geotiff_files: $.geotiff_writer.output_files

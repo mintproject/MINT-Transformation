@@ -22,6 +22,7 @@ class ArgType(object):
         Callable[[Any, bool, str, str], 'ArgType']] = dataset
     OrderedDict: 'ArgType' = None
     ListString: 'ArgType' = None
+    ListOrOneString: 'ArgType' = None
     String: 'ArgType' = None
     Number: 'ArgType' = None
     Boolean: 'ArgType' = None
@@ -75,6 +76,7 @@ ArgType.FilePath = ArgType("file_path", validate=lambda val: Path(val).parent.ex
                            from_str=lambda val: str(Path(val)))
 ArgType.OrderedDict = ArgType("ordered_dict", validate=lambda val: isinstance(val, dict))
 ArgType.ListString = ArgType("list_string", validate=lambda val: isinstance(val, list) and all(isinstance(x, str) for x in val))
+ArgType.ListOrOneString = ArgType("list_or_one_string", validate=lambda val: isinstance(val, str) or (isinstance(val, list) and all(isinstance(x, str) for x in val)))
 ArgType.String = ArgType("string", validate=lambda val: isinstance(val, str))
 ArgType.Number = ArgType("number", validate=lambda val: isinstance(val, int) or isinstance(val, float),
                          from_str=lambda val: ('.' in val and float(val)) or int(val))

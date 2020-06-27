@@ -17,15 +17,17 @@ class GeoTiffWriteFunc(IFunc):
         "dataset": ArgType.DataSet(None),
         "variable_name": ArgType.String,
         "output_dir": ArgType.String,
+        "skip_on_exist": ArgType.Boolean,
     }
     outputs = {
         "output_files": ArgType.ListString
     }
 
-    def __init__(self, dataset: BaseOutputSM, variable_name: str, output_dir: Union[str, Path]):
+    def __init__(self, dataset: BaseOutputSM, variable_name: str, output_dir: Union[str, Path], skip_on_exist: bool=False):
         self.dataset = dataset
         self.variable_name = variable_name
         self.output_dir = os.path.abspath(str(output_dir))
+        self.skip_on_exist = skip_on_exist
 
         if not os.path.exists(self.output_dir):
             Path(self.output_dir).mkdir(exist_ok=True, parents=True)
@@ -37,7 +39,10 @@ class GeoTiffWriteFunc(IFunc):
             os.path.join(self.output_dir, datetime.fromtimestamp(raster['timestamp'], tz=timezone.utc).strftime(f"%Y%m%d%H%M%S.{i}.tif"))
             for i, raster in enumerate(rasters)
         ]
+
         for outfile, raster in zip(outfiles, rasters):
+            if self.skip_on_exist and os.path.exists(outfile):
+                continue
             raster['raster'].to_geotiff(outfile)
 
         return {"output_files": outfiles}
