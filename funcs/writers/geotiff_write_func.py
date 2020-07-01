@@ -34,7 +34,8 @@ class GeoTiffWriteFunc(IFunc):
         rasters = CroppingTransFunc.extract_raster(self.dataset, self.variable_name)
         rasters = sorted(rasters, key=lambda x: x['timestamp'])
         outfiles = [
-            os.path.join(self.output_dir, datetime.fromtimestamp(raster['timestamp'], tz=timezone.utc).strftime(f"%Y%m%d%H%M%S.{i}.tif"))
+            os.path.join(self.output_dir,
+                         datetime.fromtimestamp(raster['timestamp'], tz=timezone.utc).strftime(f"%Y%m%d%H%M%S.{i}.tif"))
             for i, raster in enumerate(rasters)
         ]
         for outfile, raster in zip(outfiles, rasters):
