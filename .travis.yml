@@ -17,6 +17,10 @@ before_install:
 - docker build -t mint_dt .
 - docker tag mint_dt mintproject/mint_dt:latest
 - docker push mintproject/mint_dt:latest
+- sed -i '$ d' Dockerfile
+- docker build -t dt_dame .
+- docker tag mint_dt mintproject/dt_dame:latest
+- docker push mintproject/dt_name:latest
 deploy:
   provider: script
   script: bash .docker-push.sh $TRAVIS_TAG
