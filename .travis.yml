@@ -20,7 +20,7 @@ before_install:
 - sed -i '/^ENTRYPOINT/d' Dockerfile
 - docker build -t dt_dame .
 - docker tag mint_dt mintproject/dt_dame:latest
-- docker push mintproject/dt_name:latest
+- docker push mintproject/dt_dame:latest
 deploy:
   provider: script
   script: bash .docker-push.sh $TRAVIS_TAG
