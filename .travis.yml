@@ -17,8 +17,7 @@ before_install:
 - docker build -t mint_dt .
 - docker tag mint_dt mintproject/mint_dt:latest
 - docker push mintproject/mint_dt:latest
-- sed -i '/^ENTRYPOINT/d' Dockerfile
-- docker build -t dt_dame .
+- docker build -t dt_dame -f Dockerfile.dame .
 - docker tag mint_dt mintproject/dt_dame:latest
 - docker push mintproject/dt_dame:latest
 deploy:
