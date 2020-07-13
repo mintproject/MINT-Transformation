@@ -10,15 +10,14 @@ import numpy as np
 HOME_DIR = Path(os.path.abspath(os.environ['HOME_DIR']))
 DOWNLOAD_DIR = Path(os.path.abspath(os.environ['DATA_CATALOG_DOWNLOAD_DIR']))
 
-run_dir = HOME_DIR / "data" / "tf_gldas"
+# gldas is 8, gpm is 48
+n_files_per_day = 48
+run_dir = HOME_DIR / "data" / "tf_gpm"
 
 
 def get_size(infile):
     data = np.fromfile(infile, dtype=np.float32)
     return data.shape[0]
-
-# gldas is 8
-n_files_per_day = 8
 
 n_month_days = [
     (parser.parse(f'2000-{i+1:02}-01T00:00') - parser.parse(f'2000-{i:02}-01T00:00')).days
@@ -26,7 +25,7 @@ n_month_days = [
 ]
 n_month_days.append(31)
 
-for year in range(2019, 2020):
+for year in range(2008, 2009):
     n_year_days = (parser.parse(f'{year+1}-01-01T00:00') - parser.parse(f'{year}-01-01T00:00')).days
     n_month_days[1] = (parser.parse(f'{year}-03-01T00:00') - parser.parse(f'{year}-02-01T00:00')).days
 

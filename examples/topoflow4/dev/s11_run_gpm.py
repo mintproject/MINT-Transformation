@@ -8,7 +8,7 @@ from tqdm.auto import tqdm
 
 
 HOME_DIR = Path(os.path.abspath(os.environ['HOME_DIR']))
-DOWNLOAD_DIR = Path(os.path.abspath(os.environ['DATA_CATALOG_DOWNLOAD_DIR']))
+DOWNLOAD_DIR = HOME_DIR / "data/GPM"
 
 arcsecs = [30, 60]
 areas = {
@@ -22,21 +22,23 @@ areas = {
     "alwero": "34.206249999999, 7.415416666666, 35.249583333333, 8.143749999999"
 }
 
-run_dir = HOME_DIR / "data" / "tf_gldas"
-commands = []
+run_dir = HOME_DIR / "data" / "tf_gpm"
 
-def add_geotif_command(commands, start_time, end_time, geotiff_dir):
-    writegeotiff_config_file = str(HOME_DIR / "examples" / "topoflow4" / "dev" / "tf_climate_writegeotiff.gldas_remote.yml")
+def add_geotif_command(commands, year, month, geotiff_dir):
+    writegeotiff_config_file = str(HOME_DIR / "examples" / "topoflow4" / "dev" / "tf_climate_writegeotiff.gpm.yml")
+    resource_path = str(DOWNLOAD_DIR / str(year) / f"*3IMERG.{year}{month:02d}*")
+    gpm_file = str(HOME_DIR / "examples/topoflow4/dev/gpm.yml")
+
     cmd = f"""dotenv run python -m dtran.main exec_pipeline --config {writegeotiff_config_file} \
-    --dataset.start_time={start_time} \
-    --dataset.end_time={end_time} \
+    --dataset.resource_path={resource_path} \
+    --dataset.repr_file={gpm_file} \
     --geotiff_writer.output_dir={geotiff_dir} \
     --geotiff_writer.skip_on_exist=true \
             """.strip()
     commands.append(cmd)
 
 
-def add_rts_command(commands, start_time, end_time, geotiff_dir, geotiff_dir_crop, output_file, arcsec, area):
+def add_rts_command(commands, geotiff_dir, geotiff_dir_crop, output_file, arcsec, area):
     makerts_config_file = str(HOME_DIR / "examples" / "topoflow4" / "dev" / "tf_climate_make_rts.yml")
     cmd = f"""dotenv run python -m dtran.main exec_pipeline --config {makerts_config_file} \
     --topoflow.geotiff_files='{geotiff_dir}*/*.tif' \
@@ -45,12 +47,15 @@ def add_rts_command(commands, start_time, end_time, geotiff_dir, geotiff_dir_cro
     --topoflow.skip_crop_on_exist=true \
     --topoflow.xres_arcsecs={arcsec} \
     --topoflow.yres_arcsecs={arcsec} \
-    --topoflow.bounds="{area}"
+    --topoflow.bounds="{area}" \
+    --topoflow.unit_multiplier=1
             """.strip()
     commands.append(cmd)
 
 
-for year in range(2016, 2020):
+for year in range(2010, 2020):
+    commands = []
+    (run_dir / str(year)).mkdir(exist_ok=True, parents=True)
     for month in range(1, 13):
         s0 = parser.parse(f"{year}-{month:02d}-01T00:00:00")
         if month == 12:
@@ -61,13 +66,13 @@ for year in range(2016, 2020):
         start_time = s0.isoformat()
         end_time = s1.isoformat()
         geotiff_dir = str(run_dir / str(year) / f"data_m{month:02d}")
-        add_geotif_command(commands, start_time, end_time, geotiff_dir)
+        add_geotif_command(commands, year, month, geotiff_dir)
 
         for area_name, area in areas.items():
             for arcsec in arcsecs:
                 geotiff_dir_crop = str(run_dir / str(year) / area_name / f"geotiff_crop_{arcsec}")
                 output_file = str(run_dir / str(year) / area_name / f"output_r{arcsec}_m{month:02d}.rts")
-                add_rts_command(commands, start_time, end_time, geotiff_dir, geotiff_dir_crop, output_file, arcsec, area)
+                add_rts_command(commands, geotiff_dir, geotiff_dir_crop, output_file, arcsec, area)
 
     start_time = f"{year}-01-01T00:00:00"
     end_time = f"{year}-12-31T23:59:59"
@@ -77,9 +82,20 @@ for year in range(2016, 2020):
         for arcsec in arcsecs:
             geotiff_dir_crop = str(run_dir / str(year) / area_name / f"geotiff_crop_{arcsec}")
             output_file = str(run_dir / str(year) / area_name / f"output_r{arcsec}.rts")
-            add_rts_command(commands, start_time, end_time, geotiff_dir, geotiff_dir_crop, output_file, arcsec, area)
+            add_rts_command(commands, geotiff_dir, geotiff_dir_crop, output_file, arcsec, area)
 
+    # compress the data
+    for area_name in areas.keys():
+        input_dir = run_dir / str(year) / area_name
+        commands.append(f"cd {input_dir.parent} && tar -czf {input_dir.name}.tar.gz {input_dir.name}")
 
-commands = commands[:]
-for cmd in tqdm(commands, desc="run commands"):
-    output = subprocess.check_output(cmd, shell=True, cwd=str(HOME_DIR))
+    # upload the file
+    commands.append(f"""
+        dotenv run python dtran/dcat/scripts/upload_files_in_batch.py upload_files \
+            --server=OWNCLOUD --dir={run_dir / str(year)} \
+            --ext=tar.gz --upload_dir=Topoflow/GPM_version_2/{year}
+    """)
+    commands.append(f"rm -rf {run_dir / str(year)}")
+
+    for cmd in tqdm(commands, desc=f"run commands for year {year}"):
+        output = subprocess.check_output(cmd, shell=True, cwd=str(HOME_DIR))
