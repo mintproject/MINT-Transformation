@@ -1,0 +1,15 @@
+version: "1"
+adapters:
+  dataset:
+    comment: |
+      Weather dataset
+    adapter: funcs.ReadFunc
+    inputs:
+      resource_path: /home/rook/workspace/mint/MINT-Transformation/examples/topoflow4/dev/gpm/download/*.nc4
+      repr_file: /home/rook/workspace/mint/MINT-Transformation/examples/topoflow4/dev/gpm.yml
+  geotiff_writer:
+    adapter: funcs.GeoTiffWriteFunc
+    inputs:
+      dataset: $.dataset.data
+      variable_name: atmosphere_water__precipitation_mass_flux
+      output_dir: /home/rook/workspace/mint/MINT-Transformation/examples/topoflow4/dev/gpm/geotiff

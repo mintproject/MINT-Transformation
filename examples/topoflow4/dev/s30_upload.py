@@ -1,0 +1,1 @@
+dotenv run python dtran/dcat/scripts/upload_files_in_batch.py upload_files --server=OWNCLOUD --dir=data/tf_gldas --ext=tar.gz --upload_dir=Topoflow/GLDAS_version_2
