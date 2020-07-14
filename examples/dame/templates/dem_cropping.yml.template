@@ -3,22 +3,22 @@ description: Data transformation to generate daily average data from original GL
 inputs:
   dataset_id:
     comment: DataCatalog Dataset ID for raster file
-    value: 3c5aa587-2e3d-49ef-ad60-532370941e87
+    value: {INPUTS1}
   crop_region_xmin:
     comment: Target region bounding box xmin coordinate
-    value: 32.75418
+    value: {PARAMS1}
   crop_region_ymin:
     comment: Target region bounding box ymin coordinate
-    value: 8.22206
+    value: {PARAMS2}
   crop_region_xmax:
     comment: Target region bounding box xmax coordinate
-    value: 47.98942
+    value: {PARAMS3}
   crop_region_ymax:
     comment: Target region bounding box ymax coordinate
-    value: 15.15943
+    value: {PARAMS4}
   output_file:
     comment: Path to output file
-    value: output.tiff
+    value: {OUTPUTS1}
 adapters:
   read_func:
     comment: My geotiff read func adapter

@@ -28,7 +28,7 @@ class DcatReadNoReprFunc(IFunc):
     func_type = IFuncType.READER
     friendly_name: str = " Data Catalog Reader Without repr File"
     inputs = {"dataset_id": ArgType.String}
-    outputs = {"data": ArgType.String}
+    outputs = {"data_path": ArgType.String}
     example = {"dataset_id": "05c43c58-ed42-4830-9b1f-f01059c4b96f"}
 
     def __init__(self, dataset_id: str):
@@ -48,7 +48,7 @@ class DcatReadNoReprFunc(IFunc):
 
     def exec(self) -> dict:
         data_path = self.resource_manager.download(
-            self.resource_id, self.resource_metadata, should_redownload=True
+            self.resource_id, self.resource_metadata, should_redownload=False
         )
         return {"data_path": data_path}
 

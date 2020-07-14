@@ -280,7 +280,6 @@ class DCatAPI:
         """
         This is a convenience method to handle api responses
         :param response:
-        :param print_response:
         :return:
         """
         parsed_response = response.json()

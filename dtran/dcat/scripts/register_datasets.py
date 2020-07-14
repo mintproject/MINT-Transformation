@@ -14,8 +14,8 @@ def cli():
     ignore_unknown_options=True,
     allow_extra_args=False,
 ))
-@click.option("--name", help="DCAT dataset name", default="test-dataset")
-@click.option("--description", help="DCAT dataset description", default="test-description")
+@click.option("--name", help="DCAT dataset name", prompt="Dataset name")
+@click.option("--description", help="DCAT dataset description", prompt="Dataset description")
 @click.option("--metadata_path", help="DCAT dataset metadata file path", default=None)
 @click.option("--resource_path", help="DCAT dataset resources json path, should be a file name-url dict", default=None)
 @click.option("--resource_type", help="DCAT dataset resource type", default="zip")
@@ -23,11 +23,11 @@ def cli():
 def register_dataset(name, description, metadata_path, resource_path, variable_path, resource_type):
     """
     Registers DCAT dataset with multiple resources.
-    Example: PYTHONPATH=$(pwd):$(pwd):$PYTHONPATH python dtran/dcat/scripts/register_datasets.py register_dataset
+    Example: PYTHONPATH=$(pwd):$PYTHONPATH python dtran/dcat/scripts/register_datasets.py register_dataset
     --resource_path=./uploaded.json --variable_path=variables.json
     """
 
-    dcat = DCatAPI.get_instance("https://api.mint-data-catalog.org")
+    dcat = DCatAPI.get_instance()
 
     if metadata_path is None:
         metadata = {}
@@ -85,7 +85,7 @@ def delete_dataset(dcatid, json_path):
     Delete specified datasets.
     Example: PYTHONPATH=$(pwd):$(pwd):$PYTHONPATH python dtran/dcat/scripts/register_datasets.py delete_dataset --dcatid=c4fedf48-f888-4de1-b60f-c6ac5cb1615b
     """
-    dcat = DCatAPI.get_instance("https://api.mint-data-catalog.org")
+    dcat = DCatAPI.get_instance()
 
     if dcatid is None and json_path is None:
         raise ValueError("Please enter dataset ids to delete!")

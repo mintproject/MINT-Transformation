@@ -1,4 +1,3 @@
-import argparse
 import math
 import os
 import shutil
@@ -8,10 +7,10 @@ from typing import Optional, Dict
 
 import numpy as np
 from netCDF4 import Dataset
+
 from dtran import IFunc, ArgType
 from dtran.ifunc import IFuncType
 from dtran.metadata import Metadata
-import xarray
 
 
 class Gldas2CyclesFunc(IFunc):
