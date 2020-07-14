@@ -86,6 +86,9 @@ class Topoflow4ClimateWriteFunc(IFunc):
     def validate(self) -> bool:
         return True
 
+    def change_metadata(self, metadata: Optional[Dict[str, Metadata]]) -> Dict[str, Metadata]:
+        return metadata
+
 
 class Topoflow4ClimateWriteWrapperFunc(IFunc):
     func_cls = Topoflow4ClimateWriteFunc

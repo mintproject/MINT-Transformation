@@ -79,7 +79,7 @@ if __name__ == "__main__":
         TransWrapperFunc.I._2.filter: "@type = 'qb:Observation' and sdmx-dimension:refPeriod = '2016-10-12'",
         TransWrapperFunc.I.code: wdir / "cycles-to-crop.py",
         CSVWriteFunc.I.main_class: "qb:Observation",
-        CSVWriteFunc.I.output_file: wdir / "output.csv",
+        CSVWriteFunc.I.output_path: wdir / "output.csv",
         CSVWriteFunc.I.mapped_columns: {},
     }
 

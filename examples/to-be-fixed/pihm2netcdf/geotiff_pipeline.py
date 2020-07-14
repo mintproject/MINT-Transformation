@@ -37,7 +37,7 @@ if __name__ == "__main__":
             "2017-12-31 23:59:59", "%Y-%m-%d %H:%M:%S"
         ),
         # MintGeoTiffWriteFunc.I.output_file: wdir / "MONTHLY_GRIDDED_SURFACE_INUNDATION_2017.tif",
-        MintGeoTiffWriteFunc.I.output_file: wdir / "MONTHLY_GRIDDED_SURFACE_INUNDATION_2017",
+        MintGeoTiffWriteFunc.I.output_path: wdir / "MONTHLY_GRIDDED_SURFACE_INUNDATION_2017",
         MintGeoTiffWriteFunc.I.is_multiple_files: True,
     }
 

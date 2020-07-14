@@ -3,10 +3,21 @@
 
 import subprocess
 from pathlib import Path
+from typing import Dict, Optional
 
 from dtran.argtype import ArgType
 from dtran.ifunc import IFunc, IFuncType
-from funcs.readers.dcat_read_func import DCatAPI
+from dtran.metadata import Metadata
+from funcs.readers.dcat_read_func import DCatAPI, ResourceManager
+import os
+
+DATA_CATALOG_DOWNLOAD_DIR = os.path.abspath(os.environ["DATA_CATALOG_DOWNLOAD_DIR"])
+if os.environ["NO_CHECK_CERTIFICATE"].lower().strip() == "true":
+    DOWNLOAD_CMD = "wget --no-check-certificate"
+else:
+    DOWNLOAD_CMD = "wget"
+
+Path(DATA_CATALOG_DOWNLOAD_DIR).mkdir(exist_ok=True, parents=True)
 
 
 class DcatReadNoReprFunc(IFunc):
@@ -18,44 +29,33 @@ class DcatReadNoReprFunc(IFunc):
     friendly_name: str = " Data Catalog Reader Without repr File"
     inputs = {"dataset_id": ArgType.String}
     outputs = {"data": ArgType.String}
-    example = {
-        "dataset_id": "05c43c58-ed42-4830-9b1f-f01059c4b96f"
-    }
+    example = {"dataset_id": "05c43c58-ed42-4830-9b1f-f01059c4b96f"}
 
     def __init__(self, dataset_id: str):
-        # TODO: move to a diff arch (pointer to Data-Catalog URL)
-        DCAT_URL = "https://api.mint-data-catalog.org"
-
         self.dataset_id = dataset_id
+        self.resource = []
 
-        resource_results = DCatAPI.get_instance(DCAT_URL).find_resources_by_dataset_id(
-            dataset_id
-        )
-        # TODO: fix me!!
-        assert len(resource_results) == 1
-        resource_ids = {"default": resource_results[0]["resource_data_url"]}
-        Path("/tmp/dcat_read_func").mkdir(exist_ok=True, parents=True)
+        resources = DCatAPI.get_instance().find_resources_by_dataset_id(dataset_id)
 
-        self.resources = {}
-        for resource_id, resource_url in resource_ids.items():
-            file_full_path = f"/tmp/dcat_read_func/{resource_id}.dat"
-            subprocess.check_call(
-                f"wget {resource_url} -O {file_full_path}", shell=True
-            )
-            self.resources[resource_id] = file_full_path
+        self.resource_manager = ResourceManager.get_instance()
+
+        assert len(resources) == 1
+
+        self.resource_id = resources[0]["resource_id"]
+        self.resource_metadata = {
+            key: resources[0][key] for key in {"resource_data_url", "resource_type"}
+        }
 
     def exec(self) -> dict:
-        input_dir_full_path = f"/data/{self.dataset_id}"
-        for resource in self.resources.values():
-            if not Path(input_dir_full_path).exists():
-                print("Not exists")
-                Path(input_dir_full_path).mkdir(parents=True)
-            else:
-                subprocess.check_output(f"rm -rf {input_dir_full_path}/*", shell=True)
-            subprocess.check_call(
-                f"tar -xvzf {resource} -C {input_dir_full_path}/", shell=True
-            )
-        return {"data": input_dir_full_path}
+        data_path = self.resource_manager.download(
+            self.resource_id, self.resource_metadata, should_redownload=True
+        )
+        return {"data_path": data_path}
 
     def validate(self) -> bool:
         return True
+
+    def change_metadata(
+        self, metadata: Optional[Dict[str, Metadata]]
+    ) -> Dict[str, Metadata]:
+        return metadata

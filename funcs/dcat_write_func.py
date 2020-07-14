@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import subprocess
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional, Dict
 import os
 
 import ujson as json
@@ -10,6 +10,7 @@ import ujson as json
 from dtran.argtype import ArgType
 from dtran.dcat.api import DCatAPI
 from dtran.ifunc import IFunc, IFuncType
+from dtran.metadata import Metadata
 
 
 class DcatWriteFunc(IFunc):
@@ -24,10 +25,9 @@ class DcatWriteFunc(IFunc):
     }
     outputs = {"data": ArgType.String}
     friendly_name: str = "Data Catalog Writer"
-    func_type = IFuncType.WRITER
     example = {
         "resource_path": "$.my_graph_write_func.output_file",
-        "metadata": '[{"name": "WFP Food Prices - South Sudan", "description": "Food price dataset for South Sudan (2012-2019)"}]'
+        "metadata": '[{"name": "WFP Food Prices - South Sudan", "description": "Food price dataset for South Sudan (2012-2019)"}]',
     }
 
     PROVENANCE_ID = "b3e79dc2-8fa1-4203-ac82-b5267925191f"
@@ -59,28 +59,28 @@ class DcatWriteFunc(IFunc):
     def validate(self) -> bool:
         return True
 
+    def change_metadata(
+        self, metadata: Optional[Dict[str, Metadata]]
+    ) -> Dict[str, Metadata]:
+        pass
+
 
 class DcatWriteMetadataFunc(IFunc):
     id = "dcat_write_metadata_func"
     description = """ A data catalog metadata writer adapter.
     """
     func_type = IFuncType.WRITER
-    inputs = {
-        "metadata": ArgType.String,
-        "dataset_id": ArgType.String
-    }
+    inputs = {"metadata": ArgType.String, "dataset_id": ArgType.String}
     outputs = {"data": ArgType.String}
     friendly_name: str = "Data Catalog Metadata Writer"
     example = {
         "metadata": '[{"name": "WFP Food Prices - South Sudan", "description": "Food price dataset for South Sudan (2012-2019)"}]',
-        "dataset_id": "ea0e86f3-9470-4e7e-a581-df85b4a7075d"
+        "dataset_id": "ea0e86f3-9470-4e7e-a581-df85b4a7075d",
     }
 
     PROVENANCE_ID = "b3e79dc2-8fa1-4203-ac82-b5267925191f"
 
-    def __init__(
-        self, metadata: str, dataset_id: str
-    ):
+    def __init__(self, metadata: str, dataset_id: str):
         self.metadata = json.loads(metadata)
         self.dataset_id = dataset_id
         self.dcat = DCatAPI.get_instance()
@@ -93,3 +93,8 @@ class DcatWriteMetadataFunc(IFunc):
 
     def validate(self) -> bool:
         return True
+
+    def change_metadata(
+        self, metadata: Optional[Dict[str, Metadata]]
+    ) -> Dict[str, Metadata]:
+        pass
