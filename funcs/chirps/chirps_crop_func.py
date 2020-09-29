@@ -77,7 +77,7 @@ class CHIRPSCropFunc(IFunc):
         # Write out to output file: force faster
         # See issue: https://github.com/pydata/xarray/issues/2912
         precip.load().to_netcdf(self.output_file)
-        print(f" Writing the result to {self.output_file}")
+        print(f" Writing result to {self.output_file}")
         return {}
 
     def validate(self) -> bool:
