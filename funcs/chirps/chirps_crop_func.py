@@ -4,7 +4,6 @@ This script downloads CHIRPS global daily dataset and register with dcat
 import os
 import urllib
 import datetime
-import netCDF4
 import xarray
 
 from dtran.argtype import ArgType
@@ -12,6 +11,7 @@ from dtran.ifunc import IFunc, IFuncType
 
 
 class CHIRPSCropFunc(IFunc):
+    # Conforming to Cropping Trans: x = longitude, y = latitude
     id = "chirps_crop_func"
     description = """
     An adapter that downloads CHIRPS dataset, crop by given time and spatial constraint.
@@ -21,10 +21,10 @@ class CHIRPSCropFunc(IFunc):
     inputs = {
         "start_date": ArgType.String,
         "end_date": ArgType.String,
-        "lat_min": ArgType.Number(optional=True),
-        "long_min": ArgType.Number(optional=True),
-        "lat_max": ArgType.Number(optional=True),
-        "long_max": ArgType.Number(optional=True),
+        "y_min": ArgType.Number(optional=True),
+        "x_min": ArgType.Number(optional=True),
+        "y_max": ArgType.Number(optional=True),
+        "x_max": ArgType.Number(optional=True),
         "output_file": ArgType.String
     }
     outputs = {}
@@ -32,14 +32,14 @@ class CHIRPSCropFunc(IFunc):
 
     def __init__(
         self, start_date, end_date, output_file,
-        lat_min=-50.0, long_min=-180.0, lat_max=50.0, long_max=180.0
+        y_min=-50.0, x_min=-180.0, y_max=50.0, x_max=180.0
     ):
         self.start_date = start_date
         self.end_date = end_date
-        self.lat_min = lat_min
-        self.long_min = long_min
-        self.lat_max = lat_max
-        self.long_max = long_max
+        self.y_min = y_min
+        self.x_min = x_min
+        self.y_max = y_max
+        self.x_max = x_max
         self.output_file = output_file
 
     def exec(self) -> dict:
@@ -70,16 +70,15 @@ class CHIRPSCropFunc(IFunc):
         chirps_precip = xarray.open_mfdataset(fns, combine='by_coords')
         precip = chirps_precip.precip.sel(
             time=slice(self.start_date, self.end_date),
-            latitude=slice(self.lat_min, self.lat_max),
-            longitude=slice(self.long_min, self.long_max)
+            latitude=slice(self.y_min, self.y_max),
+            longitude=slice(self.x_min, self.x_max)
         )
-        print(precip)
 
         # Write out to output file: force faster
         # See issue: https://github.com/pydata/xarray/issues/2912
         precip.load().to_netcdf(self.output_file)
         print(f" Writing the result to {self.output_file}")
-        return
+        return {}
 
     def validate(self) -> bool:
         return True

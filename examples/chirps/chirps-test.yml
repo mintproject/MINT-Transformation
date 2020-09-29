@@ -4,10 +4,10 @@ adapters:
     comment: My CHIRPS cropping adapter
     adapter: funcs.CHIRPSCropFunc
     inputs:
-      lat_min: -22.0
-      long_min: 143.0
-      lat_max: -21.0
-      long_max: 144.0
-      start_date: '2016-12-31'
+      y_min: -22.0
+      x_min: 143.0
+      y_max: -21.0
+      x_max: 144.0
+      start_date: '2017-12-31'
       end_date: '2018-03-05'
       output_file: './data/cropped_data.nc'
