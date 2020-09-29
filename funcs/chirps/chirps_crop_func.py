@@ -21,6 +21,7 @@ class CHIRPSCropFunc(IFunc):
     inputs = {
         "start_date": ArgType.String,
         "end_date": ArgType.String,
+        "dataset_id": ArgType.String(optional=True),
         "y_min": ArgType.Number(optional=True),
         "x_min": ArgType.Number(optional=True),
         "y_max": ArgType.Number(optional=True),
@@ -32,7 +33,8 @@ class CHIRPSCropFunc(IFunc):
 
     def __init__(
         self, start_date, end_date, output_file,
-        y_min=-50.0, x_min=-180.0, y_max=50.0, x_max=180.0
+        y_min=-50.0, x_min=-180.0, y_max=50.0, x_max=180.0,
+        dataset_id=""
     ):
         self.start_date = start_date
         self.end_date = end_date

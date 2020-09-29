@@ -11,3 +11,4 @@ adapters:
       start_date: '2017-12-31'
       end_date: '2018-03-05'
       output_file: './data/cropped_data.nc'
+      dataset_id: "810cf4c0-ba65-4c5e-9e8a-1f6bb2403cd7"
