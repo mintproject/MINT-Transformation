@@ -187,7 +187,7 @@ framework_dir = framework_dir + os.sep
 parent_dir    = parent_dir    + os.sep
 examples_dir  = examples_dir  + os.sep
 
-SILENT = False
+SILENT = True
 if not(SILENT):
     # print ' '
     print('Paths for this package:')

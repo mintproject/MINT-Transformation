@@ -1,4 +1,3 @@
-import argparse
 import math
 import os
 import shutil
@@ -8,6 +7,7 @@ from typing import Optional, Dict
 
 import numpy as np
 from netCDF4 import Dataset
+
 from dtran import IFunc, ArgType
 from dtran.ifunc import IFuncType
 from dtran.metadata import Metadata
@@ -84,10 +84,10 @@ class Gldas2CyclesFunc(IFunc):
         return metadata
 
 
-def Closest(lat, lon, path):
+def closest(lat, lon, path):
 
     elevation_fp = path + "/GLDASp4_elevation_025d.nc4"
-    nc = Dataset(elevation_fp, "r")
+    nc = xr.ope(elevation_fp, "r")
 
     best_y = (np.abs(nc.variables["lat"][:] - lat)).argmin()
     best_x = (np.abs(nc.variables["lon"][:] - lon)).argmin()
@@ -101,7 +101,7 @@ def Closest(lat, lon, path):
     )
 
 
-def ReadVar(y, x, nc_name):
+def read_var(y, x, nc_name):
     with Dataset(nc_name, "r") as nc:
         _prcp = nc["Rainf_f_tavg"][0, y, x]
         _temp = nc["Tair_f_inst"][0, y, x]
@@ -148,7 +148,7 @@ def process_day(t, y, x, path):
 
     for nc_name in os.listdir(nc_path):
         if nc_name.endswith(".nc4"):
-            (_prcp, _temp, _wind, _solar, _rh) = ReadVar(
+            (_prcp, _temp, _wind, _solar, _rh) = read_var(
                 y, x, os.path.join(nc_path, nc_name)
             )
 
@@ -235,7 +235,7 @@ def gldas2cycles(
     for lat, lon, fname in coords:
         print("Processing data for {0}, {1}".format(lat, lon))
 
-        (y, x, grid_lat, grid_lon, elevation) = Closest(lat, lon, data_path)
+        (y, x, grid_lat, grid_lon, elevation) = closest(lat, lon, data_path)
 
         if grid_lat < 0.0:
             lat_str = "%.2fS" % (abs(grid_lat))
@@ -256,8 +256,8 @@ def gldas2cycles(
         Path(output_path).mkdir(parents=True, exist_ok=True)
         # fname = "met" + lat_str + "x" + lon_str + ".weather"
         outfp = open(os.path.join(output_path, fname), "w")
-        outfp.write("LATITUDE %.2f\n" % (grid_lat))
-        outfp.write("ALTITUDE %.2f\n" % (elevation))
+        outfp.write("LATITUDE %.2f\n" % grid_lat)
+        outfp.write("ALTITUDE %.2f\n" % elevation)
         outfp.write("SCREENING_HEIGHT 2\n")
         outfp.write(
             "YEAR    DOY     PP      TX      TN     SOLAR      RHX      RHN     WIND\n"

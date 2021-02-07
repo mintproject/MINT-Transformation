@@ -23,7 +23,7 @@ def crop_geotiff(args):
     return True
 
 
-def create_rts_rti(tif_files, out_file, crop_dir: str, out_bounds: BoundingBox, out_xres_sec: int, out_yres_sec: int, unit_multiplier: float):
+def create_rts_rti(tif_files, out_file, crop_dir: str, out_bounds: BoundingBox, out_xres_sec: int, out_yres_sec: int, unit_multiplier: float, skip_crop_on_exist: bool):
     """Create RTS file from TIF files. Names of TIF files must be sorted by time"""
     assert out_file.endswith(".rts") and len(out_file.split(".rts")) == 2
     assert len(tif_files) > 0
@@ -40,6 +40,8 @@ def create_rts_rti(tif_files, out_file, crop_dir: str, out_bounds: BoundingBox, 
     # ]))
     # print(res)
     for tif_file, out_crop_file in tqdm(zip(tif_files, out_crop_files)):
+        if skip_crop_on_exist and os.path.exists(out_crop_file):
+            continue
         args = (tif_file, out_crop_file, out_bounds, out_xres_sec, out_yres_sec)
         assert crop_geotiff(args)
 
@@ -62,7 +64,7 @@ def create_rts_rti(tif_files, out_file, crop_dir: str, out_bounds: BoundingBox, 
 
 def create_rti(tif_file, out_file):
     """Create RTI from the TIF file"""
-    import_grid.read_from_geotiff(tif_file, REPORT=True, rti_file=out_file)
+    import_grid.read_from_geotiff(tif_file, REPORT=False, rti_file=out_file)
 
 
 if __name__ == '__main__':

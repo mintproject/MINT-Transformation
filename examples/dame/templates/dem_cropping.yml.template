@@ -1,0 +1,37 @@
+version: "1.0"
+description: Data transformation to generate daily average data from original GLDAS data sources
+inputs:
+  dataset_id:
+    comment: DataCatalog Dataset ID for raster file
+    value: {INPUTS1}
+  crop_region_xmin:
+    comment: Target region bounding box xmin coordinate
+    value: {PARAMS1}
+  crop_region_ymin:
+    comment: Target region bounding box ymin coordinate
+    value: {PARAMS2}
+  crop_region_xmax:
+    comment: Target region bounding box xmax coordinate
+    value: {PARAMS3}
+  crop_region_ymax:
+    comment: Target region bounding box ymax coordinate
+    value: {PARAMS4}
+  output_file:
+    comment: Path to output file
+    value: {OUTPUTS1}
+adapters:
+  read_func:
+    comment: My geotiff read func adapter
+    adapter: funcs.DcatReadNoReprFunc
+    inputs:
+      dataset_id: $$.dataset_id
+  my_crop_wrapper:
+    comment: My cropping func wrapper adapter
+    adapter: funcs.dem.DEMCropFunc
+    inputs:
+      input_file: $.read_func.data_path
+      output_file: $$.output_file
+      xmin: $$.crop_region_xmin
+      ymin: $$.crop_region_ymin
+      xmax: $$.crop_region_xmax
+      ymax: $$.crop_region_ymax

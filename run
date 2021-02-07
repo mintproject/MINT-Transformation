@@ -4,7 +4,7 @@ env_file=$(readlink -f ./env.env)
 BASEDIR=`dirname $0`
 pushd /ws
 echo "Running DAME execution"
-dotenv -f env.env run python -m dtran.dame.exec "$@"
+dotenv -f $env_file run python -m dtran.dame.exec "$@"
 
 while [[ "$#" -gt 0 ]]
 do

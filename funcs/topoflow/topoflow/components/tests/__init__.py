@@ -1,5 +1,5 @@
 
-SILENT = False
+SILENT = True
 if not(SILENT):
     print('Importing TopoFlow 3.6 packages:')
     print('   topoflow.utils')

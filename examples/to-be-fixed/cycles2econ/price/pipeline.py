@@ -34,14 +34,14 @@ if __name__ == "__main__":
         UnitTransFunc.I.unit_desired: "$/kg",
         CSVWriteFunc.I.main_class: "qb:Observation",
         CSVWriteFunc.I.mapped_columns: {},
-        CSVWriteFunc.I.output_file: wdir / "price.csv",
+        CSVWriteFunc.I.output_path: wdir / "price.csv",
         VisJsonWriteFunc.I.filter: "@type = 'qb:Observation' and "
                                    "sdmx-attribute:refArea.contains('Aweil (Town)') and "
                                    "sdmx-dimension:refPeriod = '2016-10-15' and "
                                    f"dcat-dimension:thing in {str(set(crop_names.keys()))}",
         VisJsonWriteFunc.I.main_class: "qb:Observation",
         VisJsonWriteFunc.I.mapped_columns: {},
-        VisJsonWriteFunc.I.output_file: wdir / "visualization.json",
+        VisJsonWriteFunc.I.output_path: wdir / "visualization.json",
     }
 
     outputs = pipeline.exec(inputs)

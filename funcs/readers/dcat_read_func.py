@@ -14,13 +14,13 @@ from typing import Union, Dict
 from functools import partial
 from playhouse.kv import KeyValue
 from peewee import SqliteDatabase, Model, UUIDField, IntegerField, BooleanField, BigIntegerField, DoesNotExist
-
 from drepr import DRepr
 from drepr.outputs import ArrayBackend, GraphBackend
 from dtran.argtype import ArgType
 from dtran.backend import ShardedBackend, ShardedClassID, LazyLoadBackend
 from dtran.dcat.api import DCatAPI
 from dtran.ifunc import IFunc, IFuncType
+from tqdm.auto import tqdm
 
 DATA_CATALOG_DOWNLOAD_DIR = os.path.abspath(os.environ["DATA_CATALOG_DOWNLOAD_DIR"])
 if os.environ['NO_CHECK_CERTIFICATE'].lower().strip() == 'true':
@@ -54,8 +54,8 @@ class ResourceManager:
     instance = None
 
     def __init__(self):
-        self.max_capacity = 200 * UNITS_MAPPING['MB']
-        self.max_clear_size = 100 * UNITS_MAPPING['MB']
+        self.max_capacity = 32 * UNITS_MAPPING['GB']
+        self.max_clear_size = 20 * UNITS_MAPPING['GB']
         assert self.max_capacity >= self.max_clear_size, "max_capacity cannot be less than max_clear_size"
         self.poll_interval = 10
         self.compressed_resource_types = {".zip", ".tar.gz", ".tar"}
@@ -143,14 +143,14 @@ class ResourceManager:
             DcatReadFunc.logger.debug(f"Downloading resource {resource_id} ...")
             if is_compressed:
                 temp_path = path + resource_metadata['resource_type']
-                subprocess.check_call(f"wget -q \"{resource_metadata['resource_data_url']}\" -O {temp_path}", shell=True, close_fds=False)
+                subprocess.check_call(f"wget \"{resource_metadata['resource_data_url']}\" -O {temp_path}", shell=True)
                 self.uncompress(resource_metadata['resource_type'], path)
                 # adjust required_size when the resource is compressed
                 required_size = -resource.size
                 required_size += sum(f.stat().st_size for f in Path(path).rglob('*')) + Path(path).stat().st_size
                 Path(temp_path).unlink()
             else:
-                subprocess.check_call(f"wget -q \"{resource_metadata['resource_data_url']}\" -O {path}", shell=True, close_fds=False)
+                subprocess.check_call(f"wget \"{resource_metadata['resource_data_url']}\" -O {path}", shell=True)
                 required_size = 0
 
             with self.db.atomic('EXCLUSIVE'):
@@ -195,7 +195,7 @@ class ResourceManager:
         return size
 
     def uncompress(self, resource_type: str, path: Union[Path, str]):
-        subprocess.check_call(f"unzip {path + resource_type} -d {path}", shell=True, close_fds=False)
+        subprocess.check_call(f"unzip {path + resource_type} -d {path}", shell=True)
         # flatten the structure (max two levels)
         for fpath in Path(path).iterdir():
             if fpath.is_dir():
@@ -337,6 +337,101 @@ class DcatReadFunc(IFunc):
         if not self.lazy_load_enabled:
             for resource_id, resource_metadata in self.resources.items():
                 self.resource_manager.unlink(resource_id)
+
+    def validate(self) -> bool:
+        return True
+
+
+# TODO: this is a temporary class, should be remove before move on with existing pipeline
+class DcatReadStreamFunc(IFunc):
+    id = "dcat_read_stream_func"
+    description = """ An entry point in the pipeline.
+    Fetches a dataset and its metadata from the MINT Data-Catalog.
+    """
+    func_type = IFuncType.READER
+    friendly_name: str = "Data Catalog Reader"
+    inputs = {
+        "dataset_id": ArgType.String,
+        "start_time": ArgType.DateTime(optional=True),
+        "end_time": ArgType.DateTime(optional=True),
+        "should_redownload": ArgType.Boolean(optional=True),
+        "override_drepr": ArgType.String(optional=True),
+    }
+    outputs = {"data": ArgType.DataSet(None), "data_path": ArgType.ListString(optional=True)}
+    example = {
+        "dataset_id": "ea0e86f3-9470-4e7e-a581-df85b4a7075d",
+        "start_time": "2020-03-02T12:30:55",
+        "end_time": "2020-03-02T12:30:55",
+        "should_redownload": "False",
+        "override_drepr": "/tmp/model.yml"
+    }
+    logger = logging.getLogger(__name__)
+
+    def __init__(self,
+                 dataset_id: str,
+                 start_time: datetime = None,
+                 end_time: datetime = None,
+                 should_redownload: bool = False,
+                 override_drepr: str = None
+                 ):
+        self.dataset_id = dataset_id
+        self.should_redownload = should_redownload
+        self.resource_manager = ResourceManager.get_instance()
+        dataset = DCatAPI.get_instance().find_dataset_by_id(dataset_id)
+
+        assert ('resource_repr' in dataset['metadata']) or ('dataset_repr' in dataset['metadata']), \
+            "Dataset is missing both 'resource_repr' and 'dataset_repr'"
+        assert not (('resource_repr' in dataset['metadata']) and ('dataset_repr' in dataset['metadata'])), \
+            "Dataset has both 'resource_repr' and 'dataset_repr'"
+
+        resources = DCatAPI.get_instance().find_resources_by_dataset_id(dataset_id, start_time, end_time)
+
+        self.resources = OrderedDict()
+        if 'resource_repr' in dataset['metadata']:
+            if override_drepr is not None:
+                self.drepr = DRepr.parse_from_file(override_drepr)
+            else:
+                self.drepr = DRepr.parse(dataset['metadata']['resource_repr'])
+            for resource in resources:
+                self.resources[resource['resource_id']] = {key: resource[key] for key in
+                                                           {'resource_data_url', 'resource_type'}}
+            self.repr_type = 'resource_repr'
+        else:
+            # TODO: fix me!!
+            assert len(resources) == 1
+            self.resources[resources[0]['resource_id']] = {key: resources[0][key] for key in
+                                                           {'resource_data_url', 'resource_type'}}
+            if override_drepr is not None:
+                self.drepr = DRepr.parse_from_file(override_drepr)
+            else:
+                self.drepr = DRepr.parse(dataset['metadata']['dataset_repr'])
+            self.repr_type = 'dataset_repr'
+
+        self.logger.debug(f"Found key '{self.repr_type}'")
+
+    async def exec(self) -> dict:
+        # TODO: fix me! incorrect way to choose backend
+        if self.get_preference("data") is None or self.get_preference("data") == 'array':
+            backend = ArrayBackend
+        else:
+            backend = GraphBackend
+    
+        if self.repr_type == 'dataset_repr':
+            resource_id, resource_metadata = list(self.resources.items())[0]
+            resource_file = self.resource_manager.download(resource_id, resource_metadata, self.should_redownload)
+            yield {"data": backend.from_drepr(self.drepr, resource_file), "data_path": [resource_file]}
+        else:
+            # data_path is location of the resources in disk, for pipeline that wants to download the file
+            for resource_id, resource_metadata in tqdm(self.resources.items(), total=len(self.resources), desc='dcat_read'):
+                resource_file = self.resource_manager.download(resource_id, resource_metadata, self.should_redownload)
+                yield {
+                    "data": backend.from_drepr(self.drepr, resource_file),
+                    "data_path": [resource_file]
+                }
+
+    def __del__(self):
+        for resource_id, resource_metadata in self.resources.items():
+            self.resource_manager.unlink(resource_id)
 
     def validate(self) -> bool:
         return True

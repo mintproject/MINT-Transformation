@@ -1,0 +1,13 @@
+version: "1"
+adapters:
+  topoflow:
+    adapter: funcs.topoflow.topoflow_climate.Topoflow4ClimateWriteFunc
+    inputs:
+      geotiff_files: /home/rook/workspace/mint/MINT-Transformation/examples/topoflow4/dev/data/geotiff/*.tif
+      cropped_geotiff_dir: /home/rook/workspace/mint/MINT-Transformation/examples/topoflow4/dev/data/geotiff_crop
+      output_file: /home/rook/workspace/mint/MINT-Transformation/examples/topoflow4/dev/data/output.rts
+      bounds: "34.221249999999, 7.353749999999, 36.45458333333234, 9.503749999999"
+      xres_arcsecs: 60
+      yres_arcsecs: 60
+      # required for GLDAS (unit transformation = 3600)
+      unit_multiplier: 1

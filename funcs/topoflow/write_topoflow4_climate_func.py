@@ -71,6 +71,9 @@ class Topoflow4ClimateWriteFunc(IFunc):
     def validate(self) -> bool:
         return True
 
+    def change_metadata(self, metadata: Optional[Dict[str, Metadata]]) -> Dict[str, Metadata]:
+        return metadata
+
 
 class Topoflow4ClimateWritePerMonthFunc(IFunc):
     id = "topoflow4_climate_write_per_month_func"
@@ -87,7 +90,7 @@ class Topoflow4ClimateWritePerMonthFunc(IFunc):
     func_type = IFuncType.MODEL_TRANS
     example = {
         "grid_dir": f"/data/mint/gpm_grid_baro",
-        "date_regex": '3B-HHR-E.MS.MRG.3IMERG.(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})',
+        "date_regex": r'3B-HHR-E.MS.MRG.3IMERG.(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})',
         "output_file": f"/data/mint/baro/climate.rts",
     }
 
