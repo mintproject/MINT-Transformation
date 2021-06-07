@@ -73,7 +73,7 @@ Arguments:
 **With docker**
 
 ```
-docker run --rm -v $(pwd):/ws -v /tmp:/tmp mint_dt [config_path]
+docker run --rm -v $(pwd):/ws -v /tmp:/tmp  mintproject/mint_dt [config_path]
 ```
 
 Web application
