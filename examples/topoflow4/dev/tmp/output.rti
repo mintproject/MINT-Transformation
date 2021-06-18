@@ -3,7 +3,7 @@ RiverTools Info File
 ;--------------------
 ;Description of Grid
 ;--------------------
-Grid filename:  /home/clapika/workspace/MINT-Transformation/examples/topoflow4/dev/tmp/output.tif
+Grid filename:  /Users/varun/git/MINT-Transformation/examples/topoflow4/dev/tmp/output.tif
 Grid source:    TopoFlow & GDAL
  
 ;----------------------
