@@ -6,6 +6,8 @@ from typing import List, Dict
 
 import requests
 
+def dateTimeToXSD(dt):
+    return str(dt).replace(" ", "T")
 
 class StandardVariableForm:
     def __init__(self, ontology: str, name: str, uri: str):
@@ -52,11 +54,13 @@ class DCatAPI:
 
         return deleted_ids
 
+
     def find_resources_by_dataset_id(
             self,
             dataset_id: str,
             start_time: datetime = None,
             end_time: datetime = None,
+            geometry: str = None,
             limit: int = 100000,
     ):
         """start_time and end_time is inclusive"""
@@ -68,12 +72,14 @@ class DCatAPI:
             "dataset_id": dataset_id,
             "limit": limit,
         }
-        if start_time is not None or end_time is not None:
+        if start_time is not None or end_time is not None or geometry is not None:
             query["filter"] = {}
             if start_time is not None:
-                query["filter"]["start_time__gte"] = start_time.isoformat()
+                query["filter"]["start_time__lte"] = dateTimeToXSD(end_time)
             if end_time is not None:
-                query["filter"]["end_time__lte"] = end_time.isoformat()
+                query["filter"]["end_time__gte"] = dateTimeToXSD(start_time)
+            if geometry is not None:
+                query["filter"]["spatial_coverage__intersects"] = geometry
 
         resp = requests.post(
             f"{self.dcat_url}/datasets/dataset_resources",

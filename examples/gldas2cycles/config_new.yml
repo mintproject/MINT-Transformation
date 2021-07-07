@@ -3,19 +3,25 @@ description: Data transformation to generate Cycles-ready input files (RTS) from
 inputs:
   gldas_dataset_id:
     comment: "GLDAS Dataset ID"
-    value: "5babae3f-c468-4e01-862e-8b201468e3b5"
+    value: "456e5abc-91a5-4c58-8444-1f381ce686bd"
   soil_dataset_id:
-    comment: "FIXME: Soil Dataset ID - Change to real id"
-    value: "ac34f01b-1484-4403-98ea-3a380838cab1"
+    comment: "Soil Dataset ID - Change to real id"
+    value: "8a0037e2-9130-42d3-8e29-380bce6a182d"
+  gldas_elevation_file_path:
+    comment: "Path to the GLDAS elevation file"
+    value: "data/download/gldas/GLDASp4_elevation_025d.nc4"
   start_date:
     comment: "Start date to filter resources in the dataset"
     value: "2000-01-02"
   end_date:
     comment: "End date to filter resources in the dataset"
-    value: "2000-01-03"
-  gldas_path:
-    comment: "Path to GLDAS dataset directory"
-    value: "examples/gldas2cycles/GLDAS/"
+    value: "2000-01-04"
+  batch_numdays:
+    comment: "Number of days of GLDAS to load in one go. Keep this number higher for machines with more RAM"
+    value: 10
+  bounding_box:
+    comment: "Bounding box of the extracting region (Horn of Africa here)"
+    value: "21.533203125, -5.353521355337321, 51.943359375, 22.67484735118852"  
   output_path:
     comment: "Path to the output directory"
     value: "examples/gldas2cycles/output/"
@@ -29,8 +35,10 @@ adapters:
     inputs:
       gldas_dataset_id: $$.gldas_dataset_id
       soil_dataset_id: $$.soil_dataset_id
+      gldas_elevation_file_path: $$.gldas_elevation_file_path
       start_date: $$.start_date
       end_date: $$.end_date
-      gldas_path: $$.gldas_path
+      batch_numdays: $$.batch_numdays
+      bounding_box: $$.bounding_box
       output_path: $$.output_path
       output_prefix: $$.output_prefix
