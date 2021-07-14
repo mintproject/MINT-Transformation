@@ -19,7 +19,7 @@ from dtran.metadata import Metadata
 from zipfile import ZipFile
 
 import logging, sys
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 class Gldas2CyclesFuncNew(IFunc):
     id = "topoflow4_climate_write_func"
@@ -243,8 +243,10 @@ def gldas2cycles(
 
     soil_directory = DATA_CATALOG_DOWNLOAD_DIR + "/soil"
     gldas_directory = DATA_CATALOG_DOWNLOAD_DIR + "/gldas"
-    Path(soil_directory).mkdir(exist_ok=True, parents=True)
-    Path(gldas_directory).mkdir(exist_ok=True, parents=True)
+    if not os.path.exists(soil_directory):
+       Path(soil_directory).mkdir(exist_ok=True, parents=True)
+    if not os.path.exists(gldas_directory):
+       Path(gldas_directory).mkdir(exist_ok=True, parents=True)
 
     # Download Soil Datasets & Get their Lat/Long
     geometry = get_geometry(bounding_box)
@@ -365,7 +367,7 @@ def gldas2cycles(
 
             # Load GLDAS data for the exact gridpoint location
             logging.debug(f"Loading GLDAS data for grid point {grid_lat}, {grid_lon}")
-            loc_ds = gldas_ds.sel(lat=grid_lat, lon=grid_lon).load()
+            loc_ds = gldas_ds.sel(lat=grid_lat, lon=grid_lon, time=slice(cur_start_date, cur_end_date)).load()
             logging.debug("Loaded gldas data for location")
 
             logging.debug("Converting to Cycles input data")
