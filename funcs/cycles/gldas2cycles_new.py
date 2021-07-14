@@ -328,6 +328,8 @@ def gldas2cycles(
         if cur_end_date > end_date:
             cur_end_date = end_date
 
+        cur_end_date = cur_end_date - timedelta(minutes = 1) # So we don't get midnight file of next day
+        
         logging.info(f"Fetching GLDAS files list for dates from {cur_start_date} to {cur_end_date}")
 
         logging.info("Downloading missing GLDAS files..")
