@@ -15,7 +15,7 @@ inputs:
     value: "2021-03-31"
   batch_numdays:
     comment: "Number of days of GLDAS to load in one go. Keep this number higher for machines with more RAM"
-    value: 2
+    value: 15
   output_path:
     comment: "Path to the output directory"
     value: "examples/gldas2cycles/output-batched/"
