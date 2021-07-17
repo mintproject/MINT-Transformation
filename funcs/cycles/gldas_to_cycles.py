@@ -357,7 +357,7 @@ def gldas_to_cycles(
 
         weather_fname = fname + ".weather"
         soil_fname = fname + ".soil"
-        zip_fname = fname + "_soil_weather.zip"
+        zip_fname = fname + ".soil_weather.zip"
 
         tmp_soil_file = os.path.join(output_path, soil_fname)    
         tmp_weather_file = os.path.join(output_path, weather_fname)        
