@@ -5,6 +5,10 @@ A framework to construct a transformation pipeline based on some specification f
 Spatial Transformations (from GDAL): cropping, regirdding, resampling, etc.
 Model-specific Transformations: Topoflow, PIHM, Cycles, Econ, etc.
 
+
+A list of available transformatios can be found in the [wiki](https://github.com/mintproject/MINT-Transformation/wiki/Transformation-Pipelines)
+
+
 Table of Contents
 =================
 
