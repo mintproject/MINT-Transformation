@@ -6,7 +6,7 @@ Spatial Transformations (from GDAL): cropping, regirdding, resampling, etc.
 Model-specific Transformations: Topoflow, PIHM, Cycles, Econ, etc.
 
 
-A list of available transformatios can be found in the [wiki](https://github.com/mintproject/MINT-Transformation/wiki/Transformation-Pipelines)
+A list of available transformations can be found in the [wiki](https://github.com/mintproject/MINT-Transformation/wiki/Transformation-Pipelines)
 
 
 Table of Contents
