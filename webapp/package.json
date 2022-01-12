@@ -18,7 +18,7 @@
     "eslint": "^6.7.2",
     "history": "^4.9.0",
     "lodash": "^4.17.15",
-    "markdown-it": "^10.0.0",
+    "markdown-it": "^12.3.2",
     "mobx": "^5.13.0",
     "mobx-react": "^6.1.1",
     "mobx-react-router": "^4.0.7",
